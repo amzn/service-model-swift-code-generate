@@ -47,6 +47,9 @@ extension ServiceModelCodeGenerator {
     
     func generateFromModel<ModelType: ServiceModel>(serviceModel: ModelType,
                                                     ...) throws {
+        let myClientDelegate = ...
+        let myModelErrorsDelegate = ...
+
         generateClient(delegate: myClientDelegate)
         generateModelOperationsEnum()
         generateModelOperationClientInput()
@@ -74,7 +77,7 @@ public struct MyCodeGeneration {
         modelOverride: ModelOverride?,
         ...) throws {
             func generatorFunction(codeGenerator: ServiceModelCodeGenerator,
-                                                            serviceModel: ModelType) throws {
+                                   serviceModel: ModelType) throws {
                 try codeGenerator.generateFromModel(serviceModel: serviceModel, ...)
             }
         
