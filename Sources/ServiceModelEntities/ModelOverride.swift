@@ -131,23 +131,23 @@ public enum KnownErrorsDefaultRetryBehavior: String, Decodable {
 public struct HttpClientConfiguration: Decodable {
     public let retryOnUnknownError: Bool
     public let knownErrorsDefaultRetryBehavior: KnownErrorsDefaultRetryBehavior
-    public let unretryableUnknownErrors: Set<String>
-    public let retryableUnknownErrors: Set<String>
+    public let unretriableUnknownErrors: Set<String>
+    public let retriableUnknownErrors: Set<String>
     public let clientDelegateNameOverride: String?
     public let clientDelegateParameters: [String]?
     public let additionalClients: [String: AdditionalHttpClient]?
     
     public init(retryOnUnknownError: Bool,
                 knownErrorsDefaultRetryBehavior: KnownErrorsDefaultRetryBehavior,
-                unretryableUnknownErrors: Set<String>,
-                retryableUnknownErrors: Set<String>,
+                unretriableUnknownErrors: Set<String>,
+                retriableUnknownErrors: Set<String>,
                 clientDelegateNameOverride: String? = nil,
                 clientDelegateParameters: [String]? = nil,
                 additionalClients: [String: AdditionalHttpClient]? = nil) {
         self.retryOnUnknownError = retryOnUnknownError
         self.knownErrorsDefaultRetryBehavior = knownErrorsDefaultRetryBehavior
-        self.unretryableUnknownErrors = unretryableUnknownErrors
-        self.retryableUnknownErrors = retryableUnknownErrors
+        self.unretriableUnknownErrors = unretriableUnknownErrors
+        self.retriableUnknownErrors = retriableUnknownErrors
         self.clientDelegateNameOverride = clientDelegateNameOverride
         self.clientDelegateParameters = clientDelegateParameters
         self.additionalClients = additionalClients
