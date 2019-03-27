@@ -47,15 +47,24 @@ public extension ServiceModelCodeGenerator {
             import LoggerAPI
             """)
         
+        let allErrorTypes: Set<String>
+        if let additionalErrors = modelOverride?.additionalErrors {
+            allErrorTypes = model.errorTypes.union(additionalErrors)
+        } else {
+            allErrorTypes = model.errorTypes
+        }
+        
+        let sortedErrors = allErrorTypes.sorted { entry1, entry2 in
+            return entry1 < entry2
+        }
+        
+        delegate.errorTypeAdditionalImportsGenerator(fileBuilder: fileBuilder, errorTypes: sortedErrors)
+        
         if case let .generateWithCustomConformance(libraryImport: libraryImport, _) = delegate.optionSetGeneration {
             fileBuilder.appendLine("import \(libraryImport)")
         }
         
         fileBuilder.appendEmptyLine()
-        
-        let sortedErrors = model.errorTypes.sorted { entry1, entry2 in
-            return entry1 < entry2
-        }
         
         generateErrorDefinition(fileBuilder: fileBuilder,
                                 sortedErrors: sortedErrors,
@@ -147,121 +156,6 @@ public extension ServiceModelCodeGenerator {
                 
                 """)
         }
-    }
-    
-    private func addErrorIdentities(fileBuilder: FileBuilder,
-                                    sortedErrors: [String],
-                                    delegate: ModelErrorsDelegate) {
-        if delegate.canExpectValidationError {
-            fileBuilder.appendLine("""
-                private let validationErrorIdentityBuiltIn = "ValidationError"
-                
-                """)
-        }
-        
-        // for each of the errors
-        for name in sortedErrors {
-            let internalName = name.normalizedErrorName
-            fileBuilder.appendLine("""
-                private let \(internalName)Identity = "\(name)"
-                """)
-        }
-    }
-    
-    private func addCodingError(fileBuilder: FileBuilder) {
-        let baseName = applicationDescription.baseName
-        fileBuilder.appendLine("""
-            
-            public enum \(baseName)CodingError: Swift.Error {
-                case unknownError
-            """)
-        
-        // if we are using an internal validation error
-        if case .internal = customizations.validationErrorDeclaration {
-            fileBuilder.appendLine("""
-                    case validationError(reason: String)
-                """)
-        }
-        
-        // if we are using an internal unrecognized error
-        if case .internal = customizations.unrecognizedErrorDeclaration {
-            fileBuilder.appendLine("""
-                    case unrecognizedError(String, String?)
-                """)
-        }
-        
-        fileBuilder.appendLine("""
-            }
-            """)
-        fileBuilder.appendEmptyLine()
-    }
-    
-    private func generateErrorDefinition(fileBuilder: FileBuilder,
-                                         sortedErrors: [String],
-                                         delegate: ModelErrorsDelegate) {
-        let baseName = applicationDescription.baseName
-        addErrorIdentities(fileBuilder: fileBuilder, sortedErrors: sortedErrors, delegate: delegate)
-        
-        // avoid an enum with no cases
-        let entityType: String
-        if model.errorTypes.count > 0 {
-            entityType = "enum"
-        } else {
-            entityType = "struct"
-        }
-        
-        addCodingError(fileBuilder: fileBuilder)
-        
-        fileBuilder.appendLine("""
-            public \(entityType) \(baseName)Error: Swift.Error, Decodable {
-            """)
-        fileBuilder.incIndent()
-        
-        // for each of the errors
-        for name in sortedErrors {
-            let internalName = name.normalizedErrorName
-            fileBuilder.appendLine("case \(internalName)(\(name))")
-        }
-        
-        delegate.errorTypeInitializerGenerator(fileBuilder: fileBuilder,
-                                               errorTypes: model.errorTypes.sorted(by: <),
-                                               codingErrorUnknownError: "\(baseName)CodingError.unknownError")
-        
-        fileBuilder.incIndent()
-        // for each of the errors
-        for name in model.errorTypes.sorted(by: <) {
-            let internalName = name.normalizedErrorName
-            fileBuilder.appendLine("""
-                case \(internalName)Identity:
-                    let errorPayload = try \(name)(from: decoder)
-                    self = \(baseName)Error.\(internalName)(errorPayload)
-                """)
-        }
-        fileBuilder.decIndent()
-        
-        // If validation errors can be expected
-        if delegate.canExpectValidationError {
-            fileBuilder.appendLine("""
-                    case validationErrorIdentityBuiltIn:
-                        let errorMessage = try values.decodeIfPresent(String.self, forKey: .errorMessage) ?? ""
-                        throw \(validationErrorType).validationError(reason: errorMessage)
-                """)
-        }
-        
-        // Otherwise this is a unrecognized error
-        fileBuilder.appendLine("""
-                default:
-                    throw \(unrecognizedErrorType).unrecognizedError(errorReason, errorMessage)
-                }
-            }
-
-            """)
-        
-        fileBuilder.decIndent()
-        fileBuilder.appendLine("""
-            }
-            
-            """)
     }
 
     private func generateErrorOptionSet(fileBuilder: FileBuilder,

@@ -32,16 +32,73 @@ public protocol ModelErrorsDelegate {
     var canExpectValidationError: Bool { get }
     
     /**
-     Generator for the error type initializer.
+     Generator for the error type additional imports.
  
      - Parameters:
         - fileBuilder: The FileBuilder to output to.
         - errorTypes: The sorted list of error types.
-     - codingErrorUnknownError: the error that can be thrown for an unknown error.
      */
-    func errorTypeInitializerGenerator(fileBuilder: FileBuilder,
-                                       errorTypes: [String],
-                                       codingErrorUnknownError: String)
+    func errorTypeAdditionalImportsGenerator(fileBuilder: FileBuilder,
+                                             errorTypes: [String])
+    
+    /**
+     Generator for the error type additional error identities.
+ 
+     - Parameters:
+        - fileBuilder: The FileBuilder to output to.
+        - errorTypes: The sorted list of error types.
+     */
+    func errorTypeAdditionalErrorIdentitiesGenerator(fileBuilder: FileBuilder,
+                                                     errorTypes: [String])
+    
+    /**
+     Indicates the number of additional error cases that will be added.
+ 
+      - Parameters:
+        - fileBuilder: The FileBuilder to output to.
+        - errorTypes: The sorted list of error types.
+     */
+    func errorTypeWillAddAdditionalCases(fileBuilder: FileBuilder,
+                                         errorTypes: [String]) -> Int
+    
+    /**
+     Generator for the error type additional error cases.
+ 
+     - Parameters:
+        - fileBuilder: The FileBuilder to output to.
+        - errorTypes: The sorted list of error types.
+     */
+    func errorTypeAdditionalErrorCasesGenerator(fileBuilder: FileBuilder,
+                                                errorTypes: [String])
+    
+    /**
+     Generator for the error type CodingKeys.
+ 
+     - Parameters:
+        - fileBuilder: The FileBuilder to output to.
+        - errorTypes: The sorted list of error types.
+     */
+    func errorTypeCodingKeysGenerator(fileBuilder: FileBuilder,
+                                      errorTypes: [String])
+    
+    /**
+     Generator for the error type identity.
+ 
+     - Parameters:
+        - fileBuilder: The FileBuilder to output to.
+     - Returns: the variable name used to store the identity.
+     */
+    func errorTypeIdentityGenerator(fileBuilder: FileBuilder) -> String
+    
+    /**
+     Generator for the error type additional decode cases using the error identity.
+ 
+     - Parameters:
+        - fileBuilder: The FileBuilder to output to.
+        - errorTypes: The sorted list of error types.
+     */
+    func errorTypeAdditionalErrorDecodeStatementsGenerator(fileBuilder: FileBuilder,
+                                                           errorTypes: [String])
 
 }
 

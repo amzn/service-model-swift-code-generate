@@ -33,6 +33,7 @@ public protocol ServiceModel {
     var fieldDescriptions: [String: Fields] { get }
     var errorTypes: Set<String> { get }
     var typeMappings: [String: String] { get }
+    var errorCodeMappings: [String: String] { get }
     
     /**
      Initialize an instance of this ServiceModel type from a data instance
