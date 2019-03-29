@@ -32,6 +32,7 @@ public struct SwaggerServiceModel: ServiceModel {
     public var fieldDescriptions: [String: Fields] = [:]
     public var errorTypes: Set<String> = []
     public var typeMappings: [String: String] = [:]
+    public var errorCodeMappings: [String: String] = [:]
     
     public static func create(data: Data, modelFormat: ModelFormat,
                               modelOverride: ModelOverride?) throws -> SwaggerServiceModel {

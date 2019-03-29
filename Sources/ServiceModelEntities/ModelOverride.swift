@@ -40,6 +40,8 @@ public struct ModelOverride: Codable {
     /// structure attributes whose optionality should be overridden from the model
     /// Can be specified as "*.{attributeName}" or "{type}.{attributeName}"
     public let requiredOverrides: [String: Bool]?
+    /// any additional error codes that can be returned
+    public let additionalErrors: Set<String>?
     
     public init(matchCase: Set<String>? = nil,
                 enumerations: EnumerationNaming? = nil,
@@ -49,7 +51,8 @@ public struct ModelOverride: Codable {
                 operationOutputOverrides: [String: OperationOutputDescription]? = nil,
                 modelStringPatternsAreAlternativeList: Bool = false,
                 codingKeyOverrides: [String: String]? = nil,
-                requiredOverrides: [String: Bool]? = nil) {
+                requiredOverrides: [String: Bool]? = nil,
+                additionalErrors: Set<String>? = nil) {
         self.matchCase = matchCase
         self.enumerations = enumerations
         self.fieldRawTypeOverride = fieldRawTypeOverride
@@ -59,6 +62,7 @@ public struct ModelOverride: Codable {
         self.modelStringPatternsAreAlternativeList = modelStringPatternsAreAlternativeList
         self.codingKeyOverrides = codingKeyOverrides
         self.requiredOverrides = requiredOverrides
+        self.additionalErrors = additionalErrors
     }
     
     public func getCodingKeyOverride(attributeName: String, inType: String?) -> String? {

@@ -199,6 +199,8 @@ public extension ServiceModelCodeGenerator {
             return "`true`"
         } else if name == "private" {
             return "`private`"
+        } else if name == "internal" {
+            return "`internal`"
         }
         
         return name
@@ -233,21 +235,28 @@ public extension ServiceModelCodeGenerator {
         - modelTypeName: The model name for the type.
      */
     public func getNormalizedEnumCaseName(modelTypeName: String,
-                                          inStructure: String) -> String {
+                                          inStructure: String,
+                                          usingUpperCamelCase: Bool = false) -> String {
         if let usingUpperCamelCase = modelOverride?.enumerations?.usingUpperCamelCase,
             usingUpperCamelCase.contains(inStructure) {
             let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "",
                                                                     wildCardReplacement: "Star")
             
             // convert from upper camel case
-            return modifiedModelTypeName.upperToLowerCamelCase
+            return escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
         } else if let usingUpperCamelCase = modelOverride?.enumerations?.usingUpperCamelCase,
             usingUpperCamelCase.contains("\(inStructure).\(modelTypeName)") {
             let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "",
                                                                     wildCardReplacement: "Star")
             
             // convert from upper camel case
-            return modifiedModelTypeName.upperToLowerCamelCase
+            return escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
+        } else if usingUpperCamelCase {
+            let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "",
+                                                                    wildCardReplacement: "Star")
+            
+            // convert from upper camel case
+            return escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
         }
         
         let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "_",
