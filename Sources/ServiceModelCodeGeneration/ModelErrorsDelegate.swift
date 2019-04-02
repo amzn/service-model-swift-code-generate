@@ -17,6 +17,8 @@
 
 import Foundation
 
+public typealias ErrorType = (normalizedName: String, identity: String)
+
 /**
  Delegate protocol that can customize the generation of errors
  from the Service Model.
@@ -39,7 +41,7 @@ public protocol ModelErrorsDelegate {
         - errorTypes: The sorted list of error types.
      */
     func errorTypeAdditionalImportsGenerator(fileBuilder: FileBuilder,
-                                             errorTypes: [String])
+                                             errorTypes: [ErrorType])
     
     /**
      Generator for the error type additional error identities.
@@ -49,7 +51,7 @@ public protocol ModelErrorsDelegate {
         - errorTypes: The sorted list of error types.
      */
     func errorTypeAdditionalErrorIdentitiesGenerator(fileBuilder: FileBuilder,
-                                                     errorTypes: [String])
+                                                     errorTypes: [ErrorType])
     
     /**
      Indicates the number of additional error cases that will be added.
@@ -59,7 +61,7 @@ public protocol ModelErrorsDelegate {
         - errorTypes: The sorted list of error types.
      */
     func errorTypeWillAddAdditionalCases(fileBuilder: FileBuilder,
-                                         errorTypes: [String]) -> Int
+                                         errorTypes: [ErrorType]) -> Int
     
     /**
      Generator for the error type additional error cases.
@@ -69,7 +71,7 @@ public protocol ModelErrorsDelegate {
         - errorTypes: The sorted list of error types.
      */
     func errorTypeAdditionalErrorCasesGenerator(fileBuilder: FileBuilder,
-                                                errorTypes: [String])
+                                                errorTypes: [ErrorType])
     
     /**
      Generator for the error type CodingKeys.
@@ -79,16 +81,18 @@ public protocol ModelErrorsDelegate {
         - errorTypes: The sorted list of error types.
      */
     func errorTypeCodingKeysGenerator(fileBuilder: FileBuilder,
-                                      errorTypes: [String])
+                                      errorTypes: [ErrorType])
     
     /**
      Generator for the error type identity.
  
      - Parameters:
         - fileBuilder: The FileBuilder to output to.
+        - codingErrorUnknownError: the error that can be thrown for an unknown error.
      - Returns: the variable name used to store the identity.
      */
-    func errorTypeIdentityGenerator(fileBuilder: FileBuilder) -> String
+    func errorTypeIdentityGenerator(fileBuilder: FileBuilder,
+                                    codingErrorUnknownError: String) -> String
     
     /**
      Generator for the error type additional decode cases using the error identity.
@@ -98,7 +102,7 @@ public protocol ModelErrorsDelegate {
         - errorTypes: The sorted list of error types.
      */
     func errorTypeAdditionalErrorDecodeStatementsGenerator(fileBuilder: FileBuilder,
-                                                           errorTypes: [String])
+                                                           errorTypes: [ErrorType])
 
 }
 

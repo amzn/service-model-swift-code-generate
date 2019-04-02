@@ -54,9 +54,7 @@ public extension ServiceModelCodeGenerator {
             allErrorTypes = model.errorTypes
         }
         
-        let sortedErrors = allErrorTypes.sorted { entry1, entry2 in
-            return entry1 < entry2
-        }
+        let sortedErrors = getSortedErrors(allErrorTypes: allErrorTypes)
         
         delegate.errorTypeAdditionalImportsGenerator(fileBuilder: fileBuilder, errorTypes: sortedErrors)
         
@@ -85,9 +83,45 @@ public extension ServiceModelCodeGenerator {
         let fileName = "\(baseName)ModelErrors.swift"
         fileBuilder.write(toFile: fileName, atFilePath: "\(applicationDescription.baseFilePath)/Sources/\(baseName)Model")
     }
+    
+    private func getSortedErrors(allErrorTypes: Set<String>) -> [ErrorType] {
+        // determine if any errors will normalize to the same name
+        var errorNameCount: [String: Int] = [:]
+        allErrorTypes.forEach { errorIdentity in
+            let normalizedErrorName = errorIdentity.normalizedErrorName
+            
+            if let existingCount = errorNameCount[normalizedErrorName] {
+                errorNameCount[normalizedErrorName] = existingCount + 1
+            } else {
+                errorNameCount[normalizedErrorName] = 1
+            }
+        }
+        
+        let rawSortedErrors = allErrorTypes.sorted { entry1, entry2 in
+            return entry1 < entry2
+        }
+        
+        let sortedErrors: [ErrorType] = rawSortedErrors.map { errorIdentity in
+            let normalizedErrorName = errorIdentity.normalizedErrorName
+            
+            let errorNameCount = errorNameCount[normalizedErrorName] ?? 1
+            
+            if errorNameCount > 1 {
+                // don't normalize the name as there will be a clash
+                return (normalizedName: errorIdentity.upperToLowerCamelCase,
+                        identity: errorIdentity)
+            } else {
+                // use the normalized name
+                return (normalizedName: normalizedErrorName,
+                        identity: errorIdentity)
+            }
+        }
+        
+        return sortedErrors
+    }
 
     private func generateProtocolExtension(fileBuilder: FileBuilder,
-                                           sortedErrors: [String],
+                                           sortedErrors: [ErrorType],
                                            delegate: ModelErrorsDelegate) {
         let baseName = applicationDescription.baseName
         guard !sortedErrors.isEmpty else {
@@ -107,8 +141,8 @@ public extension ServiceModelCodeGenerator {
             fileBuilder.incIndent()
             fileBuilder.incIndent()
             // for each of the errors
-            for name in sortedErrors {
-                let internalName = name.normalizedErrorName
+            for error in sortedErrors {
+                let internalName = error.normalizedName
                 fileBuilder.appendLine("""
                     case .\(internalName):
                         return \(internalName)Identity
@@ -139,8 +173,8 @@ public extension ServiceModelCodeGenerator {
             fileBuilder.incIndent()
             fileBuilder.incIndent()
             // for each of the errors
-            for name in sortedErrors {
-                let internalName = name.normalizedErrorName
+            for error in sortedErrors {
+                let internalName = error.normalizedName
                 fileBuilder.appendLine("""
                     case .\(internalName)(let details):
                         try details.encode(to: encoder)
@@ -159,7 +193,7 @@ public extension ServiceModelCodeGenerator {
     }
 
     private func generateErrorOptionSet(fileBuilder: FileBuilder,
-                                        sortedErrors: [String],
+                                        sortedErrors: [ErrorType],
                                         delegate: ModelErrorsDelegate) {
         let baseName = applicationDescription.baseName
         
@@ -174,8 +208,8 @@ public extension ServiceModelCodeGenerator {
             """)
         
         // for each of the errors
-        for (index, name) in sortedErrors.enumerated() {
-            let internalName = name.normalizedErrorName
+        for (index, error) in sortedErrors.enumerated() {
+            let internalName = error.normalizedName
             fileBuilder.appendLine("    public static let \(internalName) = \(baseName)ErrorTypes(rawValue: \(index + 1))")
         }
         
@@ -190,8 +224,8 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.incIndent()
         fileBuilder.incIndent()
         // for each of the errors
-        for (index, name) in sortedErrors.enumerated() {
-            let internalName = name.normalizedErrorName
+        for (index, error) in sortedErrors.enumerated() {
+            let internalName = error.normalizedName
             fileBuilder.appendLine("""
                 case \(index + 1):
                     return \(internalName)Identity
