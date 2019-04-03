@@ -22,7 +22,7 @@ import ServiceModelEntities
 public extension ServiceModelCodeGenerator {
     
     internal func generateErrorDefinition(fileBuilder: FileBuilder,
-                                          sortedErrors: [String],
+                                          sortedErrors: [ErrorType],
                                           delegate: ModelErrorsDelegate) {
         let baseName = applicationDescription.baseName
         addErrorIdentities(fileBuilder: fileBuilder, sortedErrors: sortedErrors,
@@ -59,7 +59,9 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.appendLine("public init(from decoder: Decoder) throws {", postInc: true)
         
         // add code to get the identity variable from the delegate
-        let identityVariable = delegate.errorTypeIdentityGenerator(fileBuilder: fileBuilder)
+        let identityVariable = delegate.errorTypeIdentityGenerator(
+            fileBuilder: fileBuilder,
+            codingErrorUnknownError: "\(baseName)CodingError.unknownError")
         
         fileBuilder.appendEmptyLine()
         fileBuilder.appendLine("switch \(identityVariable) {")
@@ -85,7 +87,7 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func generateErrorPayloadType(fileBuilder: FileBuilder,
-                                          sortedErrors: [String],
+                                          sortedErrors: [ErrorType],
                                           delegate: ModelErrorsDelegate) -> String {
         // if there are additional errors, create a payload type for them
         let errorPayloadTypeName = "\(applicationDescription.baseName)ErrorPayload"
@@ -111,19 +113,19 @@ public extension ServiceModelCodeGenerator {
         return errorPayloadTypeName
     }
     
-    private func addErrorCases(fileBuilder: FileBuilder, sortedErrors: [String],
+    private func addErrorCases(fileBuilder: FileBuilder, sortedErrors: [ErrorType],
                                errorPayloadTypeName: String) {
         // for each of the errors
-        for name in sortedErrors {
+        for error in sortedErrors {
             let enumName = getNormalizedEnumCaseName(
-                modelTypeName: name.normalizedErrorName,
+                modelTypeName: error.normalizedName,
                 inStructure: "\(applicationDescription.baseName)Error",
                 usingUpperCamelCase: true)
             
             let payload: String
             // if this is an error from the model
-            if model.errorTypes.contains(name) {
-                payload = name
+            if model.errorTypes.contains(error.identity) {
+                payload = error.identity
             } else {
                 payload = errorPayloadTypeName
             }
@@ -133,26 +135,26 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func addErrorDecodeStatements(fileBuilder: FileBuilder,
-                                          sortedErrors: [String],
+                                          sortedErrors: [ErrorType],
                                           delegate: ModelErrorsDelegate,
                                           errorPayloadTypeName: String) {
         let baseName = applicationDescription.baseName
         
         // for each of the errors
-        for name in sortedErrors {
+        for error in sortedErrors {
             let identityName = getNormalizedVariableName(
-                modelTypeName: name.normalizedErrorName,
+                modelTypeName: error.normalizedName,
                 inStructure: nil,
                 reservedWordsAllowed: true)
             
             let parameterName = getNormalizedVariableName(
-                modelTypeName: name.normalizedErrorName,
+                modelTypeName: error.normalizedName,
                 inStructure: "\(baseName)Error",
                 reservedWordsAllowed: true)
             
             let payload: String
-            if model.errorTypes.contains(name) {
-                payload = name
+            if model.errorTypes.contains(error.identity) {
+                payload = error.identity
             } else {
                 payload = errorPayloadTypeName
             }
@@ -180,7 +182,7 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func addErrorIdentities(fileBuilder: FileBuilder,
-                                    sortedErrors: [String],
+                                    sortedErrors: [ErrorType],
                                     delegate: ModelErrorsDelegate) {
         if delegate.canExpectValidationError {
             fileBuilder.appendLine("""
@@ -190,13 +192,14 @@ public extension ServiceModelCodeGenerator {
         }
         
         // for each of the errors
-        for name in sortedErrors {
+        for error in sortedErrors {
             let identityName = getNormalizedVariableName(
-                modelTypeName: name.normalizedErrorName,
+                modelTypeName: error.normalizedName,
                 inStructure: nil,
                 reservedWordsAllowed: true)
             
-            let identity = model.errorCodeMappings[name] ?? name
+            let rawIdentity = error.identity
+            let identity = model.errorCodeMappings[rawIdentity] ?? rawIdentity
             
             fileBuilder.appendLine("""
                 private let \(identityName)Identity = "\(identity)"
@@ -207,7 +210,7 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func getEntityType(fileBuilder: FileBuilder,
-                               sortedErrors: [String],
+                               sortedErrors: [ErrorType],
                                delegate: ModelErrorsDelegate) -> String {
         // add any additional error cases from the delegate
         let additionalCases = delegate.errorTypeWillAddAdditionalCases(fileBuilder: fileBuilder, errorTypes: sortedErrors)
