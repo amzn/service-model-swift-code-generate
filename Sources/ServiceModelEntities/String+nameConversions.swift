@@ -61,6 +61,13 @@ public extension String {
     }
     
     /**
+     This string converted from lower to upper camel case.
+     */
+    public var lowerToUpperCamelCase: String {
+        return self.prefix(1).uppercased() + self.dropFirst()
+    }
+    
+    /**
      The normalized error name; converted from upper to lower camel case
      and any error suffix removed.
      */

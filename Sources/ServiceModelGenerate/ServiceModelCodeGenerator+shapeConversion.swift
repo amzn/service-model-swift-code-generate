@@ -73,30 +73,31 @@ internal extension ServiceModelCodeGenerator {
         let setup: String?
         let fieldShape: String
         if !valueConstraints.isEmpty {
+            let capitalizedVariableName = variableName.lowerToUpperCamelCase
             if isRequired {
                 setup = """
-                guard let converted\(fieldName) = \(baseName)Model.\(fieldName)(rawValue: \(variableName).description) else {
+                guard let converted\(capitalizedVariableName) = \(baseName)Model.\(fieldName)(rawValue: \(variableName).description) else {
                     throw \(validationErrorType).validationError(reason: "Unable to convert value '"
                         + \(variableName).description + "' of field '\(variableName)' to a \(baseName)Model.\(fieldName) value.")
                 }
                 """
             } else {
                 setup = """
-                let converted\(fieldName): \(baseName)Model.\(fieldName)?
+                let converted\(capitalizedVariableName): \(baseName)Model.\(fieldName)?
                 if let description = \(variableName)?.description {
                     if let new\(fieldName) = \(baseName)Model.\(fieldName)(rawValue: description) {
-                        converted\(fieldName) = new\(fieldName)
+                        converted\(capitalizedVariableName) = new\(fieldName)
                     } else {
                         throw \(validationErrorType).validationError(reason: "Unable to convert value '"
                             + description + "' of field '\(variableName)' to a \(baseName)Model.\(fieldName) value.")
                     }
                 } else {
-                    converted\(fieldName) = nil
+                    converted\(capitalizedVariableName) = nil
                 }
                 """
             }
             
-            fieldShape = "converted\(fieldName)"
+            fieldShape = "converted\(capitalizedVariableName)"
         } else {
             fieldShape = variableName
             setup = nil
@@ -120,11 +121,12 @@ internal extension ServiceModelCodeGenerator {
         
         var setupBuilder: String
         // if there is no conversion
+        let capitalizedVariableName = variableName.lowerToUpperCamelCase
         if conversionDetails.conversion == "entry" {
-            setupBuilder = "let converted\(fieldName) = \(variableName)"
+            setupBuilder = "let converted\(capitalizedVariableName) = \(variableName)"
         } else {
             let fieldType = "[\(baseName)Model.\(typeName)]\(optionalInfix)"
-            setupBuilder = "let converted\(fieldName): \(fieldType) = \(failPostix)\(variableName)\(optionalInfix).map { entry in\n"
+            setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostix)\(variableName)\(optionalInfix).map { entry in\n"
 
             if let setup = conversionDetails.setup {
                 setup.split(separator: "\n").forEach { line in setupBuilder += "    \(line)\n" }
@@ -135,7 +137,7 @@ internal extension ServiceModelCodeGenerator {
             """
         }
         
-        return (setupBuilder, "converted\(fieldName)")
+        return (setupBuilder, "converted\(capitalizedVariableName)")
     }
     
     private func getMapShapeToInstanceConversion(fieldName: String, keyType: String,
@@ -153,8 +155,9 @@ internal extension ServiceModelCodeGenerator {
                                                              variableName: "entry",
                                                              isRequired: true)
 
+        let capitalizedVariableName = variableName.lowerToUpperCamelCase
         let fieldType = "[\(baseName)Model.\(keyTypeName): \(baseName)Model.\(valueTypeName)]\(optionalInfix)"
-        var setupBuilder = "let converted\(fieldName): \(fieldType) = \(failPostix)\(variableName)\(optionalInfix).mapValues { entry in\n"
+        var setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostix)\(variableName)\(optionalInfix).mapValues { entry in\n"
 
         if let setup = conversionDetails.setup {
             setup.split(separator: "\n").forEach { line in setupBuilder += "    \(line)\n" }
@@ -164,7 +167,7 @@ internal extension ServiceModelCodeGenerator {
         }
         """
 
-        return (setupBuilder, "converted\(fieldName)")
+        return (setupBuilder, "converted\(capitalizedVariableName)")
     }
     
     func getShapeToInstanceConversion(fieldType: String, variableName: String,
