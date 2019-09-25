@@ -40,11 +40,17 @@ internal extension SwaggerServiceModel {
             
             model.structureDescriptions[enclosingEntityName] = structureDescription
         case .object(let objectSchema):
-            var structureDescription = StructureDescription()
-            parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
-                              model: &model, objectSchema: objectSchema, modelOverride: modelOverride)
-            
-            model.structureDescriptions[enclosingEntityName] = structureDescription
+            if case .b(let mapSchema) = objectSchema.additionalProperties {
+                parseMapDefinitionSchema(mapSchema: mapSchema,
+                                         enclosingEntityName: &enclosingEntityName,
+                                         model: &model)
+            } else {
+                var structureDescription = StructureDescription()
+                parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
+                                  model: &model, objectSchema: objectSchema, modelOverride: modelOverride)
+
+                model.structureDescriptions[enclosingEntityName] = structureDescription
+            }
         case .array(let arrayMetadata):
             parseArrayDefinitionSchemas(arrayMetadata: arrayMetadata, enclosingEntityName: &enclosingEntityName,
                                         model: &model, modelOverride: modelOverride)
@@ -94,6 +100,24 @@ internal extension SwaggerServiceModel {
                                                             documentation: nil)
             }
         }
+    }
+    
+    static func parseMapDefinitionSchema(mapSchema: Schema,
+                                         enclosingEntityName: inout String,
+                                         model: inout SwaggerServiceModel) {
+        let valueType: String
+        switch mapSchema.type {
+        case .structure(let structureSchema):
+            valueType = structureSchema.name
+        case .string:
+            valueType = "String"
+        default:
+            fatalError("Not implemented.")
+        }
+
+        model.fieldDescriptions[enclosingEntityName] = Fields.map(
+            keyType: "String", valueType: valueType,
+            lengthConstraint: LengthRangeConstraint<Int>())
     }
     
     static func parseArrayDefinitionSchemas(arrayMetadata: (ArraySchema),

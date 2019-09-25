@@ -154,20 +154,29 @@ internal extension ServiceModelCodeGenerator {
         let conversionDetails = getShapeToInstanceConversion(fieldType: valueType,
                                                              variableName: "entry",
                                                              isRequired: true)
+        
+        let fullKeyTypeName = keyTypeName.isBuiltinType ? keyTypeName : "\(baseName)Model.\(keyTypeName)"
+        let fullValueTypeName = valueTypeName.isBuiltinType ? valueTypeName : "\(baseName)Model.\(valueTypeName)"
 
         let capitalizedVariableName = variableName.lowerToUpperCamelCase
-        let fieldType = "[\(baseName)Model.\(keyTypeName): \(baseName)Model.\(valueTypeName)]\(optionalInfix)"
-        var setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostix)\(variableName)\(optionalInfix).mapValues { entry in\n"
+        let fieldType = "[\(fullKeyTypeName): \(fullValueTypeName)]\(optionalInfix)"
+        
+        // if there is actually conversion on each element
+        if conversionDetails.conversion != "entry" {
+            var setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostix)\(variableName)\(optionalInfix).mapValues { entry in\n"
 
-        if let setup = conversionDetails.setup {
-            setup.split(separator: "\n").forEach { line in setupBuilder += "    \(line)\n" }
-        }
-        setupBuilder += """
-            return \(conversionDetails.conversion)
-        }
-        """
+            if let setup = conversionDetails.setup {
+                setup.split(separator: "\n").forEach { line in setupBuilder += "    \(line)\n" }
+            }
+            setupBuilder += """
+                return \(conversionDetails.conversion)
+            }
+            """
 
-        return (setupBuilder, "converted\(capitalizedVariableName)")
+            return (setupBuilder, "converted\(capitalizedVariableName)")
+        } else {
+            return (nil, variableName)
+        }
     }
     
     func getShapeToInstanceConversion(fieldType: String, variableName: String,

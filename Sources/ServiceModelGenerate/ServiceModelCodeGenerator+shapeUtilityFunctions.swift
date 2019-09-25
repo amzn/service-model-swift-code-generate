@@ -116,6 +116,9 @@ public extension ServiceModelCodeGenerator {
             case .map(let keyType, let valueType, _):
                 (fieldShape, associatedTypes) = getMapShapeType(keyType: keyType, valueType: valueType)
             }
+        } else if typeName.isBuiltinType {
+            fieldShape = typeName
+            associatedTypes = []
         } else {
             fieldShape = "\(typeName)Type"
             associatedTypes = ["\(typeName)Type: \(typeName)Shape"]
