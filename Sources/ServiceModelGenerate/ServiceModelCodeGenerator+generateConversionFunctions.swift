@@ -29,13 +29,13 @@ extension ServiceModelCodeGenerator {
         let willConversionFail = willShapeConversionFail(fieldName: innerType, alreadySeenShapes: [])
         
         let tryPrefix: String
-        let failPostix: String
+        let failPostfix: String
         if willConversionFail {
             tryPrefix = "try "
-            failPostix = " throws"
+            failPostfix = " throws"
         } else {
             tryPrefix = ""
-            failPostix = ""
+            failPostfix = ""
         }
         
         let category = getShapeCategory(fieldName: innerType,
@@ -48,7 +48,7 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Array where Element: \(type) {
-               func as\(baseName)Model\(typeName)()\(failPostix) -> \(baseName)Model.\(typeName) {
+               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
                    return \(tryPrefix)self.map { \(tryPrefix)$0.as\(baseName)Model\(innerTypeName)() }
                }
             }
@@ -57,7 +57,7 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Array where \(whereClause) {
-               func as\(baseName)Model\(typeName)()\(failPostix) -> \(baseName)Model.\(typeName) {
+               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
                    return \(tryPrefix)self.map { \(tryPrefix)$0.as\(baseName)Model\(innerTypeName)() }
                }
             }
@@ -66,7 +66,7 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Array where Element: CustomStringConvertible {
-               func as\(baseName)Model\(typeName)()\(failPostix) -> \(baseName)Model.\(typeName) {
+               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
                    return \(tryPrefix)self.map { \(tryPrefix)$0.as\(baseName)Model\(innerTypeName)() }
                }
             }
@@ -82,13 +82,13 @@ extension ServiceModelCodeGenerator {
         let willConversionFail = willShapeConversionFail(fieldName: valueType, alreadySeenShapes: [])
         
         let tryPrefix: String
-        let failPostix: String
+        let failPostfix: String
         if willConversionFail {
             tryPrefix = "try "
-            failPostix = " throws"
+            failPostfix = " throws"
         } else {
             tryPrefix = ""
-            failPostix = ""
+            failPostfix = ""
         }
         
         let category = getShapeCategory(fieldName: valueType,
@@ -101,7 +101,7 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Dictionary where Key == String, Value: \(type) {
-               func as\(baseName)Model\(typeName)()\(failPostix) -> \(baseName)Model.\(typeName) {
+               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
                    return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(baseName)Model\(valueType)() }
                }
             }
@@ -110,7 +110,7 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Dictionary where Key == String, \(whereClause) {
-               func as\(baseName)Model\(typeName)()\(failPostix) -> \(baseName)Model.\(typeName) {
+               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
                    return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(baseName)Model\(valueType)() }
                }
             }
@@ -119,7 +119,7 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Dictionary where Value: CustomStringConvertible {
-               func as\(baseName)Model\(typeName)()\(failPostix) -> \(baseName)Model.\(typeName) {
+               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
                    return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(baseName)Model\(valueType)() }
                }
             }
