@@ -230,6 +230,8 @@ internal extension ServiceModelCodeGenerator {
                 }
             case .list(type: let type, lengthConstraint: _):
                 return willShapeConversionFail(fieldName: type, alreadySeenShapes: newAlreadySeenShapes)
+            case .map( keyType: _, let valueType, lengthConstraint: _ ):
+                return willShapeConversionFail( fieldName: valueType, alreadySeenShapes: newAlreadySeenShapes )
             default:
                 break
             }
