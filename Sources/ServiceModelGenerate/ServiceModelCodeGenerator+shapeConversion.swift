@@ -109,7 +109,7 @@ internal extension ServiceModelCodeGenerator {
     private func getListShapeToInstanceConversion(fieldName: String, type: String,
                                                   variableName: String, isRequired: Bool) -> (setup: String?, fieldShape: String) {
         let willConversionFail = willShapeConversionFail(fieldName: type, alreadySeenShapes: [])
-        let failPostix = willConversionFail ? "try " : ""
+        let failPostfix = willConversionFail ? "try " : ""
         let optionalInfix = isRequired ? "" : "?"
 
         let typeName = type.getNormalizedTypeName(forModel: model)
@@ -126,7 +126,7 @@ internal extension ServiceModelCodeGenerator {
             setupBuilder = "let converted\(capitalizedVariableName) = \(variableName)"
         } else {
             let fieldType = "[\(baseName)Model.\(typeName)]\(optionalInfix)"
-            setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostix)\(variableName)\(optionalInfix).map { entry in\n"
+            setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostfix)\(variableName)\(optionalInfix).map { entry in\n"
 
             if let setup = conversionDetails.setup {
                 setup.split(separator: "\n").forEach { line in setupBuilder += "    \(line)\n" }
@@ -144,7 +144,7 @@ internal extension ServiceModelCodeGenerator {
                                                  valueType: String, variableName: String,
                                                  isRequired: Bool) -> (setup: String?, fieldShape: String) {
         let willConversionFail = willShapeConversionFail(fieldName: valueType, alreadySeenShapes: [])
-        let failPostix = willConversionFail ? "try " : ""
+        let failPostfix = willConversionFail ? "try " : ""
         let optionalInfix = isRequired ? "" : "?"
 
         let keyTypeName = keyType.getNormalizedTypeName(forModel: model)
@@ -163,7 +163,7 @@ internal extension ServiceModelCodeGenerator {
         
         // if there is actually conversion on each element
         if conversionDetails.conversion != "entry" {
-            var setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostix)\(variableName)\(optionalInfix).mapValues { entry in\n"
+            var setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostfix)\(variableName)\(optionalInfix).mapValues { entry in\n"
 
             if let setup = conversionDetails.setup {
                 setup.split(separator: "\n").forEach { line in setupBuilder += "    \(line)\n" }
@@ -205,9 +205,9 @@ internal extension ServiceModelCodeGenerator {
             let optionalInfix = isRequired ? "" : "?"
             
             let willConversionFail = willShapeConversionFail(fieldName: fieldName, alreadySeenShapes: [])
-            let failPostix = willConversionFail ? "try " : ""
+            let failPostfix = willConversionFail ? "try " : ""
             
-            fieldShape = "\(failPostix)\(variableName)\(optionalInfix).as\(baseName)Model\(fieldName)()"
+            fieldShape = "\(failPostfix)\(variableName)\(optionalInfix).as\(baseName)Model\(fieldName)()"
         }
         
         return (fieldShape, setup)
