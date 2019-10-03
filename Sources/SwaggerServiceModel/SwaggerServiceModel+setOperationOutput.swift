@@ -22,14 +22,60 @@ import SwaggerParser
 import Yams
 
 internal extension SwaggerServiceModel {
+    static func filterHeaders(operation: SwaggerParser.Operation, code: Int, headers: [String: Items],
+                              modelOverride: ModelOverride?) -> [String: Items] {
+        
+        guard let ignoreResponseHeaders = modelOverride?.ignoreResponseHeaders else {
+            // no filtering required
+            return headers
+        }
+        
+        var filteredHeaders: [String: Items] = [:]
+        
+        headers.forEach { (key, value) in
+            if ignoreResponseHeaders.contains("*.*.*") {
+                return
+            }
+            
+            if ignoreResponseHeaders.contains("*.*.\(key)") {
+                return
+            }
+            
+            if ignoreResponseHeaders.contains("*.\(code).*") {
+                return
+            }
+            
+            if let identifier = operation.identifier {
+                if ignoreResponseHeaders.contains("\(identifier).\(code).\(key)") {
+                    return
+                }
+                
+                if ignoreResponseHeaders.contains("\(identifier).*.\(key)") {
+                    return
+                }
+                
+                if ignoreResponseHeaders.contains("\(identifier).\(code).*") {
+                    return
+                }
+            }
+            
+            filteredHeaders[key] = value
+        }
+        
+        return filteredHeaders
+    }
+    
     static func setOperationOutput(operation: SwaggerParser.Operation, operationName: String, model: inout SwaggerServiceModel,
                                    modelOverride: ModelOverride?, description: inout OperationDescription) {
         // iterate through the responses
         for (code, response) in operation.responses {
             switch response {
             case .a(let value):
+                let filteredHeaders = filterHeaders(operation: operation, code: code,
+                                                    headers: value.headers, modelOverride: modelOverride)
+                
                 var headerMembers: [String: Member] = [:]
-                value.headers.enumerated().forEach { entry in
+                filteredHeaders.enumerated().forEach { entry in
                     let typeName = entry.element.key.safeModelName().startingWithUppercase
                     
                     let headerName = "\(operationName)\(typeName)Header"

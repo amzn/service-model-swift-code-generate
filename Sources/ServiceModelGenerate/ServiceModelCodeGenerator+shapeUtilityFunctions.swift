@@ -204,6 +204,12 @@ public extension ServiceModelCodeGenerator {
             return "`private`"
         } else if name == "internal" {
             return "`internal`"
+        } else if name == "as" {
+            return "`as`"
+        } else if name == "do" {
+            return "`do`"
+        } else if name == "is" {
+            return "`is`"
         }
         
         return name

@@ -111,7 +111,7 @@ public extension ServiceModelCodeGenerator {
                     /**
                      Default instance of the \(name) structure.
                      */
-                    public static let __default: \(baseName)Model.\(name) = {
+                    static let __default: \(baseName)Model.\(name) = {
                 """)
             fileBuilder.incIndent()
             fileBuilder.incIndent()

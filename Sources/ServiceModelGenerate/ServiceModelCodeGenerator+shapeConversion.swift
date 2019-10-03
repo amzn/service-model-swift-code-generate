@@ -34,7 +34,7 @@ internal extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             public extension \(originalTypeName) {
-                public func as\(baseName)Model\(derivedTypeName)() -> \(derivedTypeName) {
+                func as\(baseName)Model\(derivedTypeName)() -> \(derivedTypeName) {
                     return \(derivedTypeName)(\(postfix)
             """)
         

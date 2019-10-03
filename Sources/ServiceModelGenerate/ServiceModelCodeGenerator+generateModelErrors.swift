@@ -84,7 +84,7 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.write(toFile: fileName, atFilePath: "\(applicationDescription.baseFilePath)/Sources/\(baseName)Model")
     }
     
-    private func getSortedErrors(allErrorTypes: Set<String>) -> [ErrorType] {
+    public func getSortedErrors(allErrorTypes: Set<String>) -> [ErrorType] {
         // determine if any errors will normalize to the same name
         var errorNameCount: [String: Int] = [:]
         allErrorTypes.forEach { errorIdentity in
