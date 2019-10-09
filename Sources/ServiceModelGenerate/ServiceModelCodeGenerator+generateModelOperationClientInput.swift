@@ -35,7 +35,7 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate client input for each operation.
      */
-    public func generateModelOperationClientInput() {
+    func generateModelOperationClientInput() {
         let baseName = applicationDescription.baseName
         
         let fileBuilder = FileBuilder()

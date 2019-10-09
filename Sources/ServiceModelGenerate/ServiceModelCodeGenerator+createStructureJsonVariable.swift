@@ -37,7 +37,7 @@ private struct Value: Encodable {
 private func createEncoder() -> JSONEncoder {
     let jsonEncoder = JSONEncoder()
     #if os (Linux)
-        jsonDecoder.dateDecodingStrategy = .iso8601
+        jsonEncoder.dateDecodingStrategy = .iso8601
     #elseif os (OSX)
         if #available(OSX 10.12, *) {
             jsonEncoder.dateEncodingStrategy = .iso8601

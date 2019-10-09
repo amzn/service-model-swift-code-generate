@@ -22,7 +22,7 @@ import SwaggerParser
 import Yams
 
 internal extension SwaggerServiceModel {
-    internal struct OperationInputMembers {
+    struct OperationInputMembers {
         var queryMembers: [String: Member] = [:]
         var additionalHeaderMembers: [String: Member] = [:]
         var pathMembers: [String: Member] = [:]

@@ -21,7 +21,7 @@ public extension String {
     /**
      This string starting with an uppercase.
      */
-    public var startingWithUppercase: String {
+    var startingWithUppercase: String {
         return self.prefix(1).uppercased() + self.dropFirst()
     }
     
@@ -29,7 +29,7 @@ public extension String {
      The normalized name for a type; either a specified type mapping
      from the provided service model or this string startingWithUppercase.
      */
-    public func getNormalizedTypeName(forModel model: ServiceModel) -> String {
+    func getNormalizedTypeName(forModel model: ServiceModel) -> String {
         // if there is a mapping for this name
         if let mappedName = model.typeMappings[self] {
             return mappedName
@@ -38,7 +38,7 @@ public extension String {
         return self.startingWithUppercase
     }
     
-    public func safeModelName(replacement: String = "",
+    func safeModelName(replacement: String = "",
                               wildCardReplacement: String = "Star") -> String {
         let modifiedModelTypeName = self
             .replacingOccurrences(of: "-", with: replacement)
@@ -56,14 +56,14 @@ public extension String {
     /**
      This string converted from upper to lower camel case.
      */
-    public var upperToLowerCamelCase: String {
+    var upperToLowerCamelCase: String {
         return self.prefix(1).lowercased() + self.dropFirst()
     }
     
     /**
      This string converted from lower to upper camel case.
      */
-    public var lowerToUpperCamelCase: String {
+    var lowerToUpperCamelCase: String {
         return self.prefix(1).uppercased() + self.dropFirst()
     }
     
@@ -71,7 +71,7 @@ public extension String {
      The normalized error name; converted from upper to lower camel case
      and any error suffix removed.
      */
-    public var normalizedErrorName: String {
+    var normalizedErrorName: String {
         let normalizedName = self.upperToLowerCamelCase
         
         // drop any error|fault|exception suffix

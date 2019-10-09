@@ -22,7 +22,7 @@ import SwaggerParser
 import Yams
 
 internal extension SwaggerServiceModel {
-    internal struct OperationInputFields {
+    struct OperationInputFields {
         let allMembers: [String: Member]
         let pathFields: [String]
         let queryFields: [String]

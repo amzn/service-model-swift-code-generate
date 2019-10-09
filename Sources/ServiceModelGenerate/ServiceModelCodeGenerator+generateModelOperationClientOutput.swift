@@ -30,7 +30,7 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate client output for each operation.
      */
-    public func generateModelOperationClientOutput() {
+    func generateModelOperationClientOutput() {
         let baseName = applicationDescription.baseName
         
         let fileBuilder = FileBuilder()

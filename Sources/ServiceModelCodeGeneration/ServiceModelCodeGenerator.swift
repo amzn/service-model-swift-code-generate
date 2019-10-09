@@ -49,7 +49,7 @@ public struct ServiceModelCodeGenerator {
 }
 
 public extension ServiceModelCodeGenerator {
-    public var validationErrorType: String {
+    var validationErrorType: String {
         let baseName = applicationDescription.baseName
         
         switch customizations.validationErrorDeclaration {
@@ -60,7 +60,7 @@ public extension ServiceModelCodeGenerator {
         }
     }
     
-    public var unrecognizedErrorType: String {
+    var unrecognizedErrorType: String {
         let baseName = applicationDescription.baseName
         
         switch customizations.unrecognizedErrorDeclaration {

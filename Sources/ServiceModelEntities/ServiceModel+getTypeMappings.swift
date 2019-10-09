@@ -50,7 +50,7 @@ public extension ServiceModel {
         normalizedTypeNames[internalTypeName] = updatedNormalizedNameEntry
     }
     
-    public static func getTypeMappings(structureDescriptions: [String: StructureDescription],
+    static func getTypeMappings(structureDescriptions: [String: StructureDescription],
                                        fieldDescriptions: [String: Fields]) -> [String: String] {
         var normalizedTypeNames: [String: NormalizedNameEntry] = [:]
         

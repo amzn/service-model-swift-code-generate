@@ -20,7 +20,7 @@ import ServiceModelCodeGeneration
 import ServiceModelEntities
 
 internal extension ServiceModelCodeGenerator {
-    internal func addShapeProtocol(name: String, fileBuilder: FileBuilder,
+    func addShapeProtocol(name: String, fileBuilder: FileBuilder,
                                    structureElements: StructureElements) {
         let baseName = applicationDescription.baseName
         // add conformance to Equatable
@@ -56,7 +56,7 @@ internal extension ServiceModelCodeGenerator {
             """)
     }
 
-    internal func addShapeDefaultFunctions(name: String, fileBuilder: FileBuilder,
+    func addShapeDefaultFunctions(name: String, fileBuilder: FileBuilder,
                                            structureElements: StructureElements) {
         let baseName = applicationDescription.baseName
         let willConversionFail = willShapeConversionFail(fieldName: name, alreadySeenShapes: [])

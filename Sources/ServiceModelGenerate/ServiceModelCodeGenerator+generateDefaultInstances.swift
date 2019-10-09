@@ -31,7 +31,7 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - generationType: The type of test input to generate.
      */
-    public func generateDefaultInstances(generationType: DefaultInstancesGenerationType) {
+    func generateDefaultInstances(generationType: DefaultInstancesGenerationType) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
