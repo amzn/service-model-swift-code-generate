@@ -55,7 +55,14 @@ extension ServiceModelCodeGenerator {
             }
         }
         
-        let firstInternalName = getNormalizedEnumCaseName(modelTypeName: sortedValues[0].name,
+        let enumCaseToUse: String
+        if let enumCaseToUseOverride = modelOverride?.defaultEnumerationValueOverride?[typeName] {
+            enumCaseToUse = enumCaseToUseOverride
+        } else {
+            enumCaseToUse = sortedValues[0].name
+        }
+        
+        let firstInternalName = getNormalizedEnumCaseName(modelTypeName: enumCaseToUse,
                                                           inStructure: name)
         
         fileBuilder.appendEmptyLine()

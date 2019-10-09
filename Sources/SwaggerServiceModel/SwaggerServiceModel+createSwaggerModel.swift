@@ -22,10 +22,45 @@ import SwaggerParser
 import Yams
 
 internal extension SwaggerServiceModel {
-    internal struct OperationInputMembers {
+    struct OperationInputMembers {
         var queryMembers: [String: Member] = [:]
         var additionalHeaderMembers: [String: Member] = [:]
         var pathMembers: [String: Member] = [:]
+    }
+    
+    static func filterOperations(operations: [OperationType: SwaggerParser.Operation],
+                                 modelOverride: ModelOverride?) -> [OperationType: SwaggerParser.Operation] {
+        
+        guard let ignoreOperations = modelOverride?.ignoreOperations else {
+            // no filtering required
+            return operations
+        }
+        
+        var filteredOperations: [OperationType: SwaggerParser.Operation] = [:]
+        
+        operations.forEach { (key, value) in
+            if ignoreOperations.contains("*.*") {
+                return
+            }
+            
+            if ignoreOperations.contains("*.\(key.rawValue)") {
+                return
+            }
+            
+            if let identifier = value.identifier {
+                if ignoreOperations.contains("\(identifier).\(key.rawValue)") {
+                    return
+                }
+                
+                if ignoreOperations.contains("\(identifier).*") {
+                    return
+                }
+            }
+            
+            filteredOperations[key] = value
+        }
+        
+        return filteredOperations
     }
     
     static func createSwaggerModel(definition: Swagger, modelOverride: ModelOverride?) -> SwaggerServiceModel {
@@ -38,15 +73,18 @@ internal extension SwaggerServiceModel {
         }
         
         for (path, pathDefinition) in definition.paths {
+            let filteredOperations = filterOperations(operations: pathDefinition.operations,
+                                                      modelOverride: modelOverride)
+            
             // iterate through the operations
-            for (type, operation) in pathDefinition.operations {
+            for (type, operation) in filteredOperations {
                 guard let identifier = operation.identifier else {
                     continue
                 }
                 
                 // if there is more than one operation for this path
                 let operationName: String
-                if pathDefinition.operations.count > 1 {
+                if filteredOperations.count > 1 {
                     operationName = identifier + type.rawValue.startingWithUppercase
                 } else {
                     operationName = identifier

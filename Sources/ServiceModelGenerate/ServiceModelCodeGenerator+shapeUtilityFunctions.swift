@@ -89,7 +89,7 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - fieldName: the name of the field to retrieve the shape type for.
      */
-    public func getShapeType(fieldName: String) ->
+    func getShapeType(fieldName: String) ->
         (fieldShape: String, associatedTypes: [String]) {
         let typeName = fieldName.getNormalizedTypeName(forModel: model)
             
@@ -146,7 +146,7 @@ public extension ServiceModelCodeGenerator {
         - fieldName: the name of the field to retrieve the shape type for.
         - collectionAssociatedType: the associated type name for a collection type.
      */
-    public func getShapeCategory(fieldName: String,
+    func getShapeCategory(fieldName: String,
                                  collectionAssociatedType: String) -> ShapeCategory {
         let typeName = fieldName.getNormalizedTypeName(forModel: model)
         
@@ -204,6 +204,12 @@ public extension ServiceModelCodeGenerator {
             return "`private`"
         } else if name == "internal" {
             return "`internal`"
+        } else if name == "as" {
+            return "`as`"
+        } else if name == "do" {
+            return "`do`"
+        } else if name == "is" {
+            return "`is`"
         }
         
         return name
@@ -215,7 +221,7 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - modelTypeName: The model name for the type.
      */
-    public func getNormalizedVariableName(modelTypeName: String,
+    func getNormalizedVariableName(modelTypeName: String,
                                           inStructure: String? = nil,
                                           reservedWordsAllowed: Bool = false) -> String {
         if let inStructure = inStructure, let matchCase = modelOverride?.matchCase,
@@ -237,7 +243,7 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - modelTypeName: The model name for the type.
      */
-    public func getNormalizedEnumCaseName(modelTypeName: String,
+    func getNormalizedEnumCaseName(modelTypeName: String,
                                           inStructure: String,
                                           usingUpperCamelCase: Bool = false) -> String {
         if let usingUpperCamelCase = modelOverride?.enumerations?.usingUpperCamelCase,

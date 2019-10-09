@@ -111,7 +111,7 @@ public enum InvokeType: String {
 }
 
 public extension ModelClientDelegate {
-    public func getHttpClientForOperation(name: String, httpClientConfiguration: HttpClientConfiguration?) -> String {
+    func getHttpClientForOperation(name: String, httpClientConfiguration: HttpClientConfiguration?) -> String {
         if let additionalClients = httpClientConfiguration?.additionalClients {
             for (key, value) in additionalClients {
                 if value.operations?.contains(name) ?? false {

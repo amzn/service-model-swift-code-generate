@@ -42,6 +42,12 @@ public struct ModelOverride: Codable {
     public let requiredOverrides: [String: Bool]?
     /// any additional error codes that can be returned
     public let additionalErrors: Set<String>?
+    /// operations that should be igored.
+    public let ignoreOperations: Set<String>?
+    /// response headers that should be igored.
+    public let ignoreResponseHeaders: Set<String>?
+    /// overrides the default value used for an enumeration
+    public let defaultEnumerationValueOverride: [String: String]?
     
     public init(matchCase: Set<String>? = nil,
                 enumerations: EnumerationNaming? = nil,
@@ -52,7 +58,10 @@ public struct ModelOverride: Codable {
                 modelStringPatternsAreAlternativeList: Bool = false,
                 codingKeyOverrides: [String: String]? = nil,
                 requiredOverrides: [String: Bool]? = nil,
-                additionalErrors: Set<String>? = nil) {
+                additionalErrors: Set<String>? = nil,
+                ignoreOperations: Set<String>? = nil,
+                ignoreResponseHeaders: Set<String>? = nil,
+                defaultEnumerationValueOverride: [String: String]? = nil) {
         self.matchCase = matchCase
         self.enumerations = enumerations
         self.fieldRawTypeOverride = fieldRawTypeOverride
@@ -63,6 +72,9 @@ public struct ModelOverride: Codable {
         self.codingKeyOverrides = codingKeyOverrides
         self.requiredOverrides = requiredOverrides
         self.additionalErrors = additionalErrors
+        self.ignoreOperations = ignoreOperations
+        self.ignoreResponseHeaders = ignoreResponseHeaders
+        self.defaultEnumerationValueOverride = defaultEnumerationValueOverride
     }
     
     public func getCodingKeyOverride(attributeName: String, inType: String?) -> String? {

@@ -26,7 +26,7 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - delegate: The delegate to use when generating this client.
      */
-    public func generateModelErrors(delegate: ModelErrorsDelegate) {
+    func generateModelErrors(delegate: ModelErrorsDelegate) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -84,7 +84,7 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.write(toFile: fileName, atFilePath: "\(applicationDescription.baseFilePath)/Sources/\(baseName)Model")
     }
     
-    private func getSortedErrors(allErrorTypes: Set<String>) -> [ErrorType] {
+    func getSortedErrors(allErrorTypes: Set<String>) -> [ErrorType] {
         // determine if any errors will normalize to the same name
         var errorNameCount: [String: Int] = [:]
         allErrorTypes.forEach { errorIdentity in

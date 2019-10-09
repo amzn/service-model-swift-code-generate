@@ -107,7 +107,7 @@ public protocol ModelErrorsDelegate {
 }
 
 public extension ModelErrorsDelegate {
-    public var errorOptionSetConformance: String {
+    var errorOptionSetConformance: String {
         switch optionSetGeneration {
         case .generateWithCustomConformance(_, conformanceType: let conformanceType):
             return conformanceType

@@ -23,7 +23,7 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate the declarations for structures specified in a Service Model.
      */
-    public func generateModelTypes() {
+    func generateModelTypes() {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName

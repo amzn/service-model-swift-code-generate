@@ -17,9 +17,8 @@
 
 import XCTest
 @testable import ServiceModelEntities
-import ServiceModelCodeGeneration
 
-class ServiceModelGenerateTests: XCTestCase {
+class ServiceModelEntitiesTests: XCTestCase {
     func testExample() {
         
     }

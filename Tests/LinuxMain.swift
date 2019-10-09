@@ -1,7 +1,7 @@
 import XCTest
 
-@testable import SwiftServiceModelTests
+@testable import ServiceModelEntitiesTests
 
 XCTMain([
-    testCase(SwiftServiceModelTests.allTests),
+    testCase(ServiceModelEntitiesTests.allTests),
 ])

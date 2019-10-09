@@ -34,7 +34,7 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - delegate: The delegate to use when generating this client.
      */
-    public func generateClient(delegate: ModelClientDelegate) {
+    func generateClient(delegate: ModelClientDelegate) {
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
         

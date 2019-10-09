@@ -20,7 +20,7 @@ import ServiceModelCodeGeneration
 import ServiceModelEntities
 
 internal extension ServiceModelCodeGenerator {
-    internal func createOutputStructureStubVariable(
+    func createOutputStructureStubVariable(
             type: String,
             fileBuilder: FileBuilder,
             declarationPrefix: String,
@@ -90,7 +90,7 @@ internal extension ServiceModelCodeGenerator {
         }
     }
     
-    internal enum LocationOutput {
+    enum LocationOutput {
         case body
         case headers
     }

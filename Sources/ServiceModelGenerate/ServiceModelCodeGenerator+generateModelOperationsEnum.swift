@@ -23,7 +23,7 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate an operation enumeration for the model.
      */
-    public func generateModelOperationsEnum() {
+    func generateModelOperationsEnum() {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
