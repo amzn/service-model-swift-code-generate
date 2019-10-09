@@ -4,9 +4,6 @@
 </a>
 <img src="https://img.shields.io/badge/os-linux-green.svg?style=flat" alt="Linux">
 <a href="http://swift.org">
-<img src="https://img.shields.io/badge/swift-4.1-orange.svg?style=flat" alt="Swift 4.1 Compatible">
-</a>
-<a href="http://swift.org">
 <img src="https://img.shields.io/badge/swift-4.2-orange.svg?style=flat" alt="Swift 4.2 Compatible">
 </a>
 <a href="http://swift.org">
