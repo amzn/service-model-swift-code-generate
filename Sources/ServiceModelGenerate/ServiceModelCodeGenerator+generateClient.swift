@@ -141,9 +141,11 @@ public extension ServiceModelCodeGenerator {
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
                 }
             case .async:
-                let asyncResultType = delegate.asyncResultType.typeName
-                
-                output = "\(labelPrefix)completion: @escaping (\(asyncResultType)<\(baseName)Model.\(type)>) -> ()"
+                if let asyncResultType = delegate.asyncResultType?.typeName {
+                    output = "\(labelPrefix)completion: @escaping (\(asyncResultType)<\(baseName)Model.\(type)>) -> ()"
+                } else {
+                    output = "\(labelPrefix)completion: @escaping (Result<\(baseName)Model.\(type), HTTPClientError>) -> ()"
+                }
                 if !forTypeAlias {
                     fileBuilder.appendLine("     - completion: The \(type) object or an error will be passed to this ")
                     fileBuilder.appendLine("       callback when the operation is complete. The \(type)")
@@ -225,28 +227,69 @@ public extension ServiceModelCodeGenerator {
             declarationPrefix = "public "
             declarationPostfix = " {"
         }
-        
-        if !forTypeAlias {
-            switch invokeType {
-            case .sync:
-                fileBuilder.appendLine("""
-                    \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(\(input))\(errors)\(output)\(declarationPostfix)
-                    """)
-            case .async:
-                fileBuilder.appendLine("""
-                    \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(\(input)\(output))\(errors)\(declarationPostfix)
-                    """)
+        if input.isEmpty {
+            if !forTypeAlias {
+                switch invokeType {
+                case .sync:
+                    fileBuilder.appendLine("""
+                        \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
+                                reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                        """)
+                case .async:
+                    fileBuilder.appendLine("""
+                        \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
+                                reporting: SmokeAWSInvocationReporting,
+                                \(output))\(errors)\(declarationPostfix)
+                        """)
+                }
+            } else {
+                switch invokeType {
+                case .sync:
+                    fileBuilder.appendLine("""
+                        \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
+                                _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                        """)
+                case .async:
+                    fileBuilder.appendLine("""
+                        \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
+                                _ reporting: SmokeAWSInvocationReporting,
+                                \(output))\(errors)\(declarationPostfix) -> ()
+                        """)
+                }
             }
         } else {
-            switch invokeType {
-            case .sync:
-                fileBuilder.appendLine("""
-                    \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (\(input))\(errors)\(output)\(declarationPostfix)
-                    """)
-            case .async:
-                fileBuilder.appendLine("""
-                    \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (\(input)\(output))\(errors)\(declarationPostfix) -> ()
-                    """)
+            if !forTypeAlias {
+                switch invokeType {
+                case .sync:
+                    fileBuilder.appendLine("""
+                        \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
+                                \(input),
+                                reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                        """)
+                case .async:
+                    fileBuilder.appendLine("""
+                        \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
+                                \(input)
+                                reporting: SmokeAWSInvocationReporting,
+                                \(output))\(errors)\(declarationPostfix)
+                        """)
+                }
+            } else {
+                switch invokeType {
+                case .sync:
+                    fileBuilder.appendLine("""
+                        \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
+                                \(input),
+                                _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                        """)
+                case .async:
+                    fileBuilder.appendLine("""
+                        \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
+                                \(input)
+                                _ reporting: SmokeAWSInvocationReporting,
+                                \(output))\(errors)\(declarationPostfix) -> ()
+                        """)
+                }
             }
         }
         
@@ -334,7 +377,14 @@ public extension ServiceModelCodeGenerator {
             
             import Foundation
             import \(baseName)Model
-            import \(delegate.asyncResultType.libraryImport)
+            import SmokeAWSCore
+            import SmokeHTTPClient
             """)
+        
+        if let libraryImport = delegate.asyncResultType?.libraryImport {
+            fileBuilder.appendLine("""
+                import \(libraryImport)
+                """)
+        }
     }
 }

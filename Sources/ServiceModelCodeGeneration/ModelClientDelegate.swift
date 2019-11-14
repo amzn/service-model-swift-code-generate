@@ -28,7 +28,7 @@ public protocol ModelClientDelegate {
     /// The description of the type being generated.
     var typeDescription: String { get }
     /// The result type to use for asynchronous functions.
-    var asyncResultType: AsyncResultType { get }
+    var asyncResultType: AsyncResultType? { get }
     
     /**
      Add any custom file headers to the client file.

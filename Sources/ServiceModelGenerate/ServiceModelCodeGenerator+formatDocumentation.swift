@@ -56,7 +56,7 @@ internal extension ServiceModelCodeGenerator {
         
         let prefixDropped = firstElement.dropFirst("href=\"".count)
         
-        if let index = prefixDropped.index(of: "\"") {
+        if let index = prefixDropped.firstIndex(of: "\"") {
             let link = prefixDropped[..<index]
             let textStartIndex = prefixDropped.index(index, offsetBy: 2)
             var text = prefixDropped[textStartIndex...]
@@ -109,7 +109,7 @@ internal extension ServiceModelCodeGenerator {
         
         let prefixDropped = firstElement.dropFirst("href=\"".count)
         
-        if let index = prefixDropped.index(of: "\"") {
+        if let index = prefixDropped.firstIndex(of: "\"") {
             let link = prefixDropped[..<index]
             let textStartIndex = prefixDropped.index(index, offsetBy: 2)
             var text = prefixDropped[textStartIndex...]

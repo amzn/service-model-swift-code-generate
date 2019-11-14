@@ -25,7 +25,7 @@ import ServiceModelEntities
  */
 public struct MockClientDelegate: ModelClientDelegate {
     public let baseName: String
-    public let asyncResultType: AsyncResultType
+    public let asyncResultType: AsyncResultType?
     public let isThrowingMock: Bool
     public let clientType: ClientType
     public let typeDescription: String
@@ -39,7 +39,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         - asyncResultType: The name of the result type to use for async functions.
      */
     public init(baseName: String, isThrowingMock: Bool,
-                asyncResultType: AsyncResultType) {
+                asyncResultType: AsyncResultType? = nil) {
         self.baseName = baseName
         self.isThrowingMock = isThrowingMock
         self.asyncResultType = asyncResultType
@@ -83,7 +83,7 @@ public struct MockClientDelegate: ModelClientDelegate {
                                    fileBuilder: FileBuilder,
                                    sortedOperations: [(String, OperationDescription)]) {
         if isThrowingMock {
-            fileBuilder.appendLine("let error: Swift.Error")
+            fileBuilder.appendLine("let error: HTTPClientError")
         }
         
         // for each of the operations
@@ -104,11 +104,11 @@ public struct MockClientDelegate: ModelClientDelegate {
         if isThrowingMock {
             if !sortedOperations.isEmpty {
                 fileBuilder.appendLine("""
-                    public init(error: Swift.Error,
+                    public init(error: HTTPClientError,
                     """)
             } else {
                 fileBuilder.appendLine("""
-                    public init(error: Swift.Error) {
+                    public init(error: HTTPClientError) {
                     """)
             }
         } else {
@@ -198,7 +198,7 @@ public struct MockClientDelegate: ModelClientDelegate {
             if case .async = invokeType {
                 fileBuilder.appendLine("""
 
-                    completion(.response(result))
+                    completion(.success(result))
                     """)
             }
         } else if case .async = invokeType {
@@ -222,7 +222,7 @@ public struct MockClientDelegate: ModelClientDelegate {
             fileBuilder.appendLine("throw error")
         case .async:
             if hasOutput {
-                fileBuilder.appendLine("completion(.error(error))")
+                fileBuilder.appendLine("completion(.failure(error))")
             } else {
                 fileBuilder.appendLine("completion(error)")
             }
@@ -240,10 +240,10 @@ public struct MockClientDelegate: ModelClientDelegate {
         switch invokeType {
         case .async:
             customFunctionPostfix = "Async"
-            customFunctionParameters = hasInput ? "input, completion" : "completion"
+            customFunctionParameters = hasInput ? "input, reporting, completion" : "reporting, completion"
         case .sync:
             customFunctionPostfix = "Sync"
-            customFunctionParameters = hasInput ? "input" : ""
+            customFunctionParameters = hasInput ? "input, reporting" : "reporting"
         }
     
         fileBuilder.appendLine("""

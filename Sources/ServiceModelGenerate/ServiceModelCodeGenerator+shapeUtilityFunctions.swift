@@ -18,6 +18,9 @@
 import Foundation
 import ServiceModelCodeGeneration
 
+private let reservedWords: Set<String> = ["in", "protocol", "return", "default", "public",
+                                          "static", "private", "internal", "do", "is", "as", "true"]
+
 public enum ShapeCategory {
     case protocolType(String)
     case collectionType(String)
@@ -185,31 +188,8 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func escapeReservedWords(name: String) -> String {
-        // avoid reserved words
-        if name == "in" {
-            return "`in`"
-        } else if name == "protocol" {
-            return "`protocol`"
-        } else if name == "return" {
-            return "`return`"
-        } else if name == "default" {
-            return "`default`"
-        } else if name == "public" {
-            return "`public`"
-        } else if name == "static" {
-            return "`static`"
-        } else if name == "true" {
-            return "`true`"
-        } else if name == "private" {
-            return "`private`"
-        } else if name == "internal" {
-            return "`internal`"
-        } else if name == "as" {
-            return "`as`"
-        } else if name == "do" {
-            return "`do`"
-        } else if name == "is" {
-            return "`is`"
+        if reservedWords.contains(name) {
+            return "`\(name)`"
         }
         
         return name

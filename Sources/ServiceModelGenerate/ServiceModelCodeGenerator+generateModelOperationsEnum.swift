@@ -52,7 +52,7 @@ public extension ServiceModelCodeGenerator {
             /**
              Operation enumeration for the \(baseName)Model.
              */
-            public enum \(baseName)ModelOperations: String {
+            public enum \(baseName)ModelOperations: String, Hashable, CustomStringConvertible {
             """)
         
         let sortedOperations = model.operationDescriptions.sorted { (left, right) in left.key < right.key }
@@ -61,6 +61,13 @@ public extension ServiceModelCodeGenerator {
         addOperationCases(sortedOperations: sortedOperations, fileBuilder: fileBuilder)
         fileBuilder.appendEmptyLine()
         
+        fileBuilder.appendLine("""
+            public var description: String {
+                return rawValue
+            }
+            """)
+        
+        fileBuilder.appendEmptyLine()
         addOperationPathEnum(fileBuilder, sortedOperations)
         fileBuilder.appendLine("""
             }
