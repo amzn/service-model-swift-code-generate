@@ -201,6 +201,78 @@ public extension ServiceModelCodeGenerator {
         return errors
     }
     
+    private func addFunctionDeclarationWithNoInput(forTypeAlias: Bool, invokeType: InvokeType, fileBuilder: FileBuilder,
+                                                   declarationPrefix: String, functionName: String, errors: String, output: String,
+                                                   declarationPostfix: String) {
+        if !forTypeAlias {
+            switch invokeType {
+            case .sync:
+                fileBuilder.appendLine("""
+                    \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
+                    reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                    """)
+            case .async:
+                fileBuilder.appendLine("""
+                    \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
+                    reporting: SmokeAWSInvocationReporting,
+                    \(output))\(errors)\(declarationPostfix)
+                    """)
+            }
+        } else {
+            switch invokeType {
+            case .sync:
+                fileBuilder.appendLine("""
+                    \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
+                    _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                    """)
+            case .async:
+                fileBuilder.appendLine("""
+                    \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
+                    _ reporting: SmokeAWSInvocationReporting,
+                    \(output))\(errors)\(declarationPostfix) -> ()
+                    """)
+            }
+        }
+    }
+    
+    private func addFunctionDeclarationWithInput(forTypeAlias: Bool, invokeType: InvokeType, fileBuilder: FileBuilder,
+                                                 declarationPrefix: String, functionName: String, input: String,
+                                                 errors: String, output: String, declarationPostfix: String) {
+        if !forTypeAlias {
+            switch invokeType {
+            case .sync:
+                fileBuilder.appendLine("""
+                    \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
+                    \(input),
+                    reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                    """)
+            case .async:
+                fileBuilder.appendLine("""
+                    \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
+                    \(input)
+                    reporting: SmokeAWSInvocationReporting,
+                    \(output))\(errors)\(declarationPostfix)
+                    """)
+            }
+        } else {
+            switch invokeType {
+            case .sync:
+                fileBuilder.appendLine("""
+                    \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
+                    \(input),
+                    _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                    """)
+            case .async:
+                fileBuilder.appendLine("""
+                    \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
+                    \(input)
+                    _ reporting: SmokeAWSInvocationReporting,
+                    \(output))\(errors)\(declarationPostfix) -> ()
+                    """)
+            }
+        }
+    }
+    
     private func addOperationBody(fileBuilder: FileBuilder, name: String,
                                   operationDescription: OperationDescription,
                                   delegate: ModelClientDelegate,
@@ -228,69 +300,13 @@ public extension ServiceModelCodeGenerator {
             declarationPostfix = " {"
         }
         if input.isEmpty {
-            if !forTypeAlias {
-                switch invokeType {
-                case .sync:
-                    fileBuilder.appendLine("""
-                        \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                                reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
-                        """)
-                case .async:
-                    fileBuilder.appendLine("""
-                        \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                                reporting: SmokeAWSInvocationReporting,
-                                \(output))\(errors)\(declarationPostfix)
-                        """)
-                }
-            } else {
-                switch invokeType {
-                case .sync:
-                    fileBuilder.appendLine("""
-                        \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                                _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
-                        """)
-                case .async:
-                    fileBuilder.appendLine("""
-                        \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                                _ reporting: SmokeAWSInvocationReporting,
-                                \(output))\(errors)\(declarationPostfix) -> ()
-                        """)
-                }
-            }
+            addFunctionDeclarationWithNoInput(forTypeAlias: forTypeAlias, invokeType: invokeType, fileBuilder: fileBuilder,
+                                              declarationPrefix: declarationPrefix, functionName: functionName, errors: errors,
+                                              output: output, declarationPostfix: declarationPostfix)
         } else {
-            if !forTypeAlias {
-                switch invokeType {
-                case .sync:
-                    fileBuilder.appendLine("""
-                        \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                                \(input),
-                                reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
-                        """)
-                case .async:
-                    fileBuilder.appendLine("""
-                        \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                                \(input)
-                                reporting: SmokeAWSInvocationReporting,
-                                \(output))\(errors)\(declarationPostfix)
-                        """)
-                }
-            } else {
-                switch invokeType {
-                case .sync:
-                    fileBuilder.appendLine("""
-                        \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                                \(input),
-                                _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
-                        """)
-                case .async:
-                    fileBuilder.appendLine("""
-                        \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                                \(input)
-                                _ reporting: SmokeAWSInvocationReporting,
-                                \(output))\(errors)\(declarationPostfix) -> ()
-                        """)
-                }
-            }
+            addFunctionDeclarationWithInput(forTypeAlias: forTypeAlias, invokeType: invokeType, fileBuilder: fileBuilder,
+                                            declarationPrefix: declarationPrefix, functionName: functionName, input: input,
+                                            errors: errors, output: output, declarationPostfix: declarationPostfix)
         }
         
         delegate.addOperationBody(codeGenerator: self, delegate: delegate,

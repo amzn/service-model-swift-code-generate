@@ -150,7 +150,7 @@ public extension ServiceModelCodeGenerator {
         - collectionAssociatedType: the associated type name for a collection type.
      */
     func getShapeCategory(fieldName: String,
-                                 collectionAssociatedType: String) -> ShapeCategory {
+                          collectionAssociatedType: String) -> ShapeCategory {
         let typeName = fieldName.getNormalizedTypeName(forModel: model)
         
         let shapeCategory: ShapeCategory
@@ -202,8 +202,8 @@ public extension ServiceModelCodeGenerator {
         - modelTypeName: The model name for the type.
      */
     func getNormalizedVariableName(modelTypeName: String,
-                                          inStructure: String? = nil,
-                                          reservedWordsAllowed: Bool = false) -> String {
+                                   inStructure: String? = nil,
+                                   reservedWordsAllowed: Bool = false) -> String {
         if let inStructure = inStructure, let matchCase = modelOverride?.matchCase,
             matchCase.contains(inStructure) {
             // leave the name alone
@@ -224,8 +224,8 @@ public extension ServiceModelCodeGenerator {
         - modelTypeName: The model name for the type.
      */
     func getNormalizedEnumCaseName(modelTypeName: String,
-                                          inStructure: String,
-                                          usingUpperCamelCase: Bool = false) -> String {
+                                   inStructure: String,
+                                   usingUpperCamelCase: Bool = false) -> String {
         if let usingUpperCamelCase = modelOverride?.enumerations?.usingUpperCamelCase,
             usingUpperCamelCase.contains(inStructure) {
             let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "",
