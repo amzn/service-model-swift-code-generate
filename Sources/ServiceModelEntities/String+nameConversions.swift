@@ -39,7 +39,7 @@ public extension String {
     }
     
     func safeModelName(replacement: String = "",
-                              wildCardReplacement: String = "Star") -> String {
+                       wildCardReplacement: String = "Star") -> String {
         let modifiedModelTypeName = self
             .replacingOccurrences(of: "-", with: replacement)
             .replacingOccurrences(of: ".", with: replacement)

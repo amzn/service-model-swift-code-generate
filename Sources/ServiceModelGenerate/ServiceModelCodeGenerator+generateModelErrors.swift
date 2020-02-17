@@ -44,7 +44,7 @@ public extension ServiceModelCodeGenerator {
             //
             
             import Foundation
-            import LoggerAPI
+            import Logging
             """)
         
         let allErrorTypes: Set<String>

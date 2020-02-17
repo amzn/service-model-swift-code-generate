@@ -34,10 +34,9 @@ public extension ServiceModelCodeGenerator {
         
         let entityType = getEntityType(fileBuilder: fileBuilder, sortedErrors: sortedErrors,
                                        delegate: delegate)
-        
-        addCodingError(fileBuilder: fileBuilder)
-        
+                
         fileBuilder.appendLine("""
+            
             public \(entityType) \(baseName)Error: Swift.Error, Decodable {
             """)
         fileBuilder.incIndent()
@@ -73,7 +72,7 @@ public extension ServiceModelCodeGenerator {
         // Otherwise this is a unrecognized error
         fileBuilder.appendLine("""
                 default:
-                    throw \(unrecognizedErrorType).unrecognizedError(errorReason, errorMessage)
+                    self = \(unrecognizedErrorType).unrecognizedError(errorReason, errorMessage)
                 }
             }
 
@@ -224,33 +223,5 @@ public extension ServiceModelCodeGenerator {
         }
         
         return entityType
-    }
-    
-    private func addCodingError(fileBuilder: FileBuilder) {
-        let baseName = applicationDescription.baseName
-        fileBuilder.appendLine("""
-            
-            public enum \(baseName)CodingError: Swift.Error {
-                case unknownError
-            """)
-        
-        // if we are using an internal validation error
-        if case .internal = customizations.validationErrorDeclaration {
-            fileBuilder.appendLine("""
-                    case validationError(reason: String)
-                """)
-        }
-        
-        // if we are using an internal unrecognized error
-        if case .internal = customizations.unrecognizedErrorDeclaration {
-            fileBuilder.appendLine("""
-                    case unrecognizedError(String, String?)
-                """)
-        }
-        
-        fileBuilder.appendLine("""
-            }
-            """)
-        fileBuilder.appendEmptyLine()
     }
 }

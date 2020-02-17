@@ -51,7 +51,7 @@ public extension ServiceModel {
     }
     
     static func getTypeMappings(structureDescriptions: [String: StructureDescription],
-                                       fieldDescriptions: [String: Fields]) -> [String: String] {
+                                fieldDescriptions: [String: Fields]) -> [String: String] {
         var normalizedTypeNames: [String: NormalizedNameEntry] = [:]
         
         // iterate through all fields

@@ -56,7 +56,7 @@ public extension ServiceModelCodeGenerator {
         case .external(_, errorType: let errorType):
             return errorType
         case .internal:
-            return "\(baseName)CodingError"
+            return "\(baseName)Error"
         }
     }
     
@@ -67,7 +67,7 @@ public extension ServiceModelCodeGenerator {
         case .external(_, errorType: let errorType):
             return errorType
         case .internal:
-            return "\(baseName)CodingError"
+            return "\(baseName)Error"
         }
     }
 }

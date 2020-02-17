@@ -163,7 +163,8 @@ internal extension ServiceModelCodeGenerator {
         
         // if there is actually conversion on each element
         if conversionDetails.conversion != "entry" {
-            var setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostfix)\(variableName)\(optionalInfix).mapValues { entry in\n"
+            var setupBuilder =
+                "let converted\(capitalizedVariableName): \(fieldType) = \(failPostfix)\(variableName)\(optionalInfix).mapValues { entry in\n"
 
             if let setup = conversionDetails.setup {
                 setup.split(separator: "\n").forEach { line in setupBuilder += "    \(line)\n" }

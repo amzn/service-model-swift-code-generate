@@ -21,7 +21,7 @@ import ServiceModelEntities
 
 internal extension ServiceModelCodeGenerator {
     func addShapeProtocol(name: String, fileBuilder: FileBuilder,
-                                   structureElements: StructureElements) {
+                          structureElements: StructureElements) {
         let baseName = applicationDescription.baseName
         // add conformance to Equatable
         fileBuilder.appendLine("""
@@ -57,7 +57,7 @@ internal extension ServiceModelCodeGenerator {
     }
 
     func addShapeDefaultFunctions(name: String, fileBuilder: FileBuilder,
-                                           structureElements: StructureElements) {
+                                  structureElements: StructureElements) {
         let baseName = applicationDescription.baseName
         let willConversionFail = willShapeConversionFail(fieldName: name, alreadySeenShapes: [])
         let failPostix = willConversionFail ? " throws" : ""
