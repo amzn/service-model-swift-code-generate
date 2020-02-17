@@ -209,13 +209,13 @@ public extension ServiceModelCodeGenerator {
             case .sync:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                    reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                            reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
                     """)
             case .async:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                    reporting: SmokeAWSInvocationReporting,
-                    \(output))\(errors)\(declarationPostfix)
+                            reporting: SmokeAWSInvocationReporting,
+                            \(output))\(errors)\(declarationPostfix)
                     """)
             }
         } else {
@@ -223,13 +223,13 @@ public extension ServiceModelCodeGenerator {
             case .sync:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                    _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                            _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
                     """)
             case .async:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                    _ reporting: SmokeAWSInvocationReporting,
-                    \(output))\(errors)\(declarationPostfix) -> ()
+                            _ reporting: SmokeAWSInvocationReporting,
+                            \(output))\(errors)\(declarationPostfix) -> ()
                     """)
             }
         }
@@ -243,15 +243,15 @@ public extension ServiceModelCodeGenerator {
             case .sync:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                    \(input),
-                    reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                            \(input),
+                            reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
                     """)
             case .async:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                    \(input)
-                    reporting: SmokeAWSInvocationReporting,
-                    \(output))\(errors)\(declarationPostfix)
+                            \(input)
+                            reporting: SmokeAWSInvocationReporting,
+                            \(output))\(errors)\(declarationPostfix)
                     """)
             }
         } else {
@@ -259,15 +259,15 @@ public extension ServiceModelCodeGenerator {
             case .sync:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                    \(input),
-                    _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                            \(input),
+                            _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
                     """)
             case .async:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                    \(input)
-                    _ reporting: SmokeAWSInvocationReporting,
-                    \(output))\(errors)\(declarationPostfix) -> ()
+                            \(input)
+                            _ reporting: SmokeAWSInvocationReporting,
+                            \(output))\(errors)\(declarationPostfix) -> ()
                     """)
             }
         }
