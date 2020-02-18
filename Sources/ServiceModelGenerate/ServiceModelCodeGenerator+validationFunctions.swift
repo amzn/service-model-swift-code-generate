@@ -97,8 +97,11 @@ extension ServiceModelCodeGenerator {
         let baseName = applicationDescription.baseName
         if let isListWithInnerType = isListWithInnerType {
             typeName = isListWithInnerType.getNormalizedTypeName(forModel: model)
+            
+            let fullTypeName = typeName.isBuiltinType ? typeName : "\(baseName)Model.\(typeName)"
+            
             extensionName = name.getNormalizedTypeName(forModel: model)
-            extensionDeclaration = "Array where Element == \(baseName)Model.\(typeName)"
+            extensionDeclaration = "Array where Element == \(fullTypeName)"
         } else {
             typeName = name.getNormalizedTypeName(forModel: model)
             extensionName = typeName
