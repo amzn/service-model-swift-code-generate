@@ -45,6 +45,16 @@ public extension ServiceModelCodeGenerator {
             
             import Foundation
             import Logging
+            
+            public typealias \(baseName)ErrorResult<SuccessPayload> = Result<SuccessPayload, \(baseName)Error>
+            
+            public extension Swift.Error {
+                func asUnrecognized\(baseName)Error() -> \(baseName)Error {
+                    let errorType = String(describing: type(of: self))
+                    let errorDescription = String(describing: self)
+                    return .unrecognizedError(errorType, errorDescription)
+                }
+            }
             """)
         
         let allErrorTypes: Set<String>

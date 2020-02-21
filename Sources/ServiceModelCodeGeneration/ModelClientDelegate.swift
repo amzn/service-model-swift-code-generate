@@ -25,10 +25,10 @@ import ServiceModelEntities
 public protocol ModelClientDelegate {
     /// The type of client being generated.
     var clientType: ClientType { get }
-    /// The description of the type being generated.
-    var typeDescription: String { get }
     /// The result type to use for asynchronous functions.
     var asyncResultType: AsyncResultType? { get }
+    
+    func getFileDescription(isGenerator: Bool) -> String
     
     /**
      Add any custom file headers to the client file.
@@ -40,7 +40,8 @@ public protocol ModelClientDelegate {
      */
     func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,
                              delegate: ModelClientDelegate,
-                             fileBuilder: FileBuilder)
+                             fileBuilder: FileBuilder,
+                             isGenerator: Bool)
     
     /**
      Add any common functions to the body of the client type.
@@ -54,7 +55,8 @@ public protocol ModelClientDelegate {
     func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator,
                             delegate: ModelClientDelegate,
                             fileBuilder: FileBuilder,
-                            sortedOperations: [(String, OperationDescription)])
+                            sortedOperations: [(String, OperationDescription)],
+                            isGenerator: Bool)
     
     /**
      Add the body for an operation to the client type.
@@ -76,7 +78,8 @@ public protocol ModelClientDelegate {
                           operationName: String,
                           operationDescription: OperationDescription,
                           functionInputType: String?,
-                          functionOutputType: String?)
+                          functionOutputType: String?,
+                          isGenerator: Bool)
 }
 
 /// The type of client being generated.
@@ -84,7 +87,7 @@ public enum ClientType {
     /// A protocol with the specified name
     case `protocol`(name: String)
     /// A struct with the specified name and conforming to the specified protocol
-    case `struct`(name: String, conformingProtocolName: String)
+    case `struct`(name: String, genericParameters: [(typeName: String, conformingTypeName: String?)], conformingProtocolName: String)
 }
 
 /**

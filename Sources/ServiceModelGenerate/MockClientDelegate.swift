@@ -54,13 +54,18 @@ public struct MockClientDelegate: ModelClientDelegate {
             + "returns the `__default` property of its return type."
         }
         
-        self.clientType = .struct(name: name,
+        self.clientType = .struct(name: name, genericParameters: [],
                                   conformingProtocolName: "\(baseName)ClientProtocol")
+    }
+    
+    public func getFileDescription(isGenerator: Bool) -> String {
+        return self.typeDescription
     }
     
     public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,
                                     delegate: ModelClientDelegate,
-                                    fileBuilder: FileBuilder) {
+                                    fileBuilder: FileBuilder,
+                                    isGenerator: Bool) {
         // no custom file header
     }
     
@@ -74,23 +79,24 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
         
         let variableName = name.upperToLowerCamelCase
-        fileBuilder.appendLine("\(variableName)Async: \(protocolTypeName).\(name.startingWithUppercase)AsyncType? = nil,")
-        fileBuilder.appendLine("\(variableName)Sync: \(protocolTypeName).\(name.startingWithUppercase)SyncType? = nil\(postfix)")
+        fileBuilder.appendLine("\(variableName)Async: \(name.startingWithUppercase)AsyncType? = nil,")
+        fileBuilder.appendLine("\(variableName)Sync: \(name.startingWithUppercase)SyncType? = nil\(postfix)")
     }
     
     public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator,
                                    delegate: ModelClientDelegate,
                                    fileBuilder: FileBuilder,
-                                   sortedOperations: [(String, OperationDescription)]) {
+                                   sortedOperations: [(String, OperationDescription)],
+                                   isGenerator: Bool) {
         if isThrowingMock {
-            fileBuilder.appendLine("let error: HTTPClientError")
+            fileBuilder.appendLine("let error: \(baseName)Error")
         }
         
         // for each of the operations
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
-            fileBuilder.appendLine("let \(variableName)AsyncOverride: \(protocolTypeName).\(name.startingWithUppercase)AsyncType?")
-            fileBuilder.appendLine("let \(variableName)SyncOverride: \(protocolTypeName).\(name.startingWithUppercase)SyncType?")
+            fileBuilder.appendLine("let \(variableName)AsyncOverride: \(name.startingWithUppercase)AsyncType?")
+            fileBuilder.appendLine("let \(variableName)SyncOverride: \(name.startingWithUppercase)SyncType?")
         }
         fileBuilder.appendEmptyLine()
         
@@ -104,11 +110,11 @@ public struct MockClientDelegate: ModelClientDelegate {
         if isThrowingMock {
             if !sortedOperations.isEmpty {
                 fileBuilder.appendLine("""
-                    public init(error: HTTPClientError,
+                    public init(error: \(baseName)Error,
                     """)
             } else {
                 fileBuilder.appendLine("""
-                    public init(error: HTTPClientError) {
+                    public init(error: \(baseName)Error) {
                     """)
             }
         } else {
@@ -156,7 +162,8 @@ public struct MockClientDelegate: ModelClientDelegate {
                                  operationName: String,
                                  operationDescription: OperationDescription,
                                  functionInputType: String?,
-                                 functionOutputType: String?) {
+                                 functionOutputType: String?,
+                                 isGenerator: Bool) {
         let hasInput = functionInputType != nil
         
         if isThrowingMock {
@@ -240,10 +247,10 @@ public struct MockClientDelegate: ModelClientDelegate {
         switch invokeType {
         case .async:
             customFunctionPostfix = "Async"
-            customFunctionParameters = hasInput ? "input, reporting, completion" : "reporting, completion"
+            customFunctionParameters = hasInput ? "input, completion" : "completion"
         case .sync:
             customFunctionPostfix = "Sync"
-            customFunctionParameters = hasInput ? "input, reporting" : "reporting"
+            customFunctionParameters = hasInput ? "input" : ""
         }
     
         fileBuilder.appendLine("""
@@ -258,7 +265,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         switch clientType {
         case .protocol(name: let name):
             return name
-        case .struct(name: _, conformingProtocolName: let conformingProtocolName):
+        case .struct(name: _, genericParameters: _, conformingProtocolName: let conformingProtocolName):
             return conformingProtocolName
         }
     }

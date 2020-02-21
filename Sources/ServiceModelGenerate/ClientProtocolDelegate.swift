@@ -43,26 +43,32 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         self.typeDescription = "Client Protocol for the \(baseName) service."
     }
     
+    public func getFileDescription(isGenerator: Bool) -> String {
+        return self.typeDescription
+    }
+    
     public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,
                                     delegate: ModelClientDelegate,
-                                    fileBuilder: FileBuilder) {
+                                    fileBuilder: FileBuilder,
+                                    isGenerator: Bool) {
         // no custom file header
     }
     
     public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator,
                                    delegate: ModelClientDelegate,
                                    fileBuilder: FileBuilder,
-                                   sortedOperations: [(String, OperationDescription)]) {
+                                   sortedOperations: [(String, OperationDescription)],
+                                   isGenerator: Bool) {
         // for each of the operations
         for (name, operationDescription) in sortedOperations {
             codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
                                        operationDescription: operationDescription,
                                        delegate: delegate, invokeType: .sync,
-                                       forTypeAlias: true)
+                                       forTypeAlias: true, isGenerator: isGenerator)
             codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
                                        operationDescription: operationDescription,
                                        delegate: delegate, invokeType: .async,
-                                       forTypeAlias: true)
+                                       forTypeAlias: true, isGenerator: isGenerator)
         }
     }
     
@@ -72,7 +78,8 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                  operationName: String,
                                  operationDescription: OperationDescription,
                                  functionInputType: String?,
-                                 functionOutputType: String?) {
+                                 functionOutputType: String?,
+                                 isGenerator: Bool) {
         // nothing to do
     }
 }
