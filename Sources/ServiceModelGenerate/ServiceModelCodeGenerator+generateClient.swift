@@ -34,28 +34,49 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - delegate: The delegate to use when generating this client.
      */
-    func generateClient(delegate: ModelClientDelegate) {
+    func generateClient(delegate: ModelClientDelegate, isGenerator: Bool) {
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
         
         let typeName: String
-        let typeDescription = delegate.typeDescription
+        let typeDescription = delegate.getFileDescription(isGenerator: isGenerator)
+        
+        let typePostfix = isGenerator ? "Generator" : ""
         
         let typeDecaration: String
         switch delegate.clientType {
         case .protocol(name: let protocolTypeName):
-            typeName = protocolTypeName
+            typeName = protocolTypeName + typePostfix
             typeDecaration = "protocol \(typeName)"
-        case .struct(name: let structTypeName, conformingProtocolName: let protocolTypeName):
-            typeName = structTypeName
-            typeDecaration = "struct \(typeName): \(protocolTypeName)"
+        case .struct(name: let structTypeName, genericParameters: let genericParameters, conformingProtocolName: let protocolTypeName):
+            typeName = structTypeName + typePostfix
+            
+            if isGenerator {
+                typeDecaration = "struct \(typeName)"
+            } else {
+                let genericParametersString: String
+                if !genericParameters.isEmpty {
+                    let parameters: [String] = genericParameters.map { parameter in
+                        if let conformingTypeName = parameter.conformingTypeName {
+                            return "\(parameter.typeName): \(conformingTypeName)"
+                        } else {
+                            return parameter.typeName
+                        }
+                    }
+                    
+                    genericParametersString = "<\(parameters.joined(separator: " ,"))>"
+                } else {
+                    genericParametersString = ""
+                }
+                typeDecaration = "struct \(typeName)\(genericParametersString): \(protocolTypeName)"
+            }
         }
         
         addFileHeader(fileBuilder: fileBuilder, typeName: typeName,
                       delegate: delegate)
         
         delegate.addCustomFileHeader(codeGenerator: self, delegate: delegate,
-                                     fileBuilder: fileBuilder)
+                                     fileBuilder: fileBuilder, isGenerator: isGenerator)
         
         fileBuilder.appendLine("""
             
@@ -71,18 +92,20 @@ public extension ServiceModelCodeGenerator {
         
         delegate.addCommonFunctions(codeGenerator: self, delegate: delegate,
                                     fileBuilder: fileBuilder,
-                                    sortedOperations: sortedOperations)
+                                    sortedOperations: sortedOperations, isGenerator: isGenerator)
         
-        // for each of the operations
-        for (name, operationDescription) in sortedOperations {
-            addOperation(fileBuilder: fileBuilder, name: name,
-                         operationDescription: operationDescription,
-                         delegate: delegate, invokeType: .async,
-                         forTypeAlias: false)
-            addOperation(fileBuilder: fileBuilder, name: name,
-                         operationDescription: operationDescription,
-                         delegate: delegate, invokeType: .sync,
-                         forTypeAlias: false)
+        if !isGenerator {
+            // for each of the operations
+            for (name, operationDescription) in sortedOperations {
+                addOperation(fileBuilder: fileBuilder, name: name,
+                             operationDescription: operationDescription,
+                             delegate: delegate, invokeType: .async,
+                             forTypeAlias: false, isGenerator: isGenerator)
+                addOperation(fileBuilder: fileBuilder, name: name,
+                             operationDescription: operationDescription,
+                             delegate: delegate, invokeType: .sync,
+                             forTypeAlias: false, isGenerator: isGenerator)
+            }
         }
         fileBuilder.appendLine("}", preDec: true)
         let baseFilePath = applicationDescription.baseFilePath
@@ -144,7 +167,7 @@ public extension ServiceModelCodeGenerator {
                 if let asyncResultType = delegate.asyncResultType?.typeName {
                     output = "\(labelPrefix)completion: @escaping (\(asyncResultType)<\(baseName)Model.\(type)>) -> ()"
                 } else {
-                    output = "\(labelPrefix)completion: @escaping (Result<\(baseName)Model.\(type), HTTPClientError>) -> ()"
+                    output = "\(labelPrefix)completion: @escaping (Result<\(baseName)Model.\(type), \(baseName)Error>) -> ()"
                 }
                 if !forTypeAlias {
                     fileBuilder.appendLine("     - completion: The \(type) object or an error will be passed to this ")
@@ -162,7 +185,7 @@ public extension ServiceModelCodeGenerator {
                     output = " -> ()"
                 }
             case .async:
-                output = "\(labelPrefix)completion: @escaping (Swift.Error?) -> ()"
+                output = "\(labelPrefix)completion: @escaping (\(baseName)Error?) -> ()"
                 if !forTypeAlias {
                     fileBuilder.appendLine("     - completion: Nil or an error will be passed to this callback when the operation")
                     fileBuilder.appendLine("       is complete.")
@@ -208,13 +231,11 @@ public extension ServiceModelCodeGenerator {
             switch invokeType {
             case .sync:
                 fileBuilder.appendLine("""
-                    \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                            reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                    \(declarationPrefix)func \(functionName)\(invokeType.rawValue)()\(errors)\(output)\(declarationPostfix)
                     """)
             case .async:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                            reporting: SmokeAWSInvocationReporting,
                             \(output))\(errors)\(declarationPostfix)
                     """)
             }
@@ -222,13 +243,11 @@ public extension ServiceModelCodeGenerator {
             switch invokeType {
             case .sync:
                 fileBuilder.appendLine("""
-                    \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                            _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                    \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = ()\(errors)\(output)\(declarationPostfix)
                     """)
             case .async:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                            _ reporting: SmokeAWSInvocationReporting,
                             \(output))\(errors)\(declarationPostfix) -> ()
                     """)
             }
@@ -243,14 +262,12 @@ public extension ServiceModelCodeGenerator {
             case .sync:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
-                            \(input),
-                            reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                            \(input))\(errors)\(output)\(declarationPostfix)
                     """)
             case .async:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)\(invokeType.rawValue)(
                             \(input)
-                            reporting: SmokeAWSInvocationReporting,
                             \(output))\(errors)\(declarationPostfix)
                     """)
             }
@@ -259,14 +276,12 @@ public extension ServiceModelCodeGenerator {
             case .sync:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
-                            \(input),
-                            _ reporting: SmokeAWSInvocationReporting)\(errors)\(output)\(declarationPostfix)
+                            \(input))\(errors)\(output)\(declarationPostfix)
                     """)
             case .async:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
                             \(input)
-                            _ reporting: SmokeAWSInvocationReporting,
                             \(output))\(errors)\(declarationPostfix) -> ()
                     """)
             }
@@ -277,7 +292,8 @@ public extension ServiceModelCodeGenerator {
                                   operationDescription: OperationDescription,
                                   delegate: ModelClientDelegate,
                                   invokeType: InvokeType, forTypeAlias: Bool,
-                                  operationSignature: OperationSignature) {
+                                  operationSignature: OperationSignature,
+                                  isGenerator: Bool) {
         let functionName: String
         if !forTypeAlias {
             fileBuilder.appendLine(" */")
@@ -315,7 +331,8 @@ public extension ServiceModelCodeGenerator {
                                   operationName: name,
                                   operationDescription: operationDescription,
                                   functionInputType: operationSignature.functionInputType,
-                                  functionOutputType: operationSignature.functionOutputType)
+                                  functionOutputType: operationSignature.functionOutputType,
+                                  isGenerator: isGenerator)
     }
     
     /**
@@ -333,7 +350,8 @@ public extension ServiceModelCodeGenerator {
     internal func addOperation(fileBuilder: FileBuilder, name: String,
                                operationDescription: OperationDescription,
                                delegate: ModelClientDelegate,
-                               invokeType: InvokeType, forTypeAlias: Bool) {
+                               invokeType: InvokeType, forTypeAlias: Bool,
+                               isGenerator: Bool) {
         if !forTypeAlias {
             let invokeDescription: String
             switch invokeType {
@@ -371,7 +389,8 @@ public extension ServiceModelCodeGenerator {
                                                     errors: errors)
         
         addOperationBody(fileBuilder: fileBuilder, name: name, operationDescription: operationDescription,
-                         delegate: delegate, invokeType: invokeType, forTypeAlias: forTypeAlias, operationSignature: operationSignature)
+                         delegate: delegate, invokeType: invokeType, forTypeAlias: forTypeAlias,
+                         operationSignature: operationSignature, isGenerator: isGenerator)
     }
     
     private func addFileHeader(fileBuilder: FileBuilder,

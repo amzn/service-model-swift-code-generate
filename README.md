@@ -52,6 +52,7 @@ extension ServiceModelCodeGenerator {
 
         generateClient(delegate: myClientDelegate)
         generateModelOperationsEnum()
+        generateOperationsReporting()
         generateModelOperationClientInput()
         generateModelOperationClientOutput()
         generateModelOperationHTTPInput()
