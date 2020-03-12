@@ -103,7 +103,26 @@ public protocol ModelErrorsDelegate {
      */
     func errorTypeAdditionalErrorDecodeStatementsGenerator(fileBuilder: FileBuilder,
                                                            errorTypes: [ErrorType])
-
+    
+    /**
+        Generator for the error type additional encode cases using the error identity.
+    
+        - Parameters:
+           - fileBuilder: The FileBuilder to output to.
+           - errorTypes: The sorted list of error types.
+        */
+       func errorTypeAdditionalErrorEncodeStatementsGenerator(fileBuilder: FileBuilder,
+                                                              errorTypes: [ErrorType])
+    
+    /**
+        Generator for the error type additional description cases.
+    
+        - Parameters:
+           - fileBuilder: The FileBuilder to output to.
+           - errorTypes: The sorted list of error types.
+        */
+       func errorTypeAdditionalDescriptionCases(fileBuilder: FileBuilder,
+                                                errorTypes: [ErrorType])
 }
 
 public extension ModelErrorsDelegate {

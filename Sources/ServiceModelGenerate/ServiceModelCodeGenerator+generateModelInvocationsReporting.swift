@@ -41,7 +41,7 @@ public extension ServiceModelCodeGenerator {
             //
             
             import Foundation
-            import SmokeAWSCore
+            import SmokeHTTPClient
             import SmokeAWSHttp
             import \(baseName)Model
             """)
@@ -55,7 +55,7 @@ public extension ServiceModelCodeGenerator {
             /**
              Operation reporting for the \(baseName)Model.
              */
-            public struct \(baseName)InvocationsReporting<InvocationReportingType: SmokeAWSInvocationReporting> {
+            public struct \(baseName)InvocationsReporting<InvocationReportingType: HTTPClientCoreInvocationReporting> {
             """)
         
         let sortedOperations = model.operationDescriptions.sorted { (left, right) in left.key < right.key }

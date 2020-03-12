@@ -158,6 +158,7 @@ public extension ServiceModelCodeGenerator {
                         return \(internalName)Identity
                     """)
             }
+            delegate.errorTypeAdditionalDescriptionCases(fileBuilder: fileBuilder, errorTypes: sortedErrors)
             fileBuilder.decIndent()
             fileBuilder.decIndent()
             
@@ -190,6 +191,8 @@ public extension ServiceModelCodeGenerator {
                         try details.encode(to: encoder)
                     """)
             }
+            delegate.errorTypeAdditionalErrorEncodeStatementsGenerator(fileBuilder: fileBuilder,
+                                                                       errorTypes: sortedErrors)
             fileBuilder.decIndent()
             fileBuilder.decIndent()
             

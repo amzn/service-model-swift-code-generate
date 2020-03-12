@@ -60,7 +60,7 @@ public extension ServiceModelCodeGenerator {
         // add code to get the identity variable from the delegate
         let identityVariable = delegate.errorTypeIdentityGenerator(
             fileBuilder: fileBuilder,
-            codingErrorUnknownError: "\(baseName)CodingError.unknownError")
+            codingErrorUnknownError: "\(baseName)Error.unknownError")
         
         fileBuilder.appendEmptyLine()
         fileBuilder.appendLine("switch \(identityVariable) {")
