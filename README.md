@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://travis-ci.com/amzn/service-model-swift-code-generate">
-<img src="https://travis-ci.com/amzn/service-model-swift-code-generate.svg?branch=master" alt="Build - Master Branch">
+<img src="https://travis-ci.com/amzn/service-model-swift-code-generate.svg?branch=service-model-swift-code-generate-1.x" alt="Build - service-model-swift-code-generate-1.x Branch">
 </a>
 <img src="https://img.shields.io/badge/os-linux-green.svg?style=flat" alt="Linux">
 <a href="http://swift.org">
