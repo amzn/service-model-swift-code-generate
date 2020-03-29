@@ -32,7 +32,7 @@ let package = Package(
             targets: ["SwaggerServiceModel"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/tachyonics/SwaggerParser.git", from: "0.6.3"), 
+        .package(url: "https://github.com/tachyonics/SwaggerParser.git", from: "0.6.4"), 
         .package(url: "https://github.com/jpsim/Yams.git", from: "0.5.0")
     ],
     targets: [
