@@ -42,10 +42,12 @@ public struct ModelOverride: Codable {
     public let requiredOverrides: [String: Bool]?
     /// any additional error codes that can be returned
     public let additionalErrors: Set<String>?
-    /// operations that should be igored.
+    /// operations that should be ignored.
     public let ignoreOperations: Set<String>?
-    /// response headers that should be igored.
+    /// response headers that should be ignored.
     public let ignoreResponseHeaders: Set<String>?
+    /// request headers that should be ignored.
+    public let ignoreRequestHeaders: Set<String>?
     /// overrides the default value used for an enumeration
     public let defaultEnumerationValueOverride: [String: String]?
     
@@ -61,6 +63,7 @@ public struct ModelOverride: Codable {
                 additionalErrors: Set<String>? = nil,
                 ignoreOperations: Set<String>? = nil,
                 ignoreResponseHeaders: Set<String>? = nil,
+                ignoreRequestHeaders: Set<String>? = nil,
                 defaultEnumerationValueOverride: [String: String]? = nil) {
         self.matchCase = matchCase
         self.enumerations = enumerations
@@ -74,6 +77,7 @@ public struct ModelOverride: Codable {
         self.additionalErrors = additionalErrors
         self.ignoreOperations = ignoreOperations
         self.ignoreResponseHeaders = ignoreResponseHeaders
+        self.ignoreRequestHeaders = ignoreRequestHeaders
         self.defaultEnumerationValueOverride = defaultEnumerationValueOverride
     }
     

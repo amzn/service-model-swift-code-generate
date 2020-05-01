@@ -182,6 +182,33 @@ internal extension SwaggerServiceModel {
         }
     }
     
+    static func ignoreRequestHeader(operationName: String, headerName: String,
+                                     modelOverride: ModelOverride?) -> Bool {
+        
+        guard let ignoreRequestHeaders = modelOverride?.ignoreRequestHeaders else {
+            // no filtering required
+            return false
+        }
+        
+        if ignoreRequestHeaders.contains("*.*") {
+            return true
+        }
+        
+        if ignoreRequestHeaders.contains("*.\(headerName)") {
+            return true
+        }
+        
+        if ignoreRequestHeaders.contains("\(operationName).\(headerName)") {
+            return true
+        }
+        
+        if ignoreRequestHeaders.contains("\(operationName).*") {
+            return true
+        }
+        
+        return false
+    }
+    
     static func getFixedFieldsOperationMembers(fixedFields: FixedParameterFields, operationName: String,
                                                index: Int, members: inout SwaggerServiceModel.OperationInputMembers,
                                                items: Items, model: inout SwaggerServiceModel, modelOverride: ModelOverride?) {
@@ -198,6 +225,11 @@ internal extension SwaggerServiceModel {
         case .path:
             members.pathMembers[fixedFields.name] = member
         case .header:
+            guard !ignoreRequestHeader(operationName: operationName, headerName: fixedFields.name, modelOverride: modelOverride) else {
+                // ignore header
+                return
+            }
+            
             members.additionalHeaderMembers[fixedFields.name] = member
         default:
             // cannot happen
