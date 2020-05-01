@@ -180,6 +180,8 @@ public extension ServiceModelCodeGenerator {
                 
                 shapeCategory = .collectionType("\(collectionAssociatedType) == [\(keyTypeName): \(valueTypeName)]")
             }
+        } else if fieldName.isBuiltinType {
+            shapeCategory = .builtInType(fieldName)
         } else {
             shapeCategory = .protocolType("\(typeName)Shape")
         }
