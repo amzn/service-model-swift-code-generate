@@ -156,13 +156,14 @@ internal extension ServiceModelCodeGenerator {
                                                              isRequired: true)
         
         let fullKeyTypeName = keyTypeName.isBuiltinType ? keyTypeName : "\(baseName)Model.\(keyTypeName)"
-        let fullValueTypeName = valueTypeName.isBuiltinType ? valueTypeName : "\(baseName)Model.\(valueTypeName)"
-
-        let capitalizedVariableName = variableName.lowerToUpperCamelCase
-        let fieldType = "[\(fullKeyTypeName): \(fullValueTypeName)]\(optionalInfix)"
         
         // if there is actually conversion on each element
-        if conversionDetails.conversion != "entry" {
+        if conversionDetails.conversion != "entry" && !valueTypeName.isBuiltinType {
+            let fullValueTypeName = "\(baseName)Model.\(valueTypeName)"
+            
+            let capitalizedVariableName = variableName.lowerToUpperCamelCase
+            let fieldType = "[\(fullKeyTypeName): \(fullValueTypeName)]\(optionalInfix)"
+            
             var setupBuilder =
                 "let converted\(capitalizedVariableName): \(fieldType) = \(failPostfix)\(variableName)\(optionalInfix).mapValues { entry in\n"
 
