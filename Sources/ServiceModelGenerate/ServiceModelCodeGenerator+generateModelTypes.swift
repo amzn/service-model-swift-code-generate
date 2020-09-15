@@ -194,7 +194,7 @@ public extension ServiceModelCodeGenerator {
         case .double:
             innerType = overrideType ?? "Double"
         case .long:
-            innerType = overrideType ?? "Int"
+            innerType = overrideType ?? "Int64"
         case .timestamp:
             innerType = overrideType ?? "String"
         case .data:

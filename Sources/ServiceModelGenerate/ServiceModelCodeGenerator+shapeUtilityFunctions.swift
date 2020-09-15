@@ -109,7 +109,7 @@ public extension ServiceModelCodeGenerator {
             case .double:
                 fieldShape = "Double"
             case .long:
-                fieldShape = "Int"
+                fieldShape = "Int64"
             case .timestamp:
                 fieldShape = "String"
             case .data:
