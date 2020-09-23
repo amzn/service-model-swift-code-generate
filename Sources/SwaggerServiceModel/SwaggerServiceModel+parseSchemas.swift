@@ -27,12 +27,20 @@ internal extension SwaggerServiceModel {
         switch schema.type {
         case .boolean:
             model.fieldDescriptions[enclosingEntityName] = .boolean
-        case .integer(_, let metadata):
+        case .integer(.int32, let metadata),.integer(.none, let metadata) :
+            
             model.fieldDescriptions[enclosingEntityName] = Fields.integer(rangeConstraint:
                 NumericRangeConstraint<Int>(minimum: metadata.minimum,
                                             maximum: metadata.maximum,
                                             exclusiveMinimum: metadata.exclusiveMinimum ?? false,
                                             exclusiveMaximum: metadata.exclusiveMaximum ?? false))
+        case .integer(.int64, let metadata):
+            model.fieldDescriptions[enclosingEntityName] = Fields.long(rangeConstraint:
+                NumericRangeConstraint<Int>(minimum: metadata.minimum,
+                                            maximum: metadata.maximum,
+                                            exclusiveMinimum: metadata.exclusiveMinimum ?? false,
+                                            exclusiveMaximum: metadata.exclusiveMaximum ?? false))
+            
         case .structure(let structureSchema):
             var structureDescription = StructureDescription()
             parseStructureSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,

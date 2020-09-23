@@ -294,12 +294,23 @@ internal extension SwaggerServiceModel {
                     exclusiveMinimum: item.metadata?.exclusiveMinimum ?? false,
                     exclusiveMaximum: item.metadata?.exclusiveMaximum ?? false))
         case .integer(item: let item):
-            model.fieldDescriptions[fieldName] =
+            if item.format == IntegerFormat.int64 {
+                model.fieldDescriptions[fieldName] =
+                    Fields.long(rangeConstraint: NumericRangeConstraint<Int>(
+                    minimum: item.metadata?.minimum,
+                    maximum: item.metadata?.maximum,
+                    exclusiveMinimum: item.metadata?.exclusiveMinimum ?? false,
+                    exclusiveMaximum: item.metadata?.exclusiveMaximum ?? false))
+            } else {
+                model.fieldDescriptions[fieldName] =
                 Fields.integer(rangeConstraint: NumericRangeConstraint<Int>(
                     minimum: item.metadata?.minimum,
                     maximum: item.metadata?.maximum,
                     exclusiveMinimum: item.metadata?.exclusiveMinimum ?? false,
                     exclusiveMaximum: item.metadata?.exclusiveMaximum ?? false))
+            }
+            
+        
         case .boolean:
             model.fieldDescriptions[fieldName] = Fields.boolean
         default:
