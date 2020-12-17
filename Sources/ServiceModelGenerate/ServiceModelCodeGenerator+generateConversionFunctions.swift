@@ -53,7 +53,12 @@ extension ServiceModelCodeGenerator {
                }
             }
             """)
-        case .collectionType(let whereClause):
+        case .collectionType(let whereClause, let builtInInnerTypes):
+            // don't need this extension if everything is builtin
+            if builtInInnerTypes {
+                return
+            }
+            
             fileBuilder.appendLine("""
             
             public extension Array where \(whereClause) {
@@ -106,7 +111,12 @@ extension ServiceModelCodeGenerator {
                }
             }
             """)
-        case .collectionType(let whereClause):
+        case .collectionType(let whereClause, let builtInInnerTypes):
+            // don't need this extension if everything is builtin
+            if builtInInnerTypes {
+                return
+            }
+            
             fileBuilder.appendLine("""
             
             public extension Dictionary where Key == String, \(whereClause) {
