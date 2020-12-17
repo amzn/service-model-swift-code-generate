@@ -23,7 +23,7 @@ private let reservedWords: Set<String> = ["in", "protocol", "return", "default",
 
 public enum ShapeCategory {
     case protocolType(String)
-    case collectionType(String)
+    case collectionType(String, builtInInnerTypes: Bool)
     case enumType
     case builtInType(String)
 }
@@ -172,13 +172,28 @@ public extension ServiceModelCodeGenerator {
                 shapeCategory = .builtInType("Data")
             case .list(type: let type, lengthConstraint: _):
                 let typeName = type.getNormalizedTypeName(forModel: model)
+                                
+                let builtInInnerTypes: Bool
+                if case .builtInType = getShapeCategory(fieldName: typeName, collectionAssociatedType: collectionAssociatedType) {
+                    builtInInnerTypes = true
+                } else {
+                    builtInInnerTypes = false
+                }
                 
-                shapeCategory = .collectionType("\(collectionAssociatedType) == [\(typeName)]")
+                shapeCategory = .collectionType("\(collectionAssociatedType) == [\(typeName)]", builtInInnerTypes: builtInInnerTypes)
             case .map(keyType: let keyType, valueType: let valueType, lengthConstraint: _):
                 let keyTypeName = keyType.getNormalizedTypeName(forModel: model)
                 let valueTypeName = valueType.getNormalizedTypeName(forModel: model)
                 
-                shapeCategory = .collectionType("\(collectionAssociatedType) == [\(keyTypeName): \(valueTypeName)]")
+                let builtInInnerTypes: Bool
+                if case .builtInType = getShapeCategory(fieldName: keyTypeName, collectionAssociatedType: collectionAssociatedType),
+                   case .builtInType = getShapeCategory(fieldName: valueTypeName, collectionAssociatedType: collectionAssociatedType) {
+                    builtInInnerTypes = true
+                } else {
+                    builtInInnerTypes = false
+                }
+                
+                shapeCategory = .collectionType("\(collectionAssociatedType) == [\(keyTypeName): \(valueTypeName)]", builtInInnerTypes: builtInInnerTypes)
             }
         } else if fieldName.isBuiltinType {
             shapeCategory = .builtInType(fieldName)
