@@ -18,7 +18,7 @@
 import Foundation
 import ServiceModelCodeGeneration
 
-private let reservedWords: Set<String> = ["in", "protocol", "return", "default", "public",
+private let reservedWords: Set<String> = ["in", "protocol", "return", "default", "public", "self",
                                           "static", "private", "internal", "do", "is", "as", "true", "false", "import"]
 
 public enum ShapeCategory {
