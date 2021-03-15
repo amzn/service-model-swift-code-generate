@@ -55,7 +55,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
         
         self.clientType = .struct(name: name, genericParameters: [],
-                                  conformingProtocolName: "\(baseName)ClientProtocol")
+                                  conformingProtocolNames: ["\(baseName)ClientProtocol"])
     }
     
     public func getFileDescription(isGenerator: Bool) -> String {
@@ -79,8 +79,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
         
         let variableName = name.upperToLowerCamelCase
-        fileBuilder.appendLine("\(variableName)Async: \(name.startingWithUppercase)AsyncType? = nil,")
-        fileBuilder.appendLine("\(variableName)Sync: \(name.startingWithUppercase)SyncType? = nil\(postfix)")
+        fileBuilder.appendLine("\(variableName)EventLoopFutureAsync: \(name.startingWithUppercase)EventLoopFutureAsyncType? = nil\(postfix)")
     }
     
     public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator,
@@ -92,11 +91,15 @@ public struct MockClientDelegate: ModelClientDelegate {
             fileBuilder.appendLine("let error: \(baseName)Error")
         }
         
+        fileBuilder.appendLine("""
+            let eventLoop: EventLoop
+            let typedErrorProvider: (Swift.Error) -> \(codeGenerator.applicationDescription.baseName)Error = { $0.asTypedError() }
+            """)
+        
         // for each of the operations
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
-            fileBuilder.appendLine("let \(variableName)AsyncOverride: \(name.startingWithUppercase)AsyncType?")
-            fileBuilder.appendLine("let \(variableName)SyncOverride: \(name.startingWithUppercase)SyncType?")
+            fileBuilder.appendLine("let \(variableName)EventLoopFutureAsyncOverride: \(name.startingWithUppercase)EventLoopFutureAsyncType?")
         }
         fileBuilder.appendEmptyLine()
         
@@ -110,21 +113,25 @@ public struct MockClientDelegate: ModelClientDelegate {
         if isThrowingMock {
             if !sortedOperations.isEmpty {
                 fileBuilder.appendLine("""
-                    public init(error: \(baseName)Error,
+                    public init(
+                            error: \(baseName)Error,
+                            eventLoop: EventLoop,
                     """)
             } else {
                 fileBuilder.appendLine("""
-                    public init(error: \(baseName)Error) {
+                    public init(error: \(baseName)Error,
+                                eventLoop: EventLoop) {
                     """)
             }
         } else {
             if !sortedOperations.isEmpty {
                 fileBuilder.appendLine("""
                     public init(
+                            eventLoop: EventLoop,
                     """)
             } else {
                 fileBuilder.appendLine("""
-                    public init() {
+                    public init(eventLoop: EventLoop) {
                     """)
             }
         }
@@ -141,11 +148,15 @@ public struct MockClientDelegate: ModelClientDelegate {
             fileBuilder.appendLine("self.error = error")
         }
         
+        fileBuilder.appendLine("""
+            self.eventLoop = eventLoop
+            
+            """)
+        
         // for each of the operations
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
-            fileBuilder.appendLine("self.\(variableName)AsyncOverride = \(variableName)Async")
-            fileBuilder.appendLine("self.\(variableName)SyncOverride = \(variableName)Sync")
+            fileBuilder.appendLine("self.\(variableName)EventLoopFutureAsyncOverride = \(variableName)EventLoopFutureAsync")
         }
         
         fileBuilder.decIndent()
@@ -167,8 +178,9 @@ public struct MockClientDelegate: ModelClientDelegate {
         let hasInput = functionInputType != nil
         
         if isThrowingMock {
-            addThrowingClientOperationBody(fileBuilder: fileBuilder, hasInput: hasInput,
-                                           hasOutput: functionOutputType != nil,
+            addThrowingClientOperationBody(codeGenerator: codeGenerator,
+                                           fileBuilder: fileBuilder, hasInput: hasInput,
+                                           functionOutputType: functionOutputType,
                                            invokeType: invokeType, operationName: operationName)
         } else {
             addMockClientOperationBody(codeGenerator: codeGenerator,
@@ -186,76 +198,69 @@ public struct MockClientDelegate: ModelClientDelegate {
                                             protocolTypeName: String, operationName: String) {
         fileBuilder.incIndent()
         
-        addOverrideOperationCall(fileBuilder: fileBuilder, invokeType: invokeType, operationName: operationName, hasInput: hasInput)
+        addAsyncOverrideOperationCall(fileBuilder: fileBuilder, operationName: operationName, hasInput: hasInput)
         
         // return a default instance of the output type
         if let outputType = functionOutputType {
             let typeName = outputType.getNormalizedTypeName(forModel: codeGenerator.model)
             
-            let declarationPrefix: String
-            switch invokeType {
-            case .sync:
-                declarationPrefix = "return"
-            case .async:
-                declarationPrefix = "let result ="
-            }
-            
-            fileBuilder.appendLine("\(declarationPrefix) \(typeName).__default")
-            
-            if case .async = invokeType {
-                fileBuilder.appendLine("""
-
-                    completion(.success(result))
-                    """)
-            }
-        } else if case .async = invokeType {
             fileBuilder.appendLine("""
-                completion(nil)
+                let result = \(typeName).__default
+
+                let promise = self.eventLoop.makePromise(of: \(typeName).self)
+                promise.succeed(result)
+
+                return promise.futureResult
+                """)
+        } else {
+            fileBuilder.appendLine("""
+                let promise = self.eventLoop.makePromise(of: Void.self)
+                promise.succeed(())
+
+                return promise.futureResult
                 """)
         }
     
         fileBuilder.appendLine("}", preDec: true)
     }
     
-    private func addThrowingClientOperationBody(fileBuilder: FileBuilder, hasInput: Bool, hasOutput: Bool,
+    private func addThrowingClientOperationBody(codeGenerator: ServiceModelCodeGenerator,
+                                                fileBuilder: FileBuilder, hasInput: Bool, functionOutputType: String?,
                                                 invokeType: InvokeType, operationName: String) {
         fileBuilder.incIndent()
         
-        addOverrideOperationCall(fileBuilder: fileBuilder, invokeType: invokeType,
-                                 operationName: operationName, hasInput: hasInput)
+        addAsyncOverrideOperationCall(fileBuilder: fileBuilder, operationName: operationName, hasInput: hasInput)
         
-        switch invokeType {
-        case .sync:
-            fileBuilder.appendLine("throw error")
-        case .async:
-            if hasOutput {
-                fileBuilder.appendLine("completion(.failure(error))")
-            } else {
-                fileBuilder.appendLine("completion(error)")
-            }
+        if let outputType = functionOutputType {
+            let typeName = outputType.getNormalizedTypeName(forModel: codeGenerator.model)
+            
+            fileBuilder.appendLine("""
+                let promise = self.eventLoop.makePromise(of: \(typeName).self)
+                promise.fail(error)
+
+                return promise.futureResult
+                """)
+        } else {
+            fileBuilder.appendLine("""
+                let promise = self.eventLoop.makePromise(of: Void.self)
+                promise.fail(error)
+
+                return promise.futureResult
+                """)
         }
     
         fileBuilder.appendLine("}", preDec: true)
     }
     
-    private func addOverrideOperationCall(fileBuilder: FileBuilder,
-                                          invokeType: InvokeType, operationName: String, hasInput: Bool) {
+    private func addAsyncOverrideOperationCall(fileBuilder: FileBuilder,
+                                               operationName: String, hasInput: Bool) {
         let variableName = operationName.upperToLowerCamelCase
         
-        let customFunctionParameters: String
-        let customFunctionPostfix: String
-        switch invokeType {
-        case .async:
-            customFunctionPostfix = "Async"
-            customFunctionParameters = hasInput ? "input, completion" : "completion"
-        case .sync:
-            customFunctionPostfix = "Sync"
-            customFunctionParameters = hasInput ? "input" : ""
-        }
+        let customFunctionParameters = hasInput ? "input" : ""
     
         fileBuilder.appendLine("""
-                if let \(variableName)\(customFunctionPostfix)Override = \(variableName)\(customFunctionPostfix)Override {
-                    return try \(variableName)\(customFunctionPostfix)Override(\(customFunctionParameters))
+                if let \(variableName)EventLoopFutureAsyncOverride = \(variableName)EventLoopFutureAsyncOverride {
+                    return \(variableName)EventLoopFutureAsyncOverride(\(customFunctionParameters))
                 }
                 """)
         fileBuilder.appendEmptyLine()
@@ -265,8 +270,8 @@ public struct MockClientDelegate: ModelClientDelegate {
         switch clientType {
         case .protocol(name: let name):
             return name
-        case .struct(name: _, genericParameters: _, conformingProtocolName: let conformingProtocolName):
-            return conformingProtocolName
+        case .struct(name: _, genericParameters: _, conformingProtocolNames: let conformingProtocolNames):
+            return conformingProtocolNames.joined(separator: ", ")
         }
     }
 }

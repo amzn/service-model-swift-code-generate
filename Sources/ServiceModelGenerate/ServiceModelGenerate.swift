@@ -67,4 +67,71 @@ public struct ServiceModelGenerate {
         
         try generatorFunction(codeGenerator, model)
     }
+    
+    /**
+     Helper function to initialize code generation from the path to a service model.
+ 
+     - Parameters:
+         - modelFilePath: the file path to the service model file. Supports either xml, json or yaml encoded models.
+         - customizations: any customizations provided external to the model.
+         - applicationDescription: the description of the application being code generated.
+         - modelOverride: any overrides for values in the model.
+         - generatorFunction: a function that will be provided a code generator and an instantiated ServiceModel
+                              which can be used to generate any code that is required.
+     */
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelDirectoryPath: String, fileExtension: String,
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws {
+        
+        let dataList = try getDataListForModelFiles(atPath: modelDirectoryPath, fileExtension: fileExtension)
+        
+        let modelFormat: ModelFormat
+        if fileExtension == "yaml" || fileExtension == "yml" {
+            modelFormat = .yaml
+        } else if fileExtension == "json" {
+            modelFormat = .json
+        } else if fileExtension == "xml" {
+            modelFormat = .xml
+        } else {
+            fatalError("Unknown '\(fileExtension) extension.'")
+        }
+        
+        let model = try ModelType.create(dataList: dataList, modelFormat: modelFormat, modelOverride: modelOverride)
+        
+        let codeGenerator = ServiceModelCodeGenerator(
+            model: model,
+            applicationDescription: applicationDescription,
+            customizations: customizations,
+            modelOverride: modelOverride)
+        
+        try generatorFunction(codeGenerator, model)
+    }
+    
+    private static func getDataListForModelFiles(atPath modelDirectoryPath: String, fileExtension: String) throws -> [Data] {
+        let modelFilePaths = try FileManager.default.contentsOfDirectory(atPath: modelDirectoryPath)
+            
+        return try modelFilePaths.flatMap { modelFileName -> [Data] in
+            let modelFilePath = "\(modelDirectoryPath)/\(modelFileName)"
+            
+            guard modelFileName.lowercased().hasSuffix(".\(fileExtension)") else {
+                var isDirectory = ObjCBool(true)
+                if FileManager.default.fileExists(atPath: modelFilePath, isDirectory: &isDirectory), isDirectory.boolValue {
+                    return try getDataListForModelFiles(atPath: modelFilePath, fileExtension: fileExtension)
+                }
+                
+                return []
+            }
+            
+            let file = FileHandle(forReadingAtPath: modelFilePath)
+            
+            guard let data = file?.readDataToEndOfFile() else {
+                fatalError("Specified model file '\(modelFilePath) doesn't exist.'")
+            }
+            
+            return [data]
+        }
+    }
 }
