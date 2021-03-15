@@ -23,6 +23,10 @@ public enum ModelFormat {
     case xml
 }
 
+public enum ServiceModelError: Error {
+    case notImplementedException
+}
+
 /**
  Protocol for a Service Model description.
  */
@@ -40,4 +44,16 @@ public protocol ServiceModel {
      that represents that type.
      */
     static func create(data: Data, modelFormat: ModelFormat, modelOverride: ModelOverride?) throws -> Self
+    
+    /**
+     Initialize an instance of this ServiceModel type from a data instance
+     that represents that type.
+     */
+    static func create(dataList: [Data], modelFormat: ModelFormat, modelOverride: ModelOverride?) throws -> Self
+}
+
+public extension ServiceModel {
+    static func create(dataList: [Data], modelFormat: ModelFormat, modelOverride: ModelOverride?) throws -> Self {
+        throw ServiceModelError.notImplementedException
+    }
 }

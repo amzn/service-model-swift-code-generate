@@ -87,7 +87,7 @@ public enum ClientType {
     /// A protocol with the specified name
     case `protocol`(name: String)
     /// A struct with the specified name and conforming to the specified protocol
-    case `struct`(name: String, genericParameters: [(typeName: String, conformingTypeName: String?)], conformingProtocolName: String)
+    case `struct`(name: String, genericParameters: [(typeName: String, conformingTypeName: String?)], conformingProtocolNames: [String])
 }
 
 /**
@@ -109,8 +109,7 @@ public struct AsyncResultType {
  Specifies the invocation style for a client function being generated.
  */
 public enum InvokeType: String {
-    case sync = "Sync"
-    case async = "Async"
+    case eventLoopFutureAsync = "EventLoopFutureAsync"
 }
 
 public extension ModelClientDelegate {

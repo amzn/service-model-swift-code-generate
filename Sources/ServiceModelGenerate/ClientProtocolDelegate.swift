@@ -63,11 +63,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         for (name, operationDescription) in sortedOperations {
             codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
                                        operationDescription: operationDescription,
-                                       delegate: delegate, invokeType: .sync,
-                                       forTypeAlias: true, isGenerator: isGenerator)
-            codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
-                                       operationDescription: operationDescription,
-                                       delegate: delegate, invokeType: .async,
+                                       delegate: delegate, invokeType: .eventLoopFutureAsync,
                                        forTypeAlias: true, isGenerator: isGenerator)
         }
     }
