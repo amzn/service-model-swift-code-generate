@@ -77,7 +77,7 @@ public extension ServiceModelCodeGenerator {
             let variableName = getNormalizedVariableName(modelTypeName: name)
             
             fileBuilder.appendLine("""
-                let \(variableName): StandardSmokeAWSOperationReporting<\(baseName)ModelOperations>
+                public let \(variableName): StandardSmokeAWSOperationReporting<\(baseName)ModelOperations>
                 """)
         }
     }

@@ -51,7 +51,7 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.appendLine("""
             
             /**
-             Operation reporting for the \(baseName)Model.
+             Invocations reporting for the \(baseName)Model.
              */
             public struct \(baseName)InvocationsReporting<InvocationReportingType: HTTPClientCoreInvocationReporting> {
             """)
@@ -78,7 +78,7 @@ public extension ServiceModelCodeGenerator {
             let variableName = getNormalizedVariableName(modelTypeName: name)
             
             fileBuilder.appendLine("""
-                let \(variableName): SmokeAWSHTTPClientInvocationReporting<InvocationReportingType>
+                public let \(variableName): SmokeAWSHTTPClientInvocationReporting<InvocationReportingType>
                 """)
         }
     }
