@@ -129,7 +129,7 @@ public struct RawTypeOverride: Codable {
     }
 }
 
-public struct AdditionalHttpClient: Decodable {
+public struct AdditionalHttpClient: Codable {
     public let clientDelegateNameOverride: String?
     public let clientDelegateParameters: [String]?
     public let operations: Set<String>?
@@ -143,12 +143,12 @@ public struct AdditionalHttpClient: Decodable {
     }
 }
 
-public enum KnownErrorsDefaultRetryBehavior: String, Decodable {
+public enum KnownErrorsDefaultRetryBehavior: String, Codable {
     case retry
     case fail
 }
 
-public struct HttpClientConfiguration: Decodable {
+public struct HttpClientConfiguration: Codable {
     public let retryOnUnknownError: Bool
     public let knownErrorsDefaultRetryBehavior: KnownErrorsDefaultRetryBehavior
     public let unretriableUnknownErrors: Set<String>
