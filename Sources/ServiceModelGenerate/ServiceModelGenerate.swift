@@ -38,7 +38,7 @@ public struct ServiceModelGenerate {
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws {
+        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws -> ModelType {
             
         let file = FileHandle(forReadingAtPath: modelFilePath)
         
@@ -66,6 +66,8 @@ public struct ServiceModelGenerate {
             modelOverride: modelOverride)
         
         try generatorFunction(codeGenerator, model)
+        
+        return model
     }
     
     /**
@@ -84,7 +86,7 @@ public struct ServiceModelGenerate {
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws {
+        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws -> ModelType {
         
         let dataList = try getDataListForModelFiles(atPath: modelDirectoryPath, fileExtension: fileExtension)
         
@@ -108,6 +110,8 @@ public struct ServiceModelGenerate {
             modelOverride: modelOverride)
         
         try generatorFunction(codeGenerator, model)
+        
+        return model
     }
     
     private static func getDataListForModelFiles(atPath modelDirectoryPath: String, fileExtension: String) throws -> [Data] {
