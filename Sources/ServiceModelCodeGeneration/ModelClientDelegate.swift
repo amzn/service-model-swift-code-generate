@@ -18,6 +18,11 @@
 import Foundation
 import ServiceModelEntities
 
+public enum AsyncAwaitGeneration: String {
+    case none = "NONE"
+    case experimental = "EXPERIMENTAL"
+}
+
 /**
  Delegate protocol that can customize the generation of a client
  from the Service Model.
@@ -25,8 +30,8 @@ import ServiceModelEntities
 public protocol ModelClientDelegate {
     /// The type of client being generated.
     var clientType: ClientType { get }
-    /// The result type to use for asynchronous functions.
-    var asyncResultType: AsyncResultType? { get }
+
+    var asyncAwaitGeneration: AsyncAwaitGeneration { get }
     
     func getFileDescription(isGenerator: Bool) -> String
     
@@ -91,24 +96,10 @@ public enum ClientType {
 }
 
 /**
- The result type to use for asynchronous functions.
- */
-public struct AsyncResultType {
-    /// The name of this type.
-    public let typeName: String
-    /// The library import for this type.
-    public let libraryImport: String
-    
-    public init(typeName: String, libraryImport: String) {
-        self.typeName = typeName
-        self.libraryImport = libraryImport
-    }
-}
-
-/**
  Specifies the invocation style for a client function being generated.
  */
 public enum InvokeType: String {
+    case asyncFunction = "Function"
     case eventLoopFutureAsync = "EventLoopFutureAsync"
 }
 

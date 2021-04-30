@@ -25,9 +25,9 @@ import ServiceModelEntities
  */
 public struct ClientProtocolDelegate: ModelClientDelegate {
     public let clientType: ClientType
-    public let asyncResultType: AsyncResultType?
     public let baseName: String
     public let typeDescription: String
+    public let asyncAwaitGeneration: AsyncAwaitGeneration
     
     /**
      Initializer.
@@ -36,11 +36,11 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         - baseName: The base name of the Service.
         - asyncResultType: The name of the result type to use for async functions.
      */
-    public init(baseName: String, asyncResultType: AsyncResultType? = nil) {
+    public init(baseName: String, asyncAwaitGeneration: AsyncAwaitGeneration) {
         self.baseName = baseName
-        self.asyncResultType = asyncResultType
         self.clientType = .protocol(name: "\(baseName)ClientProtocol")
         self.typeDescription = "Client Protocol for the \(baseName) service."
+        self.asyncAwaitGeneration = asyncAwaitGeneration
     }
     
     public func getFileDescription(isGenerator: Bool) -> String {
@@ -65,6 +65,15 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                        operationDescription: operationDescription,
                                        delegate: delegate, invokeType: .eventLoopFutureAsync,
                                        forTypeAlias: true, isGenerator: isGenerator)
+            
+            if case .experimental = self.asyncAwaitGeneration {                
+                codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
+                                           operationDescription: operationDescription,
+                                           delegate: delegate, invokeType: .asyncFunction,
+                                           forTypeAlias: true, isGenerator: isGenerator,
+                                           prefixLine: "#if compiler(>=5.5) && $AsyncAwait",
+                                           postfixLine: "#endif")
+            }
         }
     }
     

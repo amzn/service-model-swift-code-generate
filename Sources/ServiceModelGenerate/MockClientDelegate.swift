@@ -25,10 +25,10 @@ import ServiceModelEntities
  */
 public struct MockClientDelegate: ModelClientDelegate {
     public let baseName: String
-    public let asyncResultType: AsyncResultType?
     public let isThrowingMock: Bool
     public let clientType: ClientType
     public let typeDescription: String
+    public let asyncAwaitGeneration: AsyncAwaitGeneration
     
     /**
      Initializer.
@@ -39,10 +39,10 @@ public struct MockClientDelegate: ModelClientDelegate {
         - asyncResultType: The name of the result type to use for async functions.
      */
     public init(baseName: String, isThrowingMock: Bool,
-                asyncResultType: AsyncResultType? = nil) {
+                asyncAwaitGeneration: AsyncAwaitGeneration) {
         self.baseName = baseName
         self.isThrowingMock = isThrowingMock
-        self.asyncResultType = asyncResultType
+        self.asyncAwaitGeneration = asyncAwaitGeneration
         
         let name: String
         if isThrowingMock {
@@ -66,7 +66,12 @@ public struct MockClientDelegate: ModelClientDelegate {
                                     delegate: ModelClientDelegate,
                                     fileBuilder: FileBuilder,
                                     isGenerator: Bool) {
-        // no custom file header
+        fileBuilder.appendLine("""
+            
+            #if compiler(>=5.5) && $AsyncAwait
+            import _NIOConcurrency
+            #endif
+            """)
     }
     
     private func addCommonFunctionsForOperation(name: String, index: Int,
@@ -198,7 +203,19 @@ public struct MockClientDelegate: ModelClientDelegate {
                                             protocolTypeName: String, operationName: String) {
         fileBuilder.incIndent()
         
-        addAsyncOverrideOperationCall(fileBuilder: fileBuilder, operationName: operationName, hasInput: hasInput)
+        let returnCallPrefix: String
+        let returnCallPostfix: String
+        switch invokeType {
+        case .eventLoopFutureAsync:
+            returnCallPrefix = ""
+            returnCallPostfix = ""
+        case .asyncFunction:
+            returnCallPrefix = "try await "
+            returnCallPostfix = ".get()"
+        }
+        
+        addAsyncOverrideOperationCall(fileBuilder: fileBuilder, operationName: operationName, hasInput: hasInput,
+                                      returnCallPrefix: returnCallPrefix, returnCallPostfix: returnCallPostfix)
         
         // return a default instance of the output type
         if let outputType = functionOutputType {
@@ -210,14 +227,14 @@ public struct MockClientDelegate: ModelClientDelegate {
                 let promise = self.eventLoop.makePromise(of: \(typeName).self)
                 promise.succeed(result)
 
-                return promise.futureResult
+                return \(returnCallPrefix)promise.futureResult\(returnCallPostfix)
                 """)
         } else {
             fileBuilder.appendLine("""
                 let promise = self.eventLoop.makePromise(of: Void.self)
                 promise.succeed(())
 
-                return promise.futureResult
+                return \(returnCallPrefix)promise.futureResult\(returnCallPostfix)
                 """)
         }
     
@@ -229,7 +246,19 @@ public struct MockClientDelegate: ModelClientDelegate {
                                                 invokeType: InvokeType, operationName: String) {
         fileBuilder.incIndent()
         
-        addAsyncOverrideOperationCall(fileBuilder: fileBuilder, operationName: operationName, hasInput: hasInput)
+        let returnCallPrefix: String
+        let returnCallPostfix: String
+        switch invokeType {
+        case .eventLoopFutureAsync:
+            returnCallPrefix = ""
+            returnCallPostfix = ""
+        case .asyncFunction:
+            returnCallPrefix = "try await "
+            returnCallPostfix = ".get()"
+        }
+        
+        addAsyncOverrideOperationCall(fileBuilder: fileBuilder, operationName: operationName, hasInput: hasInput,
+                                      returnCallPrefix: returnCallPrefix, returnCallPostfix: returnCallPostfix)
         
         if let outputType = functionOutputType {
             let typeName = outputType.getNormalizedTypeName(forModel: codeGenerator.model)
@@ -238,14 +267,14 @@ public struct MockClientDelegate: ModelClientDelegate {
                 let promise = self.eventLoop.makePromise(of: \(typeName).self)
                 promise.fail(error)
 
-                return promise.futureResult
+                return \(returnCallPrefix)promise.futureResult\(returnCallPostfix)
                 """)
         } else {
             fileBuilder.appendLine("""
                 let promise = self.eventLoop.makePromise(of: Void.self)
                 promise.fail(error)
 
-                return promise.futureResult
+                return \(returnCallPrefix)promise.futureResult\(returnCallPostfix)
                 """)
         }
     
@@ -253,14 +282,15 @@ public struct MockClientDelegate: ModelClientDelegate {
     }
     
     private func addAsyncOverrideOperationCall(fileBuilder: FileBuilder,
-                                               operationName: String, hasInput: Bool) {
+                                               operationName: String, hasInput: Bool,
+                                               returnCallPrefix: String, returnCallPostfix: String) {
         let variableName = operationName.upperToLowerCamelCase
         
         let customFunctionParameters = hasInput ? "input" : ""
     
         fileBuilder.appendLine("""
                 if let \(variableName)EventLoopFutureAsyncOverride = \(variableName)EventLoopFutureAsyncOverride {
-                    return \(variableName)EventLoopFutureAsyncOverride(\(customFunctionParameters))
+                    return \(returnCallPrefix)\(variableName)EventLoopFutureAsyncOverride(\(customFunctionParameters))\(returnCallPostfix)
                 }
                 """)
         fileBuilder.appendEmptyLine()
