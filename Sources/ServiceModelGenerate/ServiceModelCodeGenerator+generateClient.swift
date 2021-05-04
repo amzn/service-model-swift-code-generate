@@ -101,14 +101,19 @@ public extension ServiceModelCodeGenerator {
                              operationDescription: operationDescription,
                              delegate: delegate, invokeType: .eventLoopFutureAsync,
                              forTypeAlias: false, isGenerator: isGenerator)
-                
-                if case .experimental = delegate.asyncAwaitGeneration {
+            }
+            
+            // for each of the operations
+            if case .experimental = delegate.asyncAwaitGeneration {
+                for (index, operation) in sortedOperations.enumerated() {
+                    let (name, operationDescription) = operation
+                    
                     addOperation(fileBuilder: fileBuilder, name: name,
                                  operationDescription: operationDescription,
                                  delegate: delegate, invokeType: .asyncFunction,
                                  forTypeAlias: false, isGenerator: isGenerator,
-                                 prefixLine: "#if compiler(>=5.5) && $AsyncAwait",
-                                 postfixLine: "#endif")
+                                 prefixLine: (index == 0) ? "#if compiler(>=5.5) && $AsyncAwait" : nil,
+                                 postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
                 }
             }
         }
@@ -328,9 +333,9 @@ public extension ServiceModelCodeGenerator {
         if !forTypeAlias {
             switch invokeType {
             case .eventLoopFutureAsync:
-                invokeDescription = "returning immediately with an `EventLoopFuture` that will be completed with the result at a later time"
+                invokeDescription = "returning immediately with an `EventLoopFuture` that will be completed at a later time"
             case .asyncFunction:
-                invokeDescription = "returning aynchronously with the result at a later time"
+                invokeDescription = "returning aynchronously at a later time once the operation is complete"
             }
             fileBuilder.appendEmptyLine()
         } else {

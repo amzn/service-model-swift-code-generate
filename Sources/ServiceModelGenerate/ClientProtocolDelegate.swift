@@ -65,14 +65,19 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                        operationDescription: operationDescription,
                                        delegate: delegate, invokeType: .eventLoopFutureAsync,
                                        forTypeAlias: true, isGenerator: isGenerator)
-            
-            if case .experimental = self.asyncAwaitGeneration {                
+        }
+        
+        // for each of the operations
+        if case .experimental = self.asyncAwaitGeneration {
+            for (index, operation) in sortedOperations.enumerated() {
+                let (name, operationDescription) = operation
+                
                 codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
                                            operationDescription: operationDescription,
                                            delegate: delegate, invokeType: .asyncFunction,
                                            forTypeAlias: true, isGenerator: isGenerator,
-                                           prefixLine: "#if compiler(>=5.5) && $AsyncAwait",
-                                           postfixLine: "#endif")
+                                           prefixLine: (index == 0) ? "#if compiler(>=5.5) && $AsyncAwait" : nil,
+                                           postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
             }
         }
     }
