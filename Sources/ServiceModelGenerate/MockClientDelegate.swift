@@ -66,12 +66,14 @@ public struct MockClientDelegate: ModelClientDelegate {
                                     delegate: ModelClientDelegate,
                                     fileBuilder: FileBuilder,
                                     isGenerator: Bool) {
-        fileBuilder.appendLine("""
-            
-            #if compiler(>=5.5) && $AsyncAwait
-            import _NIOConcurrency
-            #endif
-            """)
+        if case .experimental = self.asyncAwaitGeneration {
+            fileBuilder.appendLine("""
+                
+                #if compiler(>=5.5) && $AsyncAwait
+                import _NIOConcurrency
+                #endif
+                """)
+        }
     }
     
     private func addCommonFunctionsForOperation(name: String, index: Int,
