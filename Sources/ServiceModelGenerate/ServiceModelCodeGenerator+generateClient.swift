@@ -102,6 +102,20 @@ public extension ServiceModelCodeGenerator {
                              delegate: delegate, invokeType: .eventLoopFutureAsync,
                              forTypeAlias: false, isGenerator: isGenerator)
             }
+            
+            // for each of the operations
+            if case .experimental = delegate.asyncAwaitGeneration {
+                for (index, operation) in sortedOperations.enumerated() {
+                    let (name, operationDescription) = operation
+                    
+                    addOperation(fileBuilder: fileBuilder, name: name,
+                                 operationDescription: operationDescription,
+                                 delegate: delegate, invokeType: .asyncFunction,
+                                 forTypeAlias: false, isGenerator: isGenerator,
+                                 prefixLine: (index == 0) ? "#if compiler(>=5.5) && $AsyncAwait" : nil,
+                                 postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
+                }
+            }
         }
         fileBuilder.appendLine("}", preDec: true)
         let baseFilePath = applicationDescription.baseFilePath
@@ -155,12 +169,24 @@ public extension ServiceModelCodeGenerator {
                     fileBuilder.appendLine(" - Returns: A future to the \(type) object to be passed back from the caller of this operation.")
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
                 }
+            case .asyncFunction:
+                output = " async throws -> \(baseName)Model.\(type)"
+                if !forTypeAlias {
+                    fileBuilder.appendLine(" - Returns: The \(type) object to be passed back from the caller of this async operation.")
+                    fileBuilder.appendLine("     Will be validated before being returned to caller.")
+                }
             }
             functionOutputType = type
         } else {
             switch invokeType {
             case .eventLoopFutureAsync:
                 output = " -> EventLoopFuture<Void>"
+            case .asyncFunction:
+                if forTypeAlias {
+                    output = " async throws -> ()"
+                } else {
+                    output = " async throws"
+                }
             }
             
             functionOutputType = nil
@@ -174,14 +200,14 @@ public extension ServiceModelCodeGenerator {
                            invokeType: InvokeType, forTypeAlias: Bool) -> String {
         let errors: String
         switch invokeType {
-        case .eventLoopFutureAsync:
+        case .eventLoopFutureAsync, .asyncFunction:
             errors = ""
         }
         if !operationDescription.errors.isEmpty && !forTypeAlias {
             var description: String
             
             switch invokeType {
-            case .eventLoopFutureAsync:
+            case .eventLoopFutureAsync, .asyncFunction:
                 description = "       The possible errors are: "
             }
             
@@ -202,14 +228,14 @@ public extension ServiceModelCodeGenerator {
                                                    declarationPostfix: String) {
         if !forTypeAlias {
             switch invokeType {
-            case .eventLoopFutureAsync:
+            case .eventLoopFutureAsync, .asyncFunction:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)()\(errors)\(output)\(declarationPostfix)
                     """)
             }
         } else {
             switch invokeType {
-            case .eventLoopFutureAsync:
+            case .eventLoopFutureAsync, .asyncFunction:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = ()\(errors)\(output)\(declarationPostfix)
                     """)
@@ -222,7 +248,7 @@ public extension ServiceModelCodeGenerator {
                                                  errors: String, output: String, declarationPostfix: String) {
         if !forTypeAlias {
             switch invokeType {
-            case .eventLoopFutureAsync:
+            case .eventLoopFutureAsync, .asyncFunction:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)func \(functionName)(
                             \(input))\(errors)\(output)\(declarationPostfix)
@@ -230,7 +256,7 @@ public extension ServiceModelCodeGenerator {
             }
         } else {
             switch invokeType {
-            case .eventLoopFutureAsync:
+            case .eventLoopFutureAsync, .asyncFunction:
                 fileBuilder.appendLine("""
                     \(declarationPrefix)typealias \(functionName)\(invokeType.rawValue)Type = (
                             \(input))\(errors)\(output)\(declarationPostfix)
@@ -302,14 +328,25 @@ public extension ServiceModelCodeGenerator {
                                operationDescription: OperationDescription,
                                delegate: ModelClientDelegate,
                                invokeType: InvokeType, forTypeAlias: Bool,
-                               isGenerator: Bool) {
+                               isGenerator: Bool, prefixLine: String? = nil, postfixLine: String? = nil) {
+        let invokeDescription: String?
         if !forTypeAlias {
-            let invokeDescription: String
             switch invokeType {
             case .eventLoopFutureAsync:
-                invokeDescription = "returning immediately with an `EventLoopFuture` that will be completed with the result at a later time"
+                invokeDescription = "returning immediately with an `EventLoopFuture` that will be completed at a later time"
+            case .asyncFunction:
+                invokeDescription = "returning aynchronously at a later time once the operation is complete"
             }
             fileBuilder.appendEmptyLine()
+        } else {
+            invokeDescription = nil
+        }
+        
+        if let prefixLine = prefixLine {
+            fileBuilder.appendLine(prefixLine)
+        }
+        
+        if let invokeDescription = invokeDescription {
             fileBuilder.appendLine("""
                 /**
                  Invokes the \(name) operation \(invokeDescription).
@@ -340,6 +377,10 @@ public extension ServiceModelCodeGenerator {
         addOperationBody(fileBuilder: fileBuilder, name: name, operationDescription: operationDescription,
                          delegate: delegate, invokeType: invokeType, forTypeAlias: forTypeAlias,
                          operationSignature: operationSignature, isGenerator: isGenerator)
+        
+        if let postfixLine = postfixLine {
+            fileBuilder.appendLine(postfixLine)
+        }
     }
     
     func addGeneratedFileHeader(fileBuilder: FileBuilder) {
@@ -377,12 +418,6 @@ public extension ServiceModelCodeGenerator {
         if !isGenerator {
             fileBuilder.appendLine("""
                 import NIO
-                """)
-        }
-        
-        if let libraryImport = delegate.asyncResultType?.libraryImport {
-            fileBuilder.appendLine("""
-                import \(libraryImport)
                 """)
         }
     }
