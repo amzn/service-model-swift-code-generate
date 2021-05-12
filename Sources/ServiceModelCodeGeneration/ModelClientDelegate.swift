@@ -18,7 +18,7 @@
 import Foundation
 import ServiceModelEntities
 
-public enum AsyncAwaitGeneration: String {
+public enum AsyncAwaitGeneration: String, Codable {
     case none = "NONE"
     case experimental = "EXPERIMENTAL"
 }
