@@ -117,7 +117,7 @@ public struct ServiceModelGenerate {
     }
     
     /**
-     Helper function to initialize code generation from the path to a service model.
+     Helper function to initialize code generation from the paths to service models.
  
      - Parameters:
          - modelDirectoryPaths: the paths to the service model files. Supports either xml, json or yaml encoded models.
@@ -189,4 +189,3 @@ public struct ServiceModelGenerate {
         }
     }
 }
-
