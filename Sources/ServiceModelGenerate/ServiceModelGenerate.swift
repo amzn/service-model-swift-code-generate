@@ -74,7 +74,7 @@ public struct ServiceModelGenerate {
      Helper function to initialize code generation from the path to a service model.
  
      - Parameters:
-         - modelDirectoryPath: the comma-separated paths to the service model directories. Supports either xml, json or yaml encoded models.
+         - modelDirectoryPath: the path to the service model files. Supports either xml, json or yaml encoded models.
          - fileExtension: the type of file extension to generate models for.
          - customizations: any customizations provided external to the model.
          - applicationDescription: the description of the application being code generated.
@@ -90,9 +90,53 @@ public struct ServiceModelGenerate {
         modelOverride: ModelOverride?,
         generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws -> ModelType {
         
-        let modelDirectoryPathList = modelDirectoryPath.components(separatedBy: ",")
+        let dataList = try getDataListForModelFiles(atPath: modelDirectoryPath, fileExtension: fileExtension)
         
-        let dataList = try modelDirectoryPathList.map { path in
+        let modelFormat: ModelFormat
+        if fileExtension == "yaml" || fileExtension == "yml" {
+            modelFormat = .yaml
+        } else if fileExtension == "json" {
+            modelFormat = .json
+        } else if fileExtension == "xml" {
+            modelFormat = .xml
+        } else {
+            fatalError("Unknown '\(fileExtension) extension.'")
+        }
+        
+        let model = try ModelType.create(dataList: dataList, modelFormat: modelFormat, modelOverride: modelOverride)
+        
+        let codeGenerator = ServiceModelCodeGenerator(
+            model: model,
+            applicationDescription: applicationDescription,
+            customizations: customizations,
+            modelOverride: modelOverride)
+        
+        try generatorFunction(codeGenerator, model)
+        
+        return model
+    }
+    
+    /**
+     Helper function to initialize code generation from the path to a service model.
+ 
+     - Parameters:
+         - modelDirectoryPaths: the paths to the service model files. Supports either xml, json or yaml encoded models.
+         - fileExtension: the type of file extension to generate models for.
+         - customizations: any customizations provided external to the model.
+         - applicationDescription: the description of the application being code generated.
+         - modelOverride: any overrides for values in the model.
+         - generatorFunction: a function that will be provided a code generator and an instantiated ServiceModel
+                              which can be used to generate any code that is required.
+     */
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelDirectoryPaths: [String],
+        fileExtension: String,
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws -> ModelType {
+        
+        let dataList = try modelDirectoryPaths.map { path in
             try getDataListForModelFiles(atPath: path, fileExtension: fileExtension)
         }.flatMap { $0 }
         
@@ -145,3 +189,4 @@ public struct ServiceModelGenerate {
         }
     }
 }
+
