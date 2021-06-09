@@ -274,6 +274,10 @@ public extension ServiceModelCodeGenerator {
         let functionName: String
         if !forTypeAlias {
             fileBuilder.appendLine(" */")
+            
+            if case .asyncFunction = invokeType {
+                fileBuilder.appendLine("@available(macOS 9999, iOS 9999, watchOS 9999, tvOS 9999, *)")
+            }
             functionName = name.upperToLowerCamelCase
         } else {
             functionName = name.getNormalizedTypeName(forModel: model)
