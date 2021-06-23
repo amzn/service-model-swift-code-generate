@@ -45,17 +45,20 @@ public struct MockClientDelegate: ModelClientDelegate {
         self.asyncAwaitGeneration = asyncAwaitGeneration
         
         let name: String
+        let additionalConformingProtocol: String
         if isThrowingMock {
             name = "Throwing\(baseName)Client"
+            additionalConformingProtocol = "MockThrowingClientProtocol"
             self.typeDescription = "Mock Client for the \(baseName) service that by default always throws from its methods."
         } else {
             name = "Mock\(baseName)Client"
+            additionalConformingProtocol = "MockClientProtocol"
             self.typeDescription = "Mock Client for the \(baseName) service by default "
             + "returns the `__default` property of its return type."
         }
         
         self.clientType = .struct(name: name, genericParameters: [],
-                                  conformingProtocolNames: ["\(baseName)ClientProtocol"])
+                                  conformingProtocolNames: ["\(baseName)ClientProtocol", additionalConformingProtocol])
     }
     
     public func getFileDescription(isGenerator: Bool) -> String {
@@ -66,11 +69,15 @@ public struct MockClientDelegate: ModelClientDelegate {
                                     delegate: ModelClientDelegate,
                                     fileBuilder: FileBuilder,
                                     isGenerator: Bool) {
+        fileBuilder.appendLine("""
+            import SmokeAWSHttp
+            """)
+        
         if case .experimental = self.asyncAwaitGeneration {
             fileBuilder.appendLine("""
                 
-                #if compiler(>=5.5) && $AsyncAwait
-                import _NIOConcurrency
+                #if compiler(>=5.5)
+                import _SmokeAWSHttpConcurrency
                 #endif
                 """)
         }
@@ -86,7 +93,8 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
         
         let variableName = name.upperToLowerCamelCase
-        fileBuilder.appendLine("\(variableName)EventLoopFutureAsync: \(name.startingWithUppercase)EventLoopFutureAsyncType? = nil\(postfix)")
+        fileBuilder.appendLine("\(variableName)EventLoopFutureAsync: \(name.startingWithUppercase)EventLoopFutureAsyncType? = nil,")
+        fileBuilder.appendLine("\(variableName)FunctionType: \(name.startingWithUppercase)FunctionType? = nil\(postfix)")
     }
     
     public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator,
@@ -107,6 +115,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
             fileBuilder.appendLine("let \(variableName)EventLoopFutureAsyncOverride: \(name.startingWithUppercase)EventLoopFutureAsyncType?")
+            fileBuilder.appendLine("let \(variableName)FunctionTypeOverride: \(name.startingWithUppercase)FunctionType?")
         }
         fileBuilder.appendEmptyLine()
         
@@ -164,6 +173,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
             fileBuilder.appendLine("self.\(variableName)EventLoopFutureAsyncOverride = \(variableName)EventLoopFutureAsync")
+            fileBuilder.appendLine("self.\(variableName)FunctionTypeOverride = \(variableName)FunctionType")
         }
         
         fileBuilder.decIndent()
@@ -199,103 +209,207 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
     }
     
+    private func delegateMockImplementationCall(codeGenerator: ServiceModelCodeGenerator,
+                                                functionPrefix: String, functionInfix: String,
+                                                fileBuilder: FileBuilder, hasInput: Bool,
+                                                functionOutputType: String?, operationName: String) {
+        let variableName = operationName.upperToLowerCamelCase
+        
+        if let outputType = functionOutputType {
+            let typeName = outputType.getNormalizedTypeName(forModel: codeGenerator.model)
+            
+            if hasInput {
+                fileBuilder.appendLine("""
+                    return \(functionPrefix)mock\(functionInfix)ExecuteWithInputWithOutput(
+                        input: input,
+                        defaultResult: \(typeName).__default,
+                        eventLoop: self.eventLoop,
+                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
+                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                    """)
+            } else {
+                fileBuilder.appendLine("""
+                    return \(functionPrefix)mock\(functionInfix)ExecuteWithoutInputWithOutput(
+                        defaultResult: \(typeName).__default,
+                        eventLoop: self.eventLoop,
+                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
+                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                    """)
+            }
+        } else {
+            if hasInput {
+                fileBuilder.appendLine("""
+                    return \(functionPrefix)mock\(functionInfix)ExecuteWithInputWithoutOutput(
+                        input: input,
+                        eventLoop: self.eventLoop,
+                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
+                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                    """)
+            } else {
+                fileBuilder.appendLine("""
+                    return \(functionPrefix)mock\(functionInfix)ExecuteWithoutInputWithoutOutput(
+                        eventLoop: self.eventLoop,
+                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
+                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                    """)
+            }
+        }
+    }
+    
     private func addMockClientOperationBody(codeGenerator: ServiceModelCodeGenerator,
                                             fileBuilder: FileBuilder, hasInput: Bool,
                                             functionOutputType: String?, invokeType: InvokeType,
                                             protocolTypeName: String, operationName: String) {
-        fileBuilder.incIndent()
-        
-        let returnCallPrefix: String
-        let returnCallPostfix: String
+        let functionPrefix: String
+        let functionInfix: String
         switch invokeType {
-        case .eventLoopFutureAsync:
-            returnCallPrefix = ""
-            returnCallPostfix = ""
         case .asyncFunction:
-            returnCallPrefix = "try await "
-            returnCallPostfix = ".get()"
+            functionPrefix = "try await "
+            functionInfix = ""
+        case .eventLoopFutureAsync:
+            functionPrefix = ""
+            functionInfix = "EventLoopFuture"
         }
         
-        addAsyncOverrideOperationCall(fileBuilder: fileBuilder, operationName: operationName, hasInput: hasInput,
-                                      returnCallPrefix: returnCallPrefix, returnCallPostfix: returnCallPostfix)
+        fileBuilder.incIndent()
         
-        // return a default instance of the output type
-        if let outputType = functionOutputType {
-            let typeName = outputType.getNormalizedTypeName(forModel: codeGenerator.model)
+        if case .experimental = self.asyncAwaitGeneration, invokeType == .eventLoopFutureAsync {
+            fileBuilder.appendLine("#if compiler(>=5.5)", postInc: true)
+            fileBuilder.appendLine("if #available(macOS 12, iOS 15, tvOS 15, watchOS 8, *) {", postInc: true)
             
-            fileBuilder.appendLine("""
-                let result = \(typeName).__default
-
-                let promise = self.eventLoop.makePromise(of: \(typeName).self)
-                promise.succeed(result)
-
-                return \(returnCallPrefix)promise.futureResult\(returnCallPostfix)
-                """)
+            delegateMockImplementationCall(codeGenerator: codeGenerator,
+                                           functionPrefix: functionPrefix,
+                                           functionInfix: "AsyncAwareEventLoopFuture",
+                                           fileBuilder: fileBuilder,
+                                           hasInput: hasInput,
+                                           functionOutputType: functionOutputType,
+                                           operationName: operationName)
+            fileBuilder.appendLine("} else {", preDec: true, postInc: true)
+            fileBuilder.appendLine("fatalError( \"Swift >=5.5 unsupported below (macOS 12, iOS 15, tvOS 15, watchOS 8)\")")
+            fileBuilder.appendLine("}", preDec: true)
+            fileBuilder.appendLine("#else", preDec: true, postInc: true)
+            
+            delegateMockImplementationCall(codeGenerator: codeGenerator,
+                                           functionPrefix: functionPrefix,
+                                           functionInfix: functionInfix,
+                                           fileBuilder: fileBuilder,
+                                           hasInput: hasInput,
+                                           functionOutputType: functionOutputType,
+                                           operationName: operationName)
+            
+            fileBuilder.appendLine("#endif", preDec: true)
         } else {
-            fileBuilder.appendLine("""
-                let promise = self.eventLoop.makePromise(of: Void.self)
-                promise.succeed(())
-
-                return \(returnCallPrefix)promise.futureResult\(returnCallPostfix)
-                """)
+            delegateMockImplementationCall(codeGenerator: codeGenerator,
+                                           functionPrefix: functionPrefix,
+                                           functionInfix: functionInfix,
+                                           fileBuilder: fileBuilder,
+                                           hasInput: hasInput,
+                                           functionOutputType: functionOutputType,
+                                           operationName: operationName)
         }
     
         fileBuilder.appendLine("}", preDec: true)
+    }
+    
+    private func delegateMockThrowingImplementationCall(codeGenerator: ServiceModelCodeGenerator,
+                                                        functionPrefix: String, functionInfix: String,
+                                                        fileBuilder: FileBuilder, hasInput: Bool,
+                                                        functionOutputType: String?, operationName: String) {
+        let variableName = operationName.upperToLowerCamelCase
+        
+        if functionOutputType != nil {
+            if hasInput {
+                fileBuilder.appendLine("""
+                    return \(functionPrefix)mockThrowing\(functionInfix)ExecuteWithInputWithOutput(
+                        input: input,
+                        defaultError: self.error,
+                        eventLoop: self.eventLoop,
+                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
+                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                    """)
+            } else {
+                fileBuilder.appendLine("""
+                    return \(functionPrefix)mockThrowing\(functionInfix)ExecuteWithoutInputWithOutput(
+                        defaultError: self.error,
+                        eventLoop: self.eventLoop,
+                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
+                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                    """)
+            }
+        } else {
+            if hasInput {
+                fileBuilder.appendLine("""
+                    return \(functionPrefix)mockThrowing\(functionInfix)ExecuteWithInputWithoutOutput(
+                        input: input,
+                        defaultError: self.error,
+                        eventLoop: self.eventLoop,
+                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
+                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                    """)
+            } else {
+                fileBuilder.appendLine("""
+                    return \(functionPrefix)mockThrowing\(functionInfix)ExecuteWithoutInputWithoutOutput(
+                        defaultError: self.error,
+                        eventLoop: self.eventLoop,
+                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
+                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                    """)
+            }
+        }
     }
     
     private func addThrowingClientOperationBody(codeGenerator: ServiceModelCodeGenerator,
                                                 fileBuilder: FileBuilder, hasInput: Bool, functionOutputType: String?,
                                                 invokeType: InvokeType, operationName: String) {
-        fileBuilder.incIndent()
-        
-        let returnCallPrefix: String
-        let returnCallPostfix: String
+        let functionPrefix: String
+        let functionInfix: String
         switch invokeType {
-        case .eventLoopFutureAsync:
-            returnCallPrefix = ""
-            returnCallPostfix = ""
         case .asyncFunction:
-            returnCallPrefix = "try await "
-            returnCallPostfix = ".get()"
+            functionPrefix = "try await "
+            functionInfix = ""
+        case .eventLoopFutureAsync:
+            functionPrefix = ""
+            functionInfix = "EventLoopFuture"
         }
         
-        addAsyncOverrideOperationCall(fileBuilder: fileBuilder, operationName: operationName, hasInput: hasInput,
-                                      returnCallPrefix: returnCallPrefix, returnCallPostfix: returnCallPostfix)
+        fileBuilder.incIndent()
         
-        if let outputType = functionOutputType {
-            let typeName = outputType.getNormalizedTypeName(forModel: codeGenerator.model)
+        if case .experimental = self.asyncAwaitGeneration, invokeType == .eventLoopFutureAsync {
+            fileBuilder.appendLine("#if compiler(>=5.5)", postInc: true)
+            fileBuilder.appendLine("if #available(macOS 12, iOS 15, tvOS 15, watchOS 8, *) {", postInc: true)
             
-            fileBuilder.appendLine("""
-                let promise = self.eventLoop.makePromise(of: \(typeName).self)
-                promise.fail(error)
-
-                return \(returnCallPrefix)promise.futureResult\(returnCallPostfix)
-                """)
+            delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,
+                                                   functionPrefix: functionPrefix,
+                                                   functionInfix: "AsyncAwareEventLoopFuture",
+                                                   fileBuilder: fileBuilder,
+                                                   hasInput: hasInput,
+                                                   functionOutputType: functionOutputType,
+                                                   operationName: operationName)
+            fileBuilder.appendLine("} else {", preDec: true, postInc: true)
+            fileBuilder.appendLine("fatalError( \"Swift >=5.5 unsupported below (macOS 12, iOS 15, tvOS 15, watchOS 8)\")")
+            fileBuilder.appendLine("}", preDec: true)
+            fileBuilder.appendLine("#else", preDec: true, postInc: true)
+            
+            delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,
+                                                   functionPrefix: functionPrefix,
+                                                   functionInfix: functionInfix,
+                                                   fileBuilder: fileBuilder,
+                                                   hasInput: hasInput,
+                                                   functionOutputType: functionOutputType,
+                                                   operationName: operationName)
+            
+            fileBuilder.appendLine("#endif", preDec: true)
         } else {
-            fileBuilder.appendLine("""
-                let promise = self.eventLoop.makePromise(of: Void.self)
-                promise.fail(error)
-
-                return \(returnCallPrefix)promise.futureResult\(returnCallPostfix)
-                """)
+            delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,
+                                                   functionPrefix: functionPrefix,
+                                                   functionInfix: functionInfix,
+                                                   fileBuilder: fileBuilder,
+                                                   hasInput: hasInput,
+                                                   functionOutputType: functionOutputType,
+                                                   operationName: operationName)
         }
     
         fileBuilder.appendLine("}", preDec: true)
-    }
-    
-    private func addAsyncOverrideOperationCall(fileBuilder: FileBuilder,
-                                               operationName: String, hasInput: Bool,
-                                               returnCallPrefix: String, returnCallPostfix: String) {
-        let variableName = operationName.upperToLowerCamelCase
-        
-        let customFunctionParameters = hasInput ? "input" : ""
-    
-        fileBuilder.appendLine("""
-                if let \(variableName)EventLoopFutureAsyncOverride = \(variableName)EventLoopFutureAsyncOverride {
-                    return \(returnCallPrefix)\(variableName)EventLoopFutureAsyncOverride(\(customFunctionParameters))\(returnCallPostfix)
-                }
-                """)
-        fileBuilder.appendEmptyLine()
     }
     
     private var protocolTypeName: String {

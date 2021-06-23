@@ -99,7 +99,7 @@ public extension ServiceModelCodeGenerator {
             for (name, operationDescription) in sortedOperations {
                 addOperation(fileBuilder: fileBuilder, name: name,
                              operationDescription: operationDescription,
-                             delegate: delegate, invokeType: .eventLoopFutureAsync,
+                             delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
                              forTypeAlias: false, isGenerator: isGenerator)
             }
             
@@ -110,9 +110,9 @@ public extension ServiceModelCodeGenerator {
                     
                     addOperation(fileBuilder: fileBuilder, name: name,
                                  operationDescription: operationDescription,
-                                 delegate: delegate, invokeType: .asyncFunction,
+                                 delegate: delegate, operationInvokeType: .asyncFunction,
                                  forTypeAlias: false, isGenerator: isGenerator,
-                                 prefixLine: (index == 0) ? "#if compiler(>=5.5) && $AsyncAwait" : nil,
+                                 prefixLine: (index == 0) ? "#if compiler(>=5.5)" : nil,
                                  postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
                 }
             }
@@ -154,7 +154,7 @@ public extension ServiceModelCodeGenerator {
     private func addOperationOutput(fileBuilder: FileBuilder,
                                     operationDescription: OperationDescription,
                                     delegate: ModelClientDelegate,
-                                    labelPrefix: String, invokeType: InvokeType,
+                                    labelPrefix: String, operationInvokeType: OperationInvokeType,
                                     forTypeAlias: Bool) -> (output: String, functionOutputType: String?) {
         let output: String
         let functionOutputType: String?
@@ -162,7 +162,7 @@ public extension ServiceModelCodeGenerator {
         if let outputType = operationDescription.output {
             let type = outputType.getNormalizedTypeName(forModel: model)
             
-            switch invokeType {
+            switch operationInvokeType {
             case .eventLoopFutureAsync:
                 output = " -> EventLoopFuture<\(baseName)Model.\(type)>"
                 if !forTypeAlias {
@@ -175,10 +175,16 @@ public extension ServiceModelCodeGenerator {
                     fileBuilder.appendLine(" - Returns: The \(type) object to be passed back from the caller of this async operation.")
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
                 }
+            case .syncFunctionForNoAsyncAwaitSupport:
+                output = " throws -> \(baseName)Model.\(type)"
+                if !forTypeAlias {
+                    fileBuilder.appendLine(" - Returns: The \(type) object to be passed back from the caller of this async operation.")
+                    fileBuilder.appendLine("     Will be validated before being returned to caller.")
+                }
             }
             functionOutputType = type
         } else {
-            switch invokeType {
+            switch operationInvokeType {
             case .eventLoopFutureAsync:
                 output = " -> EventLoopFuture<Void>"
             case .asyncFunction:
@@ -186,6 +192,12 @@ public extension ServiceModelCodeGenerator {
                     output = " async throws -> ()"
                 } else {
                     output = " async throws"
+                }
+            case .syncFunctionForNoAsyncAwaitSupport:
+                if forTypeAlias {
+                    output = " throws -> ()"
+                } else {
+                    output = " throws"
                 }
             }
             
@@ -276,7 +288,7 @@ public extension ServiceModelCodeGenerator {
             fileBuilder.appendLine(" */")
             
             if case .asyncFunction = invokeType {
-                fileBuilder.appendLine("@available(macOS 9999, iOS 9999, watchOS 9999, tvOS 9999, *)")
+                fileBuilder.appendLine("@available(macOS 12, iOS 15, tvOS 15, watchOS 8, *)")
             }
             functionName = name.upperToLowerCamelCase
         } else {
@@ -316,6 +328,12 @@ public extension ServiceModelCodeGenerator {
                                   isGenerator: isGenerator)
     }
     
+    enum OperationInvokeType {
+        case eventLoopFutureAsync
+        case asyncFunction
+        case syncFunctionForNoAsyncAwaitSupport
+    }
+    
     /**
      Generates an operation on the client.
  
@@ -331,8 +349,18 @@ public extension ServiceModelCodeGenerator {
     internal func addOperation(fileBuilder: FileBuilder, name: String,
                                operationDescription: OperationDescription,
                                delegate: ModelClientDelegate,
-                               invokeType: InvokeType, forTypeAlias: Bool,
+                               operationInvokeType: OperationInvokeType, forTypeAlias: Bool,
                                isGenerator: Bool, prefixLine: String? = nil, postfixLine: String? = nil) {
+        // OperationInvokeType.syncFunctionForNoAsyncAwaitSupport is only an internal invoke state
+        // for legacy support so we ignore it other than for where it is necessary
+        let invokeType: InvokeType
+        switch operationInvokeType {
+        case .eventLoopFutureAsync:
+            invokeType = .eventLoopFutureAsync
+        case .asyncFunction, .syncFunctionForNoAsyncAwaitSupport:
+            invokeType = .asyncFunction
+        }
+        
         let invokeDescription: String?
         if !forTypeAlias {
             switch invokeType {
@@ -365,8 +393,8 @@ public extension ServiceModelCodeGenerator {
         
         // if there is output
         let operationOuput = addOperationOutput(fileBuilder: fileBuilder, operationDescription: operationDescription,
-                                                delegate: delegate, labelPrefix: labelPrefix, invokeType: invokeType,
-                                                forTypeAlias: forTypeAlias)
+                                                delegate: delegate, labelPrefix: labelPrefix,
+                                                operationInvokeType: operationInvokeType, forTypeAlias: forTypeAlias)
         
         // if there can be errors
         let errors = addOperationError(fileBuilder: fileBuilder, operationDescription: operationDescription,
