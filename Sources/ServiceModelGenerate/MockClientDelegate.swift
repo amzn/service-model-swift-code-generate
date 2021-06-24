@@ -94,7 +94,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         
         let variableName = name.upperToLowerCamelCase
         fileBuilder.appendLine("\(variableName)EventLoopFutureAsync: \(name.startingWithUppercase)EventLoopFutureAsyncType? = nil,")
-        fileBuilder.appendLine("\(variableName)FunctionType: \(name.startingWithUppercase)FunctionType? = nil\(postfix)")
+        fileBuilder.appendLine("\(variableName): \(name.startingWithUppercase)FunctionType? = nil\(postfix)")
     }
     
     public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator,
@@ -115,7 +115,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
             fileBuilder.appendLine("let \(variableName)EventLoopFutureAsyncOverride: \(name.startingWithUppercase)EventLoopFutureAsyncType?")
-            fileBuilder.appendLine("let \(variableName)FunctionTypeOverride: \(name.startingWithUppercase)FunctionType?")
+            fileBuilder.appendLine("let \(variableName)FunctionOverride: \(name.startingWithUppercase)FunctionType?")
         }
         fileBuilder.appendEmptyLine()
         
@@ -173,7 +173,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
             fileBuilder.appendLine("self.\(variableName)EventLoopFutureAsyncOverride = \(variableName)EventLoopFutureAsync")
-            fileBuilder.appendLine("self.\(variableName)FunctionTypeOverride = \(variableName)FunctionType")
+            fileBuilder.appendLine("self.\(variableName)FunctionOverride = \(variableName)")
         }
         
         fileBuilder.decIndent()
@@ -224,16 +224,16 @@ public struct MockClientDelegate: ModelClientDelegate {
                         input: input,
                         defaultResult: \(typeName).__default,
                         eventLoop: self.eventLoop,
-                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
-                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                        functionOverride: self.\(variableName)FunctionOverride,
+                        eventLoopFutureFunctionOverride: self.\(variableName)EventLoopFutureAsyncOverride)
                     """)
             } else {
                 fileBuilder.appendLine("""
                     return \(functionPrefix)mock\(functionInfix)ExecuteWithoutInputWithOutput(
                         defaultResult: \(typeName).__default,
                         eventLoop: self.eventLoop,
-                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
-                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                        functionOverride: self.\(variableName)FunctionOverride,
+                        eventLoopFutureFunctionOverride: self.\(variableName)EventLoopFutureAsyncOverride)
                     """)
             }
         } else {
@@ -242,15 +242,15 @@ public struct MockClientDelegate: ModelClientDelegate {
                     return \(functionPrefix)mock\(functionInfix)ExecuteWithInputWithoutOutput(
                         input: input,
                         eventLoop: self.eventLoop,
-                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
-                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                        functionOverride: self.\(variableName)FunctionOverride,
+                        eventLoopFutureFunctionOverride: self.\(variableName)EventLoopFutureAsyncOverride)
                     """)
             } else {
                 fileBuilder.appendLine("""
                     return \(functionPrefix)mock\(functionInfix)ExecuteWithoutInputWithoutOutput(
                         eventLoop: self.eventLoop,
-                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
-                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                        functionOverride: self.\(variableName)FunctionOverride,
+                        eventLoopFutureFunctionOverride: self.\(variableName)EventLoopFutureAsyncOverride)
                     """)
             }
         }
@@ -324,16 +324,16 @@ public struct MockClientDelegate: ModelClientDelegate {
                         input: input,
                         defaultError: self.error,
                         eventLoop: self.eventLoop,
-                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
-                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                        functionOverride: self.\(variableName)FunctionOverride,
+                        eventLoopFutureFunctionOverride: self.\(variableName)EventLoopFutureAsyncOverride)
                     """)
             } else {
                 fileBuilder.appendLine("""
                     return \(functionPrefix)mockThrowing\(functionInfix)ExecuteWithoutInputWithOutput(
                         defaultError: self.error,
                         eventLoop: self.eventLoop,
-                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
-                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                        functionOverride: self.\(variableName)FunctionOverride,
+                        eventLoopFutureFunctionOverride: self.\(variableName)EventLoopFutureAsyncOverride)
                     """)
             }
         } else {
@@ -343,16 +343,16 @@ public struct MockClientDelegate: ModelClientDelegate {
                         input: input,
                         defaultError: self.error,
                         eventLoop: self.eventLoop,
-                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
-                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                        functionOverride: self.\(variableName)FunctionOverride,
+                        eventLoopFutureFunctionOverride: self.\(variableName)EventLoopFutureAsyncOverride)
                     """)
             } else {
                 fileBuilder.appendLine("""
                     return \(functionPrefix)mockThrowing\(functionInfix)ExecuteWithoutInputWithoutOutput(
                         defaultError: self.error,
                         eventLoop: self.eventLoop,
-                        functionTypeOverride: self.\(variableName)FunctionTypeOverride,
-                        eventLoopFutureTypeOverride: self.\(variableName)EventLoopFutureAsyncOverride)
+                        functionOverride: self.\(variableName)FunctionOverride,
+                        eventLoopFutureFunctionOverride: self.\(variableName)EventLoopFutureAsyncOverride)
                     """)
             }
         }
