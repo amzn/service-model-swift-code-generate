@@ -45,19 +45,19 @@ public struct MockClientDelegate: ModelClientDelegate {
         self.asyncAwaitGeneration = asyncAwaitGeneration
         
         let name: String
-        let additionalConformingProtocol: String
+        let implementationProviderProtocol: String
         if isThrowingMock {
             name = "Throwing\(baseName)Client"
-            additionalConformingProtocol = "MockThrowingClientProtocol"
+            implementationProviderProtocol = "MockThrowingClientProtocol"
             self.defaultBehaviourDescription = "throw the error provided at initialization."
         } else {
             name = "Mock\(baseName)Client"
-            additionalConformingProtocol = "MockClientProtocol"
+            implementationProviderProtocol = "MockClientProtocol"
             self.defaultBehaviourDescription = "return the `__default` property of its return type."
         }
         
         self.clientType = .struct(name: name, genericParameters: [],
-                                  conformingProtocolNames: ["\(baseName)ClientProtocol", additionalConformingProtocol])
+                                  conformingProtocolNames: ["\(baseName)ClientProtocol", implementationProviderProtocol])
     }
     
     public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
