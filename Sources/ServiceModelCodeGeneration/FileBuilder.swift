@@ -22,6 +22,7 @@ import Foundation
 public class FileBuilder {
     private(set) var builder: String = ""
     private var indentation: Int = 0
+    private var isInCommentBlock = false
     
     /// Default initializer.
     public init() {
@@ -31,6 +32,22 @@ public class FileBuilder {
     /// Appends an empty line to the output.
     public func appendEmptyLine() {
         builder += "\n"
+    }
+    
+    public func inCommentBlock(body: () -> ()) {
+        self.isInCommentBlock = true
+        
+        body()
+        
+        self.isInCommentBlock = false
+    }
+    
+    public func inCommentBlock(body: () throws -> ()) throws {
+        self.isInCommentBlock = true
+        
+        try body()
+        
+        self.isInCommentBlock = false
     }
     
     /**
@@ -57,6 +74,10 @@ public class FileBuilder {
         // add spaces based on the current indentation
         for _ in 0..<indentation {
             builder += "    "
+        }
+        
+        if isInCommentBlock {
+            builder += " "
         }
         
         builder += content

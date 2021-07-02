@@ -43,8 +43,11 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         self.asyncAwaitGeneration = asyncAwaitGeneration
     }
     
-    public func getFileDescription(isGenerator: Bool) -> String {
-        return self.typeDescription
+    public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
+                                   delegate: ModelClientDelegate,
+                                   fileBuilder: FileBuilder,
+                                   isGenerator: Bool) {
+        fileBuilder.appendLine(self.typeDescription)
     }
     
     public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,

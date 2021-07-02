@@ -39,7 +39,6 @@ public extension ServiceModelCodeGenerator {
         let baseName = applicationDescription.baseName
         
         let typeName: String
-        let typeDescription = delegate.getFileDescription(isGenerator: isGenerator)
         
         let typePostfix = isGenerator ? "Generator" : ""
         
@@ -81,7 +80,14 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.appendLine("""
             
             /**
-             \(typeDescription)
+            """)
+        
+        fileBuilder.inCommentBlock {
+            delegate.addTypeDescription(codeGenerator: self, delegate: delegate,
+                                        fileBuilder: fileBuilder, isGenerator: isGenerator)
+        }
+
+        fileBuilder.appendLine("""
              */
             public \(typeDecaration) {
             """)

@@ -27,7 +27,7 @@ public struct MockClientDelegate: ModelClientDelegate {
     public let baseName: String
     public let isThrowingMock: Bool
     public let clientType: ClientType
-    public let typeDescription: String
+    public let defaultBehaviourDescription: String
     public let asyncAwaitGeneration: AsyncAwaitGeneration
     
     /**
@@ -49,20 +49,37 @@ public struct MockClientDelegate: ModelClientDelegate {
         if isThrowingMock {
             name = "Throwing\(baseName)Client"
             additionalConformingProtocol = "MockThrowingClientProtocol"
-            self.typeDescription = "Mock Client for the \(baseName) service that by default always throws from its methods."
+            self.defaultBehaviourDescription = "throw the error provided at initialization."
         } else {
             name = "Mock\(baseName)Client"
             additionalConformingProtocol = "MockClientProtocol"
-            self.typeDescription = "Mock Client for the \(baseName) service by default "
-            + "returns the `__default` property of its return type."
+            self.defaultBehaviourDescription = "return the `__default` property of its return type."
         }
         
         self.clientType = .struct(name: name, genericParameters: [],
                                   conformingProtocolNames: ["\(baseName)ClientProtocol", additionalConformingProtocol])
     }
     
-    public func getFileDescription(isGenerator: Bool) -> String {
-        return self.typeDescription
+    public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
+                                   delegate: ModelClientDelegate,
+                                   fileBuilder: FileBuilder,
+                                   isGenerator: Bool) {
+        fileBuilder.appendLine("""
+            Mock Client for the \(self.baseName) service.
+            
+            At initialization, a function override directly returning a result - which can be async for Swift 5.5 or greater - and/or
+            an EventLoopFuture override returning an `EventLoopFuture` that will provide a result at a later time can be provided for each API
+            on this client.
+            
+            If the function override is provided, the corresponding API on this client will return the result provided by
+            this override or will throw any error thrown by the override.
+            
+            Otherwise, if the `EventLoopFuture` override is provided, the corresponding API on this client will return the result
+            provided by the `EventLoopFuture` or will throw any error that fails the future. This override is ignored if the first
+            function override is provided.
+            
+            Otherwise, the API will \(self.defaultBehaviourDescription)
+            """)
     }
     
     public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,
