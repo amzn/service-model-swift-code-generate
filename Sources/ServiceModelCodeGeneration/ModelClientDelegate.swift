@@ -32,9 +32,7 @@ public protocol ModelClientDelegate {
     var clientType: ClientType { get }
 
     var asyncAwaitGeneration: AsyncAwaitGeneration { get }
-    
-    func getFileDescription(isGenerator: Bool) -> String
-    
+        
     /**
      Add any custom file headers to the client file.
  
@@ -47,6 +45,19 @@ public protocol ModelClientDelegate {
                              delegate: ModelClientDelegate,
                              fileBuilder: FileBuilder,
                              isGenerator: Bool)
+    
+    /**
+     Adds the type description to the header comment.
+ 
+     - Parameters:
+        - codeGenerator: The code generator being used.
+        - delegate: the delegate being used.
+        - fileBuilder: The FileBuilder to output to.
+     */
+    func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
+                            delegate: ModelClientDelegate,
+                            fileBuilder: FileBuilder,
+                            isGenerator: Bool)
     
     /**
      Add any common functions to the body of the client type.
