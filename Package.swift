@@ -33,10 +33,14 @@ let package = Package(
         .library(
             name: "SwaggerServiceModel",
             targets: ["SwaggerServiceModel"]),
+        .library(
+            name: "OpenAPIServiceModel",
+            targets: ["OpenAPIServiceModel"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/tachyonics/SwaggerParser.git", from: "0.6.4"), 
+        .package(url: "https://github.com/tachyonics/SwaggerParser.git", from: "0.6.4"),
         .package(url: "https://github.com/jpsim/Yams.git", from: "4.0.0"),
+        .package(url: "https://github.com/Josh-Gearou/OpenAPIKit.git", from: "2.4.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -55,6 +59,15 @@ let package = Package(
                 .target(name: "ServiceModelCodeGeneration"),
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "SwaggerParser", package: "SwaggerParser"),
+                .product(name: "OpenAPIKit" , package: "OpenAPIKit"),
+            ]
+        ),
+        .target(
+            name: "OpenAPIServiceModel", dependencies: [
+                .target(name: "ServiceModelCodeGeneration"),
+                .product(name: "Yams", package: "Yams"),
+                .product(name: "SwaggerParser", package: "SwaggerParser"),
+                .product(name: "OpenAPIKit" , package: "OpenAPIKit"),
             ]
         ),
         .target(
