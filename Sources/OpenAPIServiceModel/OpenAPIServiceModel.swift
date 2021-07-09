@@ -47,7 +47,6 @@ public struct OpenAPIServiceModel: ServiceModel {
             definition = try decoder.decode(OpenAPI.Document.self, from: data)
         }
         
-        // Call of create OpenAPIModel to be implemented
-        return OpenAPIServiceModel()
+        return createOpenAPIModel(definition: definition, modelOverride: modelOverride)
     }
 }

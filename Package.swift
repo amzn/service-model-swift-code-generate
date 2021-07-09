@@ -40,7 +40,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/tachyonics/SwaggerParser.git", from: "0.6.4"),
         .package(url: "https://github.com/jpsim/Yams.git", from: "4.0.0"),
-        .package(url: "https://github.com/Josh-Gearou/OpenAPIKit.git", from: "2.4.0"),
+        .package(url: "https://github.com/mattpolzin/OpenAPIKit.git", from: "2.4.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -81,5 +81,5 @@ let package = Package(
             ]
         ),
     ],
-    swiftLanguageVersions: [.v5]
+    swiftLanguageVersions: [.v4]
 )
