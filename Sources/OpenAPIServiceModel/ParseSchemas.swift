@@ -19,29 +19,122 @@ import Foundation
 import OpenAPIKit
 import ServiceModelEntities
 import ServiceModelCodeGeneration
-// import SwaggerParser
 import Yams
 
 internal extension OpenAPIServiceModel {
     static func parseDefinitionSchemas(model: inout OpenAPIServiceModel, enclosingEntityName: inout String,
                                        schema: JSONSchema, modelOverride: ModelOverride?) {
+        switch schema {
+        case .boolean:
+            model.fieldDescriptions[enclosingEntityName] = .boolean
+        case .integer(let integerFormat, let integerContext):
+            if integerFormat.format == .int64 {
+                model.fieldDescriptions[enclosingEntityName] = Fields.long(rangeConstraint:
+                    NumericRangeConstraint<Int>(minimum: integerContext.minimum?.value,
+                                                maximum: integerContext.maximum?.value,
+                                                exclusiveMinimum: integerContext.minimum?.exclusive ?? false,
+                                                exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
+            } else {
+                model.fieldDescriptions[enclosingEntityName] = Fields.integer(rangeConstraint:
+                    NumericRangeConstraint<Int>(minimum: integerContext.minimum?.value,
+                                                maximum: integerContext.maximum?.value,
+                                                exclusiveMinimum: integerContext.minimum?.exclusive ?? false,
+                                                exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
+            }
+
+        case .object(_ , let objectContext):
+            if case .b(let mapSchema) = objectContext.additionalProperties {
+                parseMapDefinitionSchema(mapSchema: mapSchema,
+                                         enclosingEntityName: &enclosingEntityName,
+                                         model: &model)
+            } else {
+                var structureDescription = StructureDescription()
+                parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
+                                  model: &model, objectSchema: objectContext, modelOverride: modelOverride)
+
+                model.structureDescriptions[enclosingEntityName] = structureDescription
+            }
+        case .array(_, let arrayContext):
+            parseArrayDefinitionSchemas(arrayMetadata: arrayContext, enclosingEntityName: &enclosingEntityName,
+                                        model: &model, modelOverride: modelOverride)
+        case .string(_, let stringContext):
+            addStringField(metadata: stringContext, schema: schema,
+                           model: &model, fieldName: enclosingEntityName, modelOverride: modelOverride)
+        case .number(_, let numberContext):
+            model.fieldDescriptions[enclosingEntityName] = Fields.double(rangeConstraint:
+                NumericRangeConstraint<Double>(minimum: numberContext.minimum?.value,
+                                               maximum: numberContext.maximum?.value,
+                                               exclusiveMinimum: numberContext.minimum?.exclusive ?? false,
+                                               exclusiveMaximum: numberContext.maximum?.exclusive ?? false))
+        default:
+            fatalError("Not implemented.")
+        }
        
     }
     
     static func parseObjectSchema(structureDescription: inout StructureDescription, enclosingEntityName: inout String,
                                   model: inout OpenAPIServiceModel, objectSchema: JSONSchema.ObjectContext,
                                   modelOverride: ModelOverride?) {
+        let sortedKeys = objectSchema.properties.keys.sorted(by: <)
+        
+        for (index, name) in sortedKeys.enumerated() {
+            guard let property = objectSchema.properties[name] else {
+                continue
+            }
+            
+            var enclosingEntityNameForProperty = enclosingEntityName + name.startingWithUppercase
+            parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityNameForProperty,
+                                       schema: property, modelOverride: modelOverride)
+                
+            structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
+                                                            required: objectSchema.requiredProperties.contains(name),
+                                                            documentation: nil)
+        }
     }
     
     static func parseMapDefinitionSchema(mapSchema: JSONSchema,
                                          enclosingEntityName: inout String,
                                          model: inout OpenAPIServiceModel) {
+        let valueType: String
+        switch mapSchema.jsonType {
+        case .string:
+            valueType = "String"
+        default:
+            fatalError("Not implemented.")
+        }
+
+        model.fieldDescriptions[enclosingEntityName] = Fields.map(
+            keyType: "String", valueType: valueType,
+            lengthConstraint: LengthRangeConstraint<Int>())
     }
     
     static func parseArrayDefinitionSchemas(arrayMetadata: JSONSchema.ArrayContext,
                                             enclosingEntityName: inout String,
                                             model: inout OpenAPIServiceModel,
                                             modelOverride: ModelOverride?) {
-        
+        let type: String
+        if let value = arrayMetadata.items {
+            
+            var arrayElementEntityName: String
+            
+            // if the enclosingEntityName ends in an "s"
+            if enclosingEntityName.suffix(1).lowercased() == "s" {
+                arrayElementEntityName = String(enclosingEntityName.dropLast())
+            } else {
+                arrayElementEntityName = enclosingEntityName
+                enclosingEntityName = "\(enclosingEntityName)s"
+            }
+                
+            parseDefinitionSchemas(model: &model, enclosingEntityName: &arrayElementEntityName,
+                                       schema: value, modelOverride: modelOverride)
+            type = arrayElementEntityName
+            
+            let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                                                              maximum: arrayMetadata.maxItems)
+            model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                       lengthConstraint: lengthConstraint)
+        }
     }
+    
+    // Parse remaining schema types here
 }

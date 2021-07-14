@@ -142,14 +142,21 @@ internal extension OpenAPIServiceModel {
         var members = OperationInputMembers()
         var bodyStructureName: String?
         
+        if let requestBody = operation.requestBody?.b {
+            getBodyOperationMembers(requestBody, bodyStructureName: &bodyStructureName,
+                                    operationName: operationName, model: &model, modelOverride: modelOverride)
+        }
+        
         for (index, parameter) in operation.parameters.enumerated() {
             switch parameter {
             case .b(let value):
                 switch value.context.location {
                 case .cookie, .header, .path, .query:
-                    getFixedFieldsOperationMembers(fixedFields: value, operationName: operationName,
-                                                   index: index, members: &members, items: value.schemaOrContent.schemaValue.unsafelyUnwrapped,
-                                                   model: &model, modelOverride: modelOverride)
+                    if let schemaValue = value.schemaOrContent.schemaValue {
+                        getFixedFieldsOperationMembers(fixedFields: value, operationName: operationName,
+                                                       index: index, members: &members, items: schemaValue,
+                                                       model: &model, modelOverride: modelOverride)
+                    }
                 }
             case .a(_):
                 fatalError("Not implemented.")
@@ -159,22 +166,28 @@ internal extension OpenAPIServiceModel {
         return (members: members, bodyStructureName: bodyStructureName)
     }
     
-    static func getBodyOperationMembers(_ schema: JSONSchema, bodyStructureName: inout String?,
+    static func getBodyOperationMembers(_ request: OpenAPI.Request, bodyStructureName: inout String?,
                                         operationName: String, model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
-        switch schema.jsonTypeFormat {
-        // case .structure(let structure):
-           //  bodyStructureName = structure.name
-        case .object(_):
-            var enclosingEntityName = "\(operationName)RequestBody"
-            var structureDescription = StructureDescription()
-            parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
-                              model: &model, objectSchema: schema.objectContext.unsafelyUnwrapped, modelOverride: modelOverride)
-            
-            model.structureDescriptions[enclosingEntityName] = structureDescription
-            
-            bodyStructureName = enclosingEntityName
-        default:
-            fatalError("Not implemented.")
+        for (_,value) in request.content {
+            guard let schema = value.schema?.b else {
+                continue
+            }
+            switch schema.jsonTypeFormat {
+            case .object(_):
+                var enclosingEntityName = "\(operationName)RequestBody"
+                var structureDescription = StructureDescription()
+                guard let objectContext = schema.objectContext else {
+                   continue
+                }
+                parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
+                                  model: &model, objectSchema: objectContext, modelOverride: modelOverride)
+                
+                model.structureDescriptions[enclosingEntityName] = structureDescription
+                
+                bodyStructureName = enclosingEntityName
+            default:
+                fatalError("Not implemented.")
+            }
         }
     }
     
@@ -236,29 +249,19 @@ internal extension OpenAPIServiceModel {
                  model: &model, modelOverride: modelOverride)
     }
     
-    static func addOperationResponseFromSchema(_ schema: JSONSchema, operationName: String, forCode code: Int, index: Int?,
+    static func addOperationResponseFromSchema(schema: JSONSchema, operationName: String, forCode code: Int, index: Int?,
                                                description: inout OperationDescription,
                                                model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
         switch schema.jsonTypeFormat {
-     /* case .structure(let structure):
-            if code >= 200 && code < 300 {
-                description.output = structure.name
-            } else {
-                description.errors.append((type: structure.name, code: code))
-                model.errorTypes.insert(structure.name)
-            }*/
-       /* case .(let schema):
-            schema.subschemas.enumerated().forEach { entry in
-                addOperationResponseFromSchema(entry.element, operationName: operationName, forCode: code,
-                                               index: entry.offset, description: &description,
-                                               model: &model, modelOverride: modelOverride)
-            }*/
         case .object(_):
             let indexString = index?.description ?? ""
             var structureName = "\(operationName)\(code)Response\(indexString)Body"
             var structureDescription = StructureDescription()
+            guard let objectContext = schema.objectContext else {
+                fatalError("Not object")
+            }
             parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &structureName,
-                              model: &model, objectSchema: schema.objectContext.unsafelyUnwrapped, modelOverride: modelOverride)
+                              model: &model, objectSchema: objectContext, modelOverride: modelOverride)
             
             model.structureDescriptions[structureName] = structureDescription
             
@@ -276,8 +279,8 @@ internal extension OpenAPIServiceModel {
     static func addField(item: JSONSchema, fieldName: String,
                          model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
         switch item {
-        case .string:
-            addStringField(metadata: item.stringContext,
+        case .string(_, let context):
+            addStringField(metadata: context,
                            schema: nil,
                            model: &model,
                            fieldName: fieldName,
@@ -289,8 +292,8 @@ internal extension OpenAPIServiceModel {
                     maximum: context.maximum?.value,
                     exclusiveMinimum: context.minimum?.exclusive ?? false,
                     exclusiveMaximum: context.maximum?.exclusive ?? false))
-        case .integer(let format, let context):
-            if format.format ==  .int64 {
+        case .integer(let integerFormat, let context):
+            if integerFormat.format ==  .int64 {
                 model.fieldDescriptions[fieldName] =
                     Fields.long(rangeConstraint: NumericRangeConstraint<Int>(
                     minimum: context.minimum?.value,
@@ -316,9 +319,9 @@ internal extension OpenAPIServiceModel {
 
     static func getEnumerationValues(metadata: JSONSchemaContext) -> [(name: String, value: String)] {
        let enumerationValues: [(name: String, value: String)]
-        if let values = metadata.allowedValues {
-            enumerationValues = values.filter { value in value is String }
-                .compactMap { value in value as? String }
+        if let allowedValues = metadata.allowedValues {
+            enumerationValues = allowedValues.filter { allowedValue in allowedValue.value is String }
+                .compactMap { allowedValue in allowedValue.value as? String }
                 .map { value in (name: value, value: value) }
         } else {
             enumerationValues = []
@@ -347,8 +350,8 @@ internal extension OpenAPIServiceModel {
                 }
         } else {
             pattern = nil
-            if let schema = schema {
-                newValueConstraints = getEnumerationValues(metadata: schema.coreContext.unsafelyUnwrapped)
+            if let coreContext = schema?.coreContext {
+                newValueConstraints = getEnumerationValues(metadata: coreContext)
             } else {
                 newValueConstraints = []
             }

@@ -22,15 +22,15 @@ import ServiceModelCodeGeneration
 import Yams
 
 internal extension OpenAPIServiceModel {
-    static func filterHeaders(operation: OpenAPI.Operation, code: Int, headers: [String: OpenAPI.Parameter],
-                              modelOverride: ModelOverride?) -> [String: OpenAPI.Parameter] {
+    static func filterHeaders(operation: OpenAPI.Operation, code: Int, headers: OpenAPI.Header.Map,
+                              modelOverride: ModelOverride?) -> OpenAPI.Header.Map {
         
         guard let ignoreResponseHeaders = modelOverride?.ignoreResponseHeaders else {
             // no filtering required
             return headers
         }
         
-        var filteredHeaders: [String: OpenAPI.Parameter] = [:]
+        var filteredHeaders: OpenAPI.Header.Map = [:]
         
         headers.forEach { (key, value) in
             if ignoreResponseHeaders.contains("*.*.*") {
@@ -67,7 +67,48 @@ internal extension OpenAPIServiceModel {
     
     static func setOperationOutput(operation: OpenAPI.Operation, operationName: String, model: inout OpenAPIServiceModel,
                                    modelOverride: ModelOverride?, description: inout OperationDescription) {
-
+        // iterate through the responses
+        for (code, response) in operation.responses {
+            switch response {
+            case .b(let value):
+                switch code {
+                case .status(let code):
+                    if let headers = value.headers {
+                        let filteredHeaders = filterHeaders(operation: operation, code: code,
+                                                            headers: headers, modelOverride: modelOverride)
+                        var headerMembers: [String: Member] = [:]
+                        filteredHeaders.enumerated().forEach { entry in
+                            let typeName = entry.element.key.safeModelName().startingWithUppercase
+                            
+                            let headerName = "\(operationName)\(typeName)Header"
+                            
+                            if let header = entry.element.value.b  {
+                                if let schema = header.schemaOrContent.schemaValue {
+                                    addField(item: schema, fieldName: headerName, model: &model, modelOverride: modelOverride)
+                                    let member = Member(value: headerName,
+                                                        position: entry.offset,
+                                                        required: false,
+                                                        documentation: header.description)
+                                    headerMembers[entry.element.key] = member
+                                    
+                                    addOperationResponseFromSchema(schema: schema, operationName: operationName, forCode: code, index: nil,
+                                                                   description: &description, model: &model, modelOverride: modelOverride)
+                                }
+                            }
+                        }
+                        // if there are headers
+                        if !headerMembers.isEmpty {
+                            setOperationOutputWithHeaders(description: &description, model: &model, headerMembers: headerMembers,
+                                                          operationName: operationName, code: code)
+                        }
+                    }
+                default:
+                    fatalError("Not implemented")
+                }
+            case .a:
+                fatalError("Not implemented.")
+            }
+        }
     }
     
     private static func setOperationOutputWithHeaders(description: inout OperationDescription, model: inout OpenAPIServiceModel,
