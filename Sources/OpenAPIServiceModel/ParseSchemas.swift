@@ -66,6 +66,9 @@ internal extension OpenAPIServiceModel {
                                                maximum: numberContext.maximum?.value,
                                                exclusiveMinimum: numberContext.minimum?.exclusive ?? false,
                                                exclusiveMaximum: numberContext.maximum?.exclusive ?? false))
+        case .all(let otherSchema, _), .any(let otherSchema, _), .one(let otherSchema, _):
+            var structureDescription = StructureDescription()
+            parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
         default:
             fatalError("Not implemented.")
         }
@@ -136,5 +139,20 @@ internal extension OpenAPIServiceModel {
         }
     }
     
-    // Parse remaining schema types here
+    // Parse all, any, one schemas
+    static func parseOtherSchemas(structureDescription: inout StructureDescription, enclosingEntityName: inout String,
+                                  model: inout OpenAPIServiceModel, otherSchema: [JSONSchema],
+                                  modelOverride: ModelOverride?) {
+        for (index, subschema) in otherSchema.enumerated() {
+            var enclosingEntityNameForProperty = "\(enclosingEntityName)\(index + 1)"
+            
+            switch subschema {
+            case .object(_, let objectContext):
+                parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityNameForProperty,
+                                  model: &model, objectSchema: objectContext, modelOverride: modelOverride)
+            default:
+                fatalError("Non object/structure allOf schemas are not implemented. \(String(describing: subschema.jsonType))")
+            }
+        }
+    }
 }
