@@ -70,7 +70,6 @@ let package = Package(
                 .product(name: "OpenAPIKit" , package: "OpenAPIKit"),
             ], swiftSettings: [
                 // Temporary fix for OpenAPIKit + Swift 5.4 build errors
-                .unsafeFlags(["-Xfrontend -sil-verify-none"], .when(configuration: .release))
             ]
         ),
         .target(
