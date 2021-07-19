@@ -15,6 +15,6 @@ if [ "$ONLY_RUN_SWIFT_LINT" == 'yes' ]; then
     ls
     swiftlint
 else
-    swift build -c release
+    swift build -Xswiftc -Xfrontend -Xswiftc -sil-verify-none -c release
     #swift test
 fi
