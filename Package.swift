@@ -68,7 +68,6 @@ let package = Package(
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "SwaggerParser", package: "SwaggerParser"),
                 .product(name: "OpenAPIKit" , package: "OpenAPIKit"),
-            ], swiftSettings: [
                 // Temporary fix for OpenAPIKit + Swift 5.4 build errors
             ]
         ),
