@@ -26,7 +26,6 @@ internal extension OpenAPIServiceModel {
                               modelOverride: ModelOverride?) -> OpenAPI.Header.Map {
         
         guard let ignoreResponseHeaders = modelOverride?.ignoreResponseHeaders else {
-            // no filtering required
             return headers
         }
         
@@ -67,7 +66,6 @@ internal extension OpenAPIServiceModel {
     
     static func setOperationOutput(operation: OpenAPI.Operation, operationName: String, model: inout OpenAPIServiceModel,
                                    modelOverride: ModelOverride?, description: inout OperationDescription) {
-        // iterate through the responses
         for (code, response) in operation.responses {
             switch response {
             case .b(let value):
@@ -96,7 +94,6 @@ internal extension OpenAPIServiceModel {
                                 }
                             }
                         }
-                        // if there are headers
                         if !headerMembers.isEmpty {
                             setOperationOutputWithHeaders(description: &description, model: &model, headerMembers: headerMembers,
                                                           operationName: operationName, code: code)

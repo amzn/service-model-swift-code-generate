@@ -120,7 +120,7 @@ internal extension OpenAPIServiceModel {
             
             var arrayElementEntityName: String
             
-            // if the enclosingEntityName ends in an "s"
+            // If the enclosingEntityName ends in an "s", swap with element name
             if enclosingEntityName.suffix(1).lowercased() == "s" {
                 arrayElementEntityName = String(enclosingEntityName.dropLast())
             } else {

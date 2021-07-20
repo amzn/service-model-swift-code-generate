@@ -35,7 +35,6 @@ internal extension OpenAPIServiceModel {
                                   description: inout OperationDescription,
                                   model: inout OpenAPIServiceModel,
                                   operationName: String) {
-        // if this operational only has a body structure
         if let bodyStructureName = bodyStructureName,
             operationInputMembers.queryMembers.isEmpty && operationInputMembers.additionalHeaderMembers.isEmpty
                 && operationInputMembers.pathMembers.isEmpty {

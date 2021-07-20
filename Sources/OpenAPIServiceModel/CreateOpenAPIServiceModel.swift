@@ -31,7 +31,6 @@ internal extension OpenAPIServiceModel {
                                  modelOverride: ModelOverride?) -> [OpenAPI.HttpMethod: OpenAPI.Operation] {
         
         guard let ignoreOperations = modelOverride?.ignoreOperations else {
-            // no filtering required
             return operations
         }
         
@@ -81,13 +80,11 @@ internal extension OpenAPIServiceModel {
             let filteredOperations = filterOperations(operations: operations,
                                                       modelOverride: modelOverride)
             
-            // iterate through the operations
             for (type, operation) in filteredOperations {
                 guard let identifier = operation.operationId else {
                     continue
                 }
                 
-                // if there is more than one operation for this path
                 let operationName: String
                 if filteredOperations.count > 1 {
                     operationName = identifier + type.rawValue.startingWithUppercase
@@ -195,7 +192,6 @@ internal extension OpenAPIServiceModel {
                                      modelOverride: ModelOverride?) -> Bool {
         
         guard let ignoreRequestHeaders = modelOverride?.ignoreRequestHeaders else {
-            // no filtering required
             return false
         }
         
@@ -235,13 +231,11 @@ internal extension OpenAPIServiceModel {
             members.pathMembers[fixedFields.name] = member
         case .header:
             guard !ignoreRequestHeader(operationName: operationName, headerName: fixedFields.name, modelOverride: modelOverride) else {
-                // ignore header
                 return
             }
             
             members.additionalHeaderMembers[fixedFields.name] = member
         default:
-            // cannot happen
             break
         }
         
@@ -337,7 +331,7 @@ internal extension OpenAPIServiceModel {
                                modelOverride: ModelOverride?) {
         let pattern: String?
         let newValueConstraints: [(name: String, value: String)]
-        // if the pattern is a list of alternatives
+
         if modelOverride?.modelStringPatternsAreAlternativeList ?? false,
             let current = metadata?.pattern,
             let first = current.first, first == "^",
