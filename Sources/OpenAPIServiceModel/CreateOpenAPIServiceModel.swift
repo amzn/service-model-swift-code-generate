@@ -63,13 +63,9 @@ internal extension OpenAPIServiceModel {
     
     static func createOpenAPIModel(definition: OpenAPI.Document, modelOverride: ModelOverride?) -> OpenAPIServiceModel {
         var model = OpenAPIServiceModel()
-        
-        if definition.components.schemas.count == 0 {
-            fatalError("List Empty")
-        }
+
         for (name, schema) in definition.components.schemas {
             var enclosingEntityName = name.rawValue
-            NSLog(enclosingEntityName)
             parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityName,
                                    schema: schema, modelOverride: modelOverride)
         }
@@ -188,7 +184,7 @@ internal extension OpenAPIServiceModel {
                 bodyStructureName = enclosingEntityName
             default:
                 if let message = schema.jsonType?.rawValue{
-                    NSLog(message)
+                    fatalError(message)
                 }
                 fatalError("Not implemented.")
             }
@@ -274,7 +270,7 @@ internal extension OpenAPIServiceModel {
             }
         default:
             if let message = schema.jsonType?.rawValue{
-                NSLog(message)
+                fatalError(message)
             }
             fatalError("Not implemented.")
         }
@@ -318,7 +314,7 @@ internal extension OpenAPIServiceModel {
             model.fieldDescriptions[fieldName] = Fields.boolean
         default:
             if let message = item.jsonType?.rawValue{
-                NSLog(message)
+                fatalError(message)
             }
             fatalError("Field type not supported.")
         }
