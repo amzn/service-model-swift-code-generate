@@ -70,6 +70,8 @@ internal extension OpenAPIServiceModel {
             var structureDescription = StructureDescription()
             parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
         default:
+            let message = schema
+            print(message)
             fatalError("Not implemented.")
         }
        
@@ -103,6 +105,8 @@ internal extension OpenAPIServiceModel {
         case .string:
             valueType = "String"
         default:
+            let message = mapSchema.jsonType
+            print(message)
             fatalError("Not implemented.")
         }
 

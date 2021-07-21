@@ -183,6 +183,8 @@ internal extension OpenAPIServiceModel {
                 
                 bodyStructureName = enclosingEntityName
             default:
+                let message = schema.jsonTypeFormat
+                print(message)
                 fatalError("Not implemented.")
             }
         }
@@ -266,6 +268,8 @@ internal extension OpenAPIServiceModel {
                 model.errorTypes.insert(structureName)
             }
         default:
+            let message = schema.jsonTypeFormat
+            print(message)
             fatalError("Not implemented.")
         }
     }
@@ -307,6 +311,8 @@ internal extension OpenAPIServiceModel {
         case .boolean:
             model.fieldDescriptions[fieldName] = Fields.boolean
         default:
+            let message = item
+            print(message)
             fatalError("Field type not supported.")
         }
     }
