@@ -71,7 +71,7 @@ internal extension OpenAPIServiceModel {
             parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
         default:
             if let message = schema.jsonType?.rawValue {
-                print(message)
+                NSLog(message)
             }
             fatalError("Not implemented.")
         }
@@ -107,8 +107,8 @@ internal extension OpenAPIServiceModel {
             valueType = "String"
         default:
             
-            if let message = mapSchema.jsonType {
-                print(message)
+            if let message = mapSchema.jsonType?.rawValue {
+                NSLog(message)
             }
             fatalError("Not implemented.")
         }

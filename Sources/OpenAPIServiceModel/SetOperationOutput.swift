@@ -101,12 +101,10 @@ internal extension OpenAPIServiceModel {
                     }
                 default:
                     let message = code
-                    print(message.rawValue)
+                    NSLog(message.rawValue)
                     fatalError("Not implemented")
                 }
             case .a:
-                let message = response
-                print(message.value)
                 fatalError("Not implemented.")
             }
         }
