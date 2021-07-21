@@ -64,6 +64,9 @@ internal extension OpenAPIServiceModel {
     static func createOpenAPIModel(definition: OpenAPI.Document, modelOverride: ModelOverride?) -> OpenAPIServiceModel {
         var model = OpenAPIServiceModel()
         
+        if definition.components.schemas.count == 0 {
+            fatalError("List Empty")
+        }
         for (name, schema) in definition.components.schemas {
             var enclosingEntityName = name.rawValue
             NSLog(enclosingEntityName)
