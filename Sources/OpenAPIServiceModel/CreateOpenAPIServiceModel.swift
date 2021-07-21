@@ -66,6 +66,7 @@ internal extension OpenAPIServiceModel {
         
         for (name, schema) in definition.components.schemas {
             var enclosingEntityName = name.rawValue
+            print(enclosingEntityName)
             parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityName,
                                    schema: schema, modelOverride: modelOverride)
         }
