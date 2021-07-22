@@ -69,14 +69,13 @@ internal extension OpenAPIServiceModel {
         case .all(let otherSchema, _), .any(let otherSchema, _), .one(let otherSchema, _):
             var structureDescription = StructureDescription()
             parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
-        default:
-            if let message = schema.title {
-                fatalError(message)
-            } else {
-                fatalError("Schema not implemented")
-            }
+        case .reference:
+            fatalError("Schema 'reference' not implemented")
+        case .not:
+            fatalError("Schema 'not' not implemented")
+        case .fragment:
+            fatalError("Schema 'fragment' not implemented")
         }
-       
     }
     
     static func parseObjectSchema(structureDescription: inout StructureDescription, enclosingEntityName: inout String,
