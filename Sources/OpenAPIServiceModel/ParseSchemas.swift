@@ -108,8 +108,12 @@ internal extension OpenAPIServiceModel {
             model.fieldDescriptions[enclosingEntityName] = Fields.map(
                 keyType: "String", valueType: valueType,
                 lengthConstraint: LengthRangeConstraint<Int>())
+        case .reference:
+            fatalError("Schema 'reference' not implemented")
+        case .object:
+            fatalError("Schema 'object' not implemented")
         default:
-            break
+            fatalError("Not implemented")
         }
     }
     
