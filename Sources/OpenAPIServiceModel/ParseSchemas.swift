@@ -70,11 +70,6 @@ internal extension OpenAPIServiceModel {
             var structureDescription = StructureDescription()
             parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
         default:
-            if let message = schema.jsonType?.rawValue {
-                fatalError(message)
-            } else if schema.jsonType?.rawValue == nil {
-                break;
-            }
             fatalError("Not implemented.")
         }
        
@@ -104,15 +99,10 @@ internal extension OpenAPIServiceModel {
                                          enclosingEntityName: inout String,
                                          model: inout OpenAPIServiceModel) {
         let valueType: String
-        switch mapSchema.jsonType {
+        switch mapSchema {
         case .string:
             valueType = "String"
         default:
-            if let message = mapSchema.jsonType?.rawValue {
-                fatalError(message)
-            } else if mapSchema.jsonType?.rawValue == nil {
-                fatalError("mapSchema nil")
-            }
             fatalError("Not implemented.")
         }
 

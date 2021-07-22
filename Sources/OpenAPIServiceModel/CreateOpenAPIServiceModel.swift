@@ -169,8 +169,8 @@ internal extension OpenAPIServiceModel {
             guard let schema = value.schema?.b else {
                 continue
             }
-            switch schema.jsonTypeFormat {
-            case .object(_):
+            switch schema {
+            case .object:
                 var enclosingEntityName = "\(operationName)RequestBody"
                 var structureDescription = StructureDescription()
                 guard let objectContext = schema.objectContext else {
@@ -183,9 +183,6 @@ internal extension OpenAPIServiceModel {
                 
                 bodyStructureName = enclosingEntityName
             default:
-                if let message = schema.jsonType?.rawValue{
-                    fatalError(message)
-                }
                 fatalError("Not implemented.")
             }
         }
@@ -249,8 +246,8 @@ internal extension OpenAPIServiceModel {
     static func addOperationResponseFromSchema(schema: JSONSchema, operationName: String, forCode code: Int, index: Int?,
                                                description: inout OperationDescription,
                                                model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
-        switch schema.jsonTypeFormat {
-        case .object(_):
+        switch schema {
+        case .object:
             let indexString = index?.description ?? ""
             var structureName = "\(operationName)\(code)Response\(indexString)Body"
             var structureDescription = StructureDescription()
@@ -269,9 +266,6 @@ internal extension OpenAPIServiceModel {
                 model.errorTypes.insert(structureName)
             }
         default:
-            if let message = schema.jsonType?.rawValue{
-                fatalError(message)
-            }
             fatalError("Not implemented.")
         }
     }
@@ -313,9 +307,6 @@ internal extension OpenAPIServiceModel {
         case .boolean:
             model.fieldDescriptions[fieldName] = Fields.boolean
         default:
-            if let message = item.jsonType?.rawValue{
-                fatalError(message)
-            }
             fatalError("Field type not supported.")
         }
     }
