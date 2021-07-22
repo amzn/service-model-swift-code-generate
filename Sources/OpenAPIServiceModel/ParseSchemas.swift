@@ -108,9 +108,10 @@ internal extension OpenAPIServiceModel {
         case .string:
             valueType = "String"
         default:
-            
             if let message = mapSchema.jsonType?.rawValue {
                 fatalError(message)
+            } else if mapSchema.jsonType?.rawValue == nil {
+                fatalError("mapSchema nil")
             }
             fatalError("Not implemented.")
         }
