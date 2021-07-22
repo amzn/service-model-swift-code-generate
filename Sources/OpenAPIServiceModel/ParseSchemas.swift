@@ -73,7 +73,7 @@ internal extension OpenAPIServiceModel {
             if let message = schema.jsonType?.rawValue {
                 fatalError(message)
             } else if schema.jsonType?.rawValue == nil {
-                fatalError("Schema type is nil")
+                break;
             }
             fatalError("Not implemented.")
         }
