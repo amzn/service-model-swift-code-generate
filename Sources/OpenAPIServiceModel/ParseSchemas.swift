@@ -109,9 +109,8 @@ internal extension OpenAPIServiceModel {
                 keyType: "String", valueType: valueType,
                 lengthConstraint: LengthRangeConstraint<Int>())
         case .reference:
-            fatalError("Schema 'reference' not implemented")
-        case .object:
-            fatalError("Schema 'object' not implemented")
+            break
+            //fatalError("Schema 'reference' not implemented")
         default:
             fatalError("Not implemented")
         }
