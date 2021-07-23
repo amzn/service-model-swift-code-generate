@@ -72,7 +72,7 @@ internal extension OpenAPIServiceModel {
         case .fragment:
             fatalError("Schema 'fragment' not implemented")
         case .reference:
-            fatalError("Schema 'reference' not implemented")
+            break
         case .not:
             fatalError("Schema 'not' not implemented")
         }
