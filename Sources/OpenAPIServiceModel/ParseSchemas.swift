@@ -69,11 +69,7 @@ internal extension OpenAPIServiceModel {
         case .all(let otherSchema, _), .any(let otherSchema, _), .one(let otherSchema, _):
             var structureDescription = StructureDescription()
             parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
-        case .reference:
-            break
-        case .not:
-            fatalError("Schema 'not' not implemented")
-        case .fragment:
+        default:
             fatalError("Schema 'fragment' not implemented")
         }
     }
@@ -88,13 +84,22 @@ internal extension OpenAPIServiceModel {
                 continue
             }
             
-            var enclosingEntityNameForProperty = enclosingEntityName + name.startingWithUppercase
-            parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityNameForProperty,
-                                       schema: property, modelOverride: modelOverride)
-                
-            structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
-                                                            required: objectSchema.requiredProperties.contains(name),
-                                                            documentation: nil)
+            switch property {
+            case .reference(let ref):
+                if let name = ref.name {
+                    structureDescription.members[name] = Member(value: name, position: index,
+                                                                required: objectSchema.requiredProperties.contains(name),
+                                                                documentation: nil)
+                }
+            default:
+                var enclosingEntityNameForProperty = enclosingEntityName + name.startingWithUppercase
+                parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityNameForProperty,
+                                           schema: property, modelOverride: modelOverride)
+                    
+                structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
+                                                                required: objectSchema.requiredProperties.contains(name),
+                                                                documentation: nil)
+            }
         }
     }
     
@@ -108,9 +113,6 @@ internal extension OpenAPIServiceModel {
             model.fieldDescriptions[enclosingEntityName] = Fields.map(
                 keyType: "String", valueType: valueType,
                 lengthConstraint: LengthRangeConstraint<Int>())
-        case .reference:
-            break
-            //fatalError("Schema 'reference' not implemented")
         default:
             fatalError("Not implemented")
         }
