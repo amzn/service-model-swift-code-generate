@@ -85,7 +85,7 @@ internal extension OpenAPIServiceModel {
                                     addField(item: schema, fieldName: headerName, model: &model, modelOverride: modelOverride)
                                     let member = Member(value: headerName,
                                                         position: entry.offset,
-                                                        required: false,
+                                                        required: schema.required,
                                                         documentation: header.description)
                                     headerMembers[entry.element.key] = member
                                     
