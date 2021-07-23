@@ -108,6 +108,12 @@ internal extension OpenAPIServiceModel {
                                          model: inout OpenAPIServiceModel) {
         let valueType: String
         switch mapSchema {
+        case .reference(let ref):
+            if let valueType = ref.name {
+                model.fieldDescriptions[enclosingEntityName] = Fields.map(
+                    keyType: "String", valueType: valueType,
+                    lengthConstraint: LengthRangeConstraint<Int>())
+            }
         case .string:
             valueType = "String"
             model.fieldDescriptions[enclosingEntityName] = Fields.map(
@@ -116,8 +122,9 @@ internal extension OpenAPIServiceModel {
         default:
             fatalError("Not implemented")
         }
+        
     }
-    
+        
     static func parseArrayDefinitionSchemas(arrayMetadata: JSONSchema.ArrayContext,
                                             enclosingEntityName: inout String,
                                             model: inout OpenAPIServiceModel,
