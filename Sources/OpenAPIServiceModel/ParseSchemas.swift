@@ -69,8 +69,12 @@ internal extension OpenAPIServiceModel {
         case .all(let otherSchema, _), .any(let otherSchema, _), .one(let otherSchema, _):
             var structureDescription = StructureDescription()
             parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
-        default:
+        case .fragment:
             fatalError("Schema 'fragment' not implemented")
+        case .reference:
+            fatalError("Schema 'reference' not implemented")
+        case .not:
+            fatalError("Schema 'not' not implemented")
         }
     }
     
