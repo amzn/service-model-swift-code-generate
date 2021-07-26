@@ -92,7 +92,7 @@ internal extension OpenAPIServiceModel {
             case .reference(let ref):
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
-                                                                required: objectSchema.requiredProperties.contains(name),
+                                                                required: property.required,
                                                                 documentation: nil)
                 }
             default:
@@ -101,7 +101,7 @@ internal extension OpenAPIServiceModel {
                                            schema: property, modelOverride: modelOverride)
                     
                 structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
-                                                                required: objectSchema.requiredProperties.contains(name),
+                                                                required: property.required,
                                                                 documentation: nil)
             }
         }
