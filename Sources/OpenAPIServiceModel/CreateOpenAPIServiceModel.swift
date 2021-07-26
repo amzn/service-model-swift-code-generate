@@ -86,11 +86,8 @@ internal extension OpenAPIServiceModel {
                 }
                 
                 let operationName: String
-                if filteredOperations.count > 1 {
-                    operationName = identifier + type.rawValue.startingWithUppercase
-                } else {
-                    operationName = identifier
-                }
+                
+                operationName = identifier
                 
                 let inputDescription =
                         OperationInputDescription(defaultInputLocation: .body)
