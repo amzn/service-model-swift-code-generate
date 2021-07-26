@@ -133,27 +133,37 @@ internal extension OpenAPIServiceModel {
                                             enclosingEntityName: inout String,
                                             model: inout OpenAPIServiceModel,
                                             modelOverride: ModelOverride?) {
-        let type: String
         if let value = arrayMetadata.items {
-            
-            var arrayElementEntityName: String
-            
-            // If the enclosingEntityName ends in an "s", swap with element name
-            if enclosingEntityName.suffix(1).lowercased() == "s" {
-                arrayElementEntityName = String(enclosingEntityName.dropLast())
-            } else {
-                arrayElementEntityName = enclosingEntityName
-                enclosingEntityName = "\(enclosingEntityName)s"
-            }
+            switch value {
+            case .reference(let ref):
+                if let type = ref.name {
+                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                                                                      maximum: arrayMetadata.maxItems)
+                    model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                               lengthConstraint: lengthConstraint)
+                }
+            case .string:
+                var arrayElementEntityName: String
                 
-            parseDefinitionSchemas(model: &model, enclosingEntityName: &arrayElementEntityName,
-                                       schema: value, modelOverride: modelOverride)
-            type = arrayElementEntityName
-            
-            let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
-                                                              maximum: arrayMetadata.maxItems)
-            model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
-                                                                       lengthConstraint: lengthConstraint)
+                // If the enclosingEntityName ends in an "s", swap with element name
+                if enclosingEntityName.suffix(1).lowercased() == "s" {
+                    arrayElementEntityName = String(enclosingEntityName.dropLast())
+                } else {
+                    arrayElementEntityName = enclosingEntityName
+                    enclosingEntityName = "\(enclosingEntityName)s"
+                }
+                    
+                parseDefinitionSchemas(model: &model, enclosingEntityName: &arrayElementEntityName,
+                                           schema: value, modelOverride: modelOverride)
+                let type = arrayElementEntityName
+                
+                let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                                                                  maximum: arrayMetadata.maxItems)
+                model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                           lengthConstraint: lengthConstraint)
+            default:
+                fatalError("Not implemented")
+            }
         }
     }
     
