@@ -81,13 +81,9 @@ internal extension OpenAPIServiceModel {
                                                       modelOverride: modelOverride)
             
             for (type, operation) in filteredOperations {
-                guard let identifier = operation.operationId else {
+                guard let operationName = operation.operationId else {
                     continue
                 }
-                
-                let operationName: String
-                
-                operationName = identifier
                 
                 let inputDescription =
                         OperationInputDescription(defaultInputLocation: .body)
