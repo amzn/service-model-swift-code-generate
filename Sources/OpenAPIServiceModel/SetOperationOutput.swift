@@ -88,12 +88,19 @@ internal extension OpenAPIServiceModel {
                                                         required: false,
                                                         documentation: header.description)
                                     headerMembers[entry.element.key] = member
-                                    
-                                    addOperationResponseFromSchema(schema: schema, operationName: operationName, forCode: code, index: nil,
-                                                                   description: &description, model: &model, modelOverride: modelOverride)
                                 }
                             }
                         }
+                        
+                        let content = value.content
+                            content.enumerated().forEach { entry in
+                                if let schema = entry.element.value.schema?.b {
+                                addOperationResponseFromSchema(schema: schema, operationName: operationName, forCode: code, index: nil,
+                                                                   description: &description, model: &model, modelOverride: modelOverride)
+                            }
+                        }
+
+                        
                         if !headerMembers.isEmpty {
                             setOperationOutputWithHeaders(description: &description, model: &model, headerMembers: headerMembers,
                                                           operationName: operationName, code: code)
