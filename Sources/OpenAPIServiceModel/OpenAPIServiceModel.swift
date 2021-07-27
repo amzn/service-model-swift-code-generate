@@ -42,6 +42,8 @@ public struct OpenAPIServiceModel: ServiceModel {
             let decoder = YAMLDecoder()
             let dataAsString = String(data: data, encoding: .utf8)!
             definition = try decoder.decode(OpenAPI.Document.self, from: dataAsString)
+            print("Works")
+            print(definition)
         default:
             let decoder = JSONDecoder()
             definition = try decoder.decode(OpenAPI.Document.self, from: data)

@@ -98,8 +98,11 @@ internal extension OpenAPIServiceModel {
                             setOperationOutputWithHeaders(description: &description, model: &model, headerMembers: headerMembers,
                                                           operationName: operationName, code: code)
                         }
+                    } else {
+                        fatalError("")
                     }
                 default:
+                    // range or default not implemented
                     let message = code
                     fatalError(message.rawValue)
                 }
