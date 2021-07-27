@@ -241,7 +241,6 @@ internal extension OpenAPIServiceModel {
                                                model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
         switch schema {
         case .object:
-            print("we got here")
             let indexString = index?.description ?? ""
             var structureName = "\(operationName)\(code)Response\(indexString)Body"
             var structureDescription = StructureDescription()
@@ -262,6 +261,12 @@ internal extension OpenAPIServiceModel {
         default:
             fatalError("Not implemented.")
         }
+    }
+    
+    static func addOperationResponseFromReference(reference: JSONReference<JSONSchema>, operationName: String, forCode code: Int?,
+                                                  index: Int?, description: inout OperationDescription,
+                                                  model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
+        add
     }
     
     static func addField(item: JSONSchema, fieldName: String,

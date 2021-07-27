@@ -99,8 +99,9 @@ internal extension OpenAPIServiceModel {
                             if let schema = entry.element.value.schema?.b {
                                 addOperationResponseFromSchema(schema: schema, operationName: operationName, forCode: code, index: nil,
                                                                description: &description, model: &model, modelOverride: modelOverride)
-                            } else if let schema = entry.element.value.schema?.a {
-                                print("we got to the reference")
+                            } else if let ref = entry.element.value.schema?.a {
+                                addOperationResponseFromReference(reference: ref, operationName: operationName, forCode: code, index: nil,
+                                                                  description: &description, model: &model, modelOverride: modelOverride)
                             }
                         }
                         
