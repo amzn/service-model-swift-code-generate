@@ -241,6 +241,7 @@ internal extension OpenAPIServiceModel {
                                                model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
         switch schema {
         case .object:
+            print("we got here")
             let indexString = index?.description ?? ""
             var structureName = "\(operationName)\(code)Response\(indexString)Body"
             var structureDescription = StructureDescription()

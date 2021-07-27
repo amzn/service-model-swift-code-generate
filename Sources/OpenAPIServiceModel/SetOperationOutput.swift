@@ -74,7 +74,9 @@ internal extension OpenAPIServiceModel {
                     if let headers = value.headers {
                         let filteredHeaders = filterHeaders(operation: operation, code: code,
                                                             headers: headers, modelOverride: modelOverride)
+                        
                         var headerMembers: [String: Member] = [:]
+                        
                         filteredHeaders.enumerated().forEach { entry in
                             let typeName = entry.element.key.safeModelName().startingWithUppercase
                             
@@ -99,19 +101,17 @@ internal extension OpenAPIServiceModel {
                                                                    description: &description, model: &model, modelOverride: modelOverride)
                             }
                         }
-
                         
                         if !headerMembers.isEmpty {
                             setOperationOutputWithHeaders(description: &description, model: &model, headerMembers: headerMembers,
                                                           operationName: operationName, code: code)
                         }
+                        
                     } else {
                         fatalError("")
                     }
                 default:
-                    // range or default not implemented
-                    let message = code
-                    fatalError(message.rawValue)
+                    fatalError("Range and Default status code types not implemented.")
                 }
             case .a:
                 fatalError("Not implemented.")
