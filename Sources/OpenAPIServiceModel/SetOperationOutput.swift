@@ -96,11 +96,11 @@ internal extension OpenAPIServiceModel {
                         
                         let content = value.content
                             content.enumerated().forEach { entry in
-                                print("we got here 1")
-                                if let schema = entry.element.value.schema?.b {
-                                print("we got here 2")
+                            if let schema = entry.element.value.schema?.b {
                                 addOperationResponseFromSchema(schema: schema, operationName: operationName, forCode: code, index: nil,
-                                                                   description: &description, model: &model, modelOverride: modelOverride)
+                                                               description: &description, model: &model, modelOverride: modelOverride)
+                            } else if let schema = entry.element.value.schema?.a {
+                                print("we got to the reference")
                             }
                         }
                         
