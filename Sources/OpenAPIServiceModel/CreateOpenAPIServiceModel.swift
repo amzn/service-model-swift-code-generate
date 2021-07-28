@@ -170,7 +170,7 @@ internal extension OpenAPIServiceModel {
                        continue
                     }
                     parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
-                                      model: &model, objectSchema: objectContext, modelOverride: modelOverride)
+                                      model: &model, objectContext: objectContext, modelOverride: modelOverride)
                     
                     model.structureDescriptions[enclosingEntityName] = structureDescription
                     
@@ -253,7 +253,7 @@ internal extension OpenAPIServiceModel {
                 fatalError("Not object")
             }
             parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &structureName,
-                              model: &model, objectSchema: objectContext, modelOverride: modelOverride)
+                              model: &model, objectContext: objectContext, modelOverride: modelOverride)
             
             model.structureDescriptions[structureName] = structureDescription
             

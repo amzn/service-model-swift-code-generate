@@ -50,7 +50,7 @@ internal extension OpenAPIServiceModel {
             } else {
                 var structureDescription = StructureDescription()
                 parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
-                                  model: &model, objectSchema: objectContext, modelOverride: modelOverride)
+                                  model: &model, objectContext: objectContext, modelOverride: modelOverride)
 
                 model.structureDescriptions[enclosingEntityName] = structureDescription
             }
@@ -79,20 +79,22 @@ internal extension OpenAPIServiceModel {
     }
     
     static func parseObjectSchema(structureDescription: inout StructureDescription, enclosingEntityName: inout String,
-                                  model: inout OpenAPIServiceModel, objectSchema: JSONSchema.ObjectContext,
+                                  model: inout OpenAPIServiceModel, objectContext: JSONSchema.ObjectContext,
                                   modelOverride: ModelOverride?) {
-        let sortedKeys = objectSchema.properties.keys.sorted(by: <)
+        let sortedKeys = objectContext.properties.keys.sorted(by: <)
         
         for (index, name) in sortedKeys.enumerated() {
-            guard let property = objectSchema.properties[name] else {
+            guard let property = objectContext.properties[name] else {
                 continue
             }
             
             switch property {
             case .reference(let ref):
                 if let referenceName = ref.name {
+                    print(referenceName)
+                    print(name)
                     structureDescription.members[name] = Member(value: referenceName, position: index,
-                                                                required: objectSchema.requiredProperties.contains(name),
+                                                                required: objectContext.requiredProperties.contains(name),
                                                                 documentation: nil)
                 }
             default:
@@ -101,7 +103,7 @@ internal extension OpenAPIServiceModel {
                                            schema: property, modelOverride: modelOverride)
                     
                 structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
-                                                                required: objectSchema.requiredProperties.contains(name),
+                                                                required: objectContext.requiredProperties.contains(name),
                                                                 documentation: nil)
             }
         }
@@ -177,7 +179,7 @@ internal extension OpenAPIServiceModel {
             switch subschema {
             case .object(_, let objectContext):
                 parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityNameForProperty,
-                                  model: &model, objectSchema: objectContext, modelOverride: modelOverride)
+                                  model: &model, objectContext: objectContext, modelOverride: modelOverride)
             default:
                 fatalError("Non object/structure allOf schemas are not implemented. \(String(describing: subschema.jsonType))")
             }
