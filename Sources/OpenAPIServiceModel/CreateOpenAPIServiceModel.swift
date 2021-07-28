@@ -135,6 +135,8 @@ internal extension OpenAPIServiceModel {
         if let requestBody = operation.requestBody?.b {
             getBodyOperationMembers(requestBody, bodyStructureName: &bodyStructureName,
                                     operationName: operationName, model: &model, modelOverride: modelOverride)
+        } else {
+            fatalError("no request body")
         }
         
         for (index, parameter) in operation.parameters.enumerated() {
