@@ -91,8 +91,9 @@ internal extension OpenAPIServiceModel {
             switch property {
             case .reference(let ref):
                 if let referenceName = ref.name {
-                    print(referenceName)
-                    print(name)
+                    //print(referenceName)
+                    //print(name)
+                    print(objectContext.requiredProperties)
                     structureDescription.members[name] = Member(value: referenceName, position: index,
                                                                 required: objectContext.requiredProperties.contains(name),
                                                                 documentation: nil)
