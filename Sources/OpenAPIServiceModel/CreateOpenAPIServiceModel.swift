@@ -161,26 +161,27 @@ internal extension OpenAPIServiceModel {
     static func getBodyOperationMembers(_ request: OpenAPI.Request, bodyStructureName: inout String?,
                                         operationName: String, model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
         for (_,value) in request.content {
-            guard let schema = value.schema?.b else {
-                print("accessing schema")
-                continue
-            }
-            print("moves on")
-            switch schema {
-            case .object:
-                var enclosingEntityName = "\(operationName)RequestBody"
-                var structureDescription = StructureDescription()
-                guard let objectContext = schema.objectContext else {
-                   continue
+            if let schema = value.schema?.b {
+                switch schema {
+                case .object:
+                    var enclosingEntityName = "\(operationName)RequestBody"
+                    var structureDescription = StructureDescription()
+                    guard let objectContext = schema.objectContext else {
+                       continue
+                    }
+                    parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
+                                      model: &model, objectSchema: objectContext, modelOverride: modelOverride)
+                    
+                    model.structureDescriptions[enclosingEntityName] = structureDescription
+                    
+                    bodyStructureName = enclosingEntityName
+                default:
+                    fatalError("Not implemented.")
                 }
-                parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
-                                  model: &model, objectSchema: objectContext, modelOverride: modelOverride)
-                
-                model.structureDescriptions[enclosingEntityName] = structureDescription
-                
-                bodyStructureName = enclosingEntityName
-            default:
-                fatalError("Not implemented.")
+            } else if let reference = value.schema?.a {
+                if let refName = reference.name {
+                    bodyStructureName = refName
+                }
             }
         }
     }
