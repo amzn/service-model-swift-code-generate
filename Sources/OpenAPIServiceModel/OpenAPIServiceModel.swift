@@ -25,7 +25,6 @@ import Yams
  Struct that models the Metadata of the OpenAPI  model.
  */
 public struct OpenAPIServiceModel: ServiceModel {
-    var documentationDescriptions: [String: String] = [:]
     public var serviceDescriptions: [String: ServiceDescription] = [:]
     public var structureDescriptions: [String: StructureDescription] = [:]
     public var operationDescriptions: [String: OperationDescription] = [:]
