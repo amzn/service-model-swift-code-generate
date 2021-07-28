@@ -162,8 +162,10 @@ internal extension OpenAPIServiceModel {
                                         operationName: String, model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
         for (_,value) in request.content {
             guard let schema = value.schema?.b else {
+                print("accessing schema")
                 continue
             }
+            print("moves on")
             switch schema {
             case .object:
                 var enclosingEntityName = "\(operationName)RequestBody"
