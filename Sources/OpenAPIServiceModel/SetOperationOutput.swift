@@ -110,8 +110,6 @@ internal extension OpenAPIServiceModel {
                                                           operationName: operationName, code: code)
                         }
                         
-                    } else {
-                        fatalError("")
                     }
                 default:
                     fatalError("Range and Default status code types not implemented.")

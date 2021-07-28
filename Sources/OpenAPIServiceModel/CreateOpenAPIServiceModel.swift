@@ -263,10 +263,17 @@ internal extension OpenAPIServiceModel {
         }
     }
     
-    static func addOperationResponseFromReference(reference: JSONReference<JSONSchema>, operationName: String, forCode code: Int?,
+    static func addOperationResponseFromReference(reference: JSONReference<JSONSchema>, operationName: String, forCode code: Int,
                                                   index: Int?, description: inout OperationDescription,
                                                   model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
-        add
+        if let refName = reference.name {
+            if code >= 200 && code < 300 {
+                description.output = refName
+            } else {
+                description.errors.append((type: refName, code: code))
+                model.errorTypes.insert(refName)
+            }
+        }
     }
     
     static func addField(item: JSONSchema, fieldName: String,
