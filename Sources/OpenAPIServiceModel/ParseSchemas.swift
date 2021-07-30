@@ -83,6 +83,8 @@ internal extension OpenAPIServiceModel {
                                   modelOverride: ModelOverride?) {
         let sortedKeys = objectContext.properties.keys.sorted(by: <)
         
+        print(objectContext)
+
         for (index, name) in sortedKeys.enumerated() {
             guard let property = objectContext.properties[name] else {
                 continue
@@ -91,9 +93,6 @@ internal extension OpenAPIServiceModel {
             switch property {
             case .reference(let ref):
                 if let referenceName = ref.name {
-                    print(name)
-                    print(objectContext.requiredProperties.contains(name))
-                    print(objectContext.requiredProperties.contains(referenceName))
                     structureDescription.members[name] = Member(value: referenceName, position: index,
                                                                 required: objectContext.requiredProperties.contains(name),
                                                                 documentation: nil)
