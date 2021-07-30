@@ -30,18 +30,18 @@ internal extension OpenAPIServiceModel {
         case .integer(let integerFormat, let integerContext):
             if integerFormat.format == .int64 {
                 model.fieldDescriptions[enclosingEntityName] = Fields.long(rangeConstraint:
-                    NumericRangeConstraint<Int>(minimum: integerContext.minimum?.value,
-                                                maximum: integerContext.maximum?.value,
-                                                exclusiveMinimum: integerContext.minimum?.exclusive ?? false,
-                                                exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
+                                                                            NumericRangeConstraint<Int>(minimum: integerContext.minimum?.value,
+                                                                                                        maximum: integerContext.maximum?.value,
+                                                                                                        exclusiveMinimum: integerContext.minimum?.exclusive ?? false,
+                                                                                                        exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
             } else {
                 model.fieldDescriptions[enclosingEntityName] = Fields.integer(rangeConstraint:
-                    NumericRangeConstraint<Int>(minimum: integerContext.minimum?.value,
-                                                maximum: integerContext.maximum?.value,
-                                                exclusiveMinimum: integerContext.minimum?.exclusive ?? false,
-                                                exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
+                                                                                NumericRangeConstraint<Int>(minimum: integerContext.minimum?.value,
+                                                                                                            maximum: integerContext.maximum?.value,
+                                                                                                            exclusiveMinimum: integerContext.minimum?.exclusive ?? false,
+                                                                                                            exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
             }
-
+            
         case .object(_ , let objectContext):
             if case .b(let mapSchema) = objectContext.additionalProperties {
                 parseMapDefinitionSchema(mapSchema: mapSchema,
@@ -51,7 +51,7 @@ internal extension OpenAPIServiceModel {
                 var structureDescription = StructureDescription()
                 parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
                                   model: &model, objectContext: objectContext, modelOverride: modelOverride)
-
+                
                 model.structureDescriptions[enclosingEntityName] = structureDescription
             }
         case .array(_, let arrayContext):
@@ -62,10 +62,10 @@ internal extension OpenAPIServiceModel {
                            model: &model, fieldName: enclosingEntityName, modelOverride: modelOverride)
         case .number(_, let numberContext):
             model.fieldDescriptions[enclosingEntityName] = Fields.double(rangeConstraint:
-                NumericRangeConstraint<Double>(minimum: numberContext.minimum?.value,
-                                               maximum: numberContext.maximum?.value,
-                                               exclusiveMinimum: numberContext.minimum?.exclusive ?? false,
-                                               exclusiveMaximum: numberContext.maximum?.exclusive ?? false))
+                                                                            NumericRangeConstraint<Double>(minimum: numberContext.minimum?.value,
+                                                                                                           maximum: numberContext.maximum?.value,
+                                                                                                           exclusiveMinimum: numberContext.minimum?.exclusive ?? false,
+                                                                                                           exclusiveMaximum: numberContext.maximum?.exclusive ?? false))
         case .all(let otherSchema, _), .any(let otherSchema, _), .one(let otherSchema, _):
             var structureDescription = StructureDescription()
             parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
@@ -82,13 +82,6 @@ internal extension OpenAPIServiceModel {
                                   model: inout OpenAPIServiceModel, objectContext: JSONSchema.ObjectContext,
                                   modelOverride: ModelOverride?) {
         let sortedKeys = objectContext.properties.keys.sorted(by: <)
-        let values = Array(objectContext.properties.values)
-        let valueWithRequired = values.map {value in (value, value.required)}
-        
-        print(objectContext)
-        print("values: \(valueWithRequired)")
-        print("Required:")
-        print(objectContext.requiredProperties)
         
         for (index, name) in sortedKeys.enumerated() {
             guard let property = objectContext.properties[name] else {
@@ -98,18 +91,21 @@ internal extension OpenAPIServiceModel {
             switch property {
             case .reference(let ref):
                 if let referenceName = ref.name {
+                    print(property)
+                    print(ref.name)
+                    print(property.required)
                     structureDescription.members[name] = Member(value: referenceName, position: index,
-                                                                required: objectContext.requiredProperties.contains(name),
+                                                                required: property.required,
                                                                 documentation: nil)
                 }
             default:
                 var enclosingEntityNameForProperty = enclosingEntityName + name.startingWithUppercase
                 parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityNameForProperty,
-                                           schema: property, modelOverride: modelOverride)
-                    
+                                       schema: property, modelOverride: modelOverride)
+                
                 structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
-                                                                required: objectContext.requiredProperties.contains(name),
-                                                                documentation: nil)
+                                                            required: objectContext.requiredProperties.contains(name),
+                                                            documentation: nil)
             }
         }
     }
@@ -135,7 +131,7 @@ internal extension OpenAPIServiceModel {
         }
         
     }
-        
+    
     static func parseArrayDefinitionSchemas(arrayMetadata: JSONSchema.ArrayContext,
                                             enclosingEntityName: inout String,
                                             model: inout OpenAPIServiceModel,
@@ -159,9 +155,9 @@ internal extension OpenAPIServiceModel {
                     arrayElementEntityName = enclosingEntityName
                     enclosingEntityName = "\(enclosingEntityName)s"
                 }
-                    
+                
                 parseDefinitionSchemas(model: &model, enclosingEntityName: &arrayElementEntityName,
-                                           schema: value, modelOverride: modelOverride)
+                                       schema: value, modelOverride: modelOverride)
                 let type = arrayElementEntityName
                 
                 let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
