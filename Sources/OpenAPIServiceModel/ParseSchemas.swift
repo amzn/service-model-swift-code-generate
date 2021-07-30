@@ -43,7 +43,7 @@ internal extension OpenAPIServiceModel {
             }
             
         case .object(_ , let objectContext):
-            print(schema)
+            print(schema.required)
             if case .b(let mapSchema) = objectContext.additionalProperties {
                 parseMapDefinitionSchema(mapSchema: mapSchema,
                                          enclosingEntityName: &enclosingEntityName,
