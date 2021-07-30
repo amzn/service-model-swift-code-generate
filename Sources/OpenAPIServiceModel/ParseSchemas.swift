@@ -84,7 +84,9 @@ internal extension OpenAPIServiceModel {
         let sortedKeys = objectContext.properties.keys.sorted(by: <)
         
         print(objectContext)
-
+        print("Required:")
+        print(objectContext.requiredProperties)
+        
         for (index, name) in sortedKeys.enumerated() {
             guard let property = objectContext.properties[name] else {
                 continue
