@@ -82,8 +82,11 @@ internal extension OpenAPIServiceModel {
                                   model: inout OpenAPIServiceModel, objectContext: JSONSchema.ObjectContext,
                                   modelOverride: ModelOverride?) {
         let sortedKeys = objectContext.properties.keys.sorted(by: <)
+        let values = Array(objectContext.properties.values)
+        let valueWithRequired = values.map {value in (value, value.required)}
         
         print(objectContext)
+        print("values: \(valueWithRequired)")
         print("Required:")
         print(objectContext.requiredProperties)
         
