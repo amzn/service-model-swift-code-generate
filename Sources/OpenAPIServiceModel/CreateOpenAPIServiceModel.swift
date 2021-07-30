@@ -65,8 +65,8 @@ internal extension OpenAPIServiceModel {
         var model = OpenAPIServiceModel()
         
         do {
-            let resolvedDefintion = try definition.locallyDereferenced().resolved
-            print(resolvedDefintion)
+            let derefDoc = try definition.locallyDereferenced()
+            print(derefDoc)
         } catch {
             
         }
