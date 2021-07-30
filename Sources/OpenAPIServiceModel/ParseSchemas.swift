@@ -43,6 +43,7 @@ internal extension OpenAPIServiceModel {
             }
             
         case .object(_ , let objectContext):
+            print(schema)
             if case .b(let mapSchema) = objectContext.additionalProperties {
                 parseMapDefinitionSchema(mapSchema: mapSchema,
                                          enclosingEntityName: &enclosingEntityName,
@@ -92,9 +93,9 @@ internal extension OpenAPIServiceModel {
             case .reference(let ref):
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
-                                                                required: objectContext.requiredProperties.contains(referenceName),
+                                                                required: property.required,
                                                                 documentation: nil)
-                }
+            }
             default:
                 var enclosingEntityNameForProperty = enclosingEntityName + name.startingWithUppercase
                 parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityNameForProperty,
