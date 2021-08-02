@@ -12,7 +12,7 @@
       },
       {
         "package": "OpenAPIKit",
-        "repositoryURL": "https://github.com/mattpolzin/OpenAPIKit.git",
+        "repositoryURL": "https://github.com/mndzup/OpenAPIKit.git",
         "state": {
           "branch": null,
           "revision": "4986552e76c331a99770428bd2be77ad76068c08",
