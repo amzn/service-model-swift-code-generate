@@ -2,30 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "FineJSON",
-        "repositoryURL": "https://github.com/omochi/FineJSON.git",
-        "state": {
-          "branch": null,
-          "revision": "05101709243cb66d80c92e645210a3b80cf4e17f",
-          "version": "1.14.0"
-        }
-      },
-      {
         "package": "OpenAPIKit",
         "repositoryURL": "https://github.com/mndzup/OpenAPIKit.git",
         "state": {
-          "branch": null,
-          "revision": "4986552e76c331a99770428bd2be77ad76068c08",
-          "version": "2.4.0"
-        }
-      },
-      {
-        "package": "RichJSONParser",
-        "repositoryURL": "https://github.com/omochi/RichJSONParser.git",
-        "state": {
-          "branch": null,
-          "revision": "263e2ecfe88d0500fa99e4cbc8c948529d335534",
-          "version": "3.0.0"
+          "branch": "working",
+          "revision": "caa2946d5ce92639589fb25dedc1c6d4d6eb651a",
+          "version": null
         }
       },
       {
