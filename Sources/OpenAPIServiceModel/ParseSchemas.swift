@@ -87,7 +87,7 @@ internal extension OpenAPIServiceModel {
             guard let property = objectContext.properties[name] else {
                 continue
             }
-            
+            print(objectContext.optionalProperties)
             switch property {
             case .reference(let ref):
                 if let referenceName = ref.name {
