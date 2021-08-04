@@ -87,12 +87,14 @@ internal extension OpenAPIServiceModel {
             guard let property = objectContext.properties[name] else {
                 continue
             }
-            print(objectContext.optionalProperties)
+            
+            print("core context:\(property.coreContext?.required)")
+            
             switch property {
             case .reference(let ref):
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
-                                                                required: !objectContext.optionalProperties.contains(name),
+                                                                required: !objectContext.requiredProperties.contains(name),
                                                                 documentation: nil)
             }
             default:
