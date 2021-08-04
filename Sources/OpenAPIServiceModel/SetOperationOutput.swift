@@ -65,7 +65,7 @@ internal extension OpenAPIServiceModel {
     }
     
     static func setOperationOutput(operation: OpenAPI.Operation, operationName: String, model: inout OpenAPIServiceModel,
-                                   modelOverride: ModelOverride?, description: inout OperationDescription) {
+                                   modelOverride: ModelOverride?, description: inout OperationDescription, document: OpenAPI.Document) {
         for (code, response) in operation.responses {
             switch response {
             case .b(let value):
@@ -98,7 +98,7 @@ internal extension OpenAPIServiceModel {
                             content.enumerated().forEach { entry in
                             if let schema = entry.element.value.schema?.b {
                                 addOperationResponseFromSchema(schema: schema, operationName: operationName, forCode: code, index: nil,
-                                                               description: &description, model: &model, modelOverride: modelOverride)
+                                                               description: &description, model: &model, modelOverride: modelOverride, document: document)
                             } else if let ref = entry.element.value.schema?.a {
                                 addOperationResponseFromReference(reference: ref, operationName: operationName, forCode: code, index: nil,
                                                                   description: &description, model: &model, modelOverride: modelOverride)

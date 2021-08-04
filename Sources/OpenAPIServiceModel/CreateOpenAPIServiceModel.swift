@@ -67,7 +67,7 @@ internal extension OpenAPIServiceModel {
         for (name, schema) in definition.components.schemas {
             var enclosingEntityName = name.rawValue
             parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityName,
-                                   schema: schema, modelOverride: modelOverride)
+                                   schema: schema, modelOverride: modelOverride, document: definition)
         }
         
         for (path, pathDefinition) in definition.paths {
@@ -97,7 +97,7 @@ internal extension OpenAPIServiceModel {
                 parseOperation(description: &operationDescription,
                                operationName: operationName,
                                model: &model, operation: operation,
-                               modelOverride: modelOverride)
+                               modelOverride: modelOverride, document: definition)
                 
                 model.operationDescriptions[operationName] = operationDescription
             }
@@ -110,31 +110,32 @@ internal extension OpenAPIServiceModel {
                                operationName: String,
                                model: inout OpenAPIServiceModel,
                                operation: OpenAPI.Operation,
-                               modelOverride: ModelOverride?) {
+                               modelOverride: ModelOverride?,
+                               document: OpenAPI.Document) {
         let (members, bodyStructureName) = getOperationMembersAndBodyStructureName(
             operation: operation,
                             operationName: operationName,
                             model: &model,
-                            modelOverride: modelOverride)
+                            modelOverride: modelOverride, document: document)
         
         setOperationInput(bodyStructureName: bodyStructureName, operationInputMembers: members,
                           description: &description, model: &model, operationName: operationName)
         
         setOperationOutput(operation: operation, operationName: operationName, model: &model,
-                           modelOverride: modelOverride, description: &description)
+                           modelOverride: modelOverride, description: &description, document: document)
     }
     
     static func getOperationMembersAndBodyStructureName(
             operation: OpenAPI.Operation,
             operationName: String,
             model: inout OpenAPIServiceModel,
-            modelOverride: ModelOverride?) -> (members: OperationInputMembers, bodyStructureName: String?) {
+            modelOverride: ModelOverride?, document: OpenAPI.Document) -> (members: OperationInputMembers, bodyStructureName: String?) {
         var members = OperationInputMembers()
         var bodyStructureName: String?
         
         if let requestBody = operation.requestBody?.b {
             getBodyOperationMembers(requestBody, bodyStructureName: &bodyStructureName,
-                                    operationName: operationName, model: &model, modelOverride: modelOverride)
+                                    operationName: operationName, model: &model, modelOverride: modelOverride, document: document)
         } else {
             fatalError("no request body")
         }
@@ -159,7 +160,7 @@ internal extension OpenAPIServiceModel {
     }
     
     static func getBodyOperationMembers(_ request: OpenAPI.Request, bodyStructureName: inout String?,
-                                        operationName: String, model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
+                                        operationName: String, model: inout OpenAPIServiceModel, modelOverride: ModelOverride?, document: OpenAPI.Document) {
         for (_,value) in request.content {
             if let schema = value.schema?.b {
                 switch schema {
@@ -170,7 +171,7 @@ internal extension OpenAPIServiceModel {
                        continue
                     }
                     parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
-                                      model: &model, objectContext: objectContext, modelOverride: modelOverride)
+                                      model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)
                     
                     model.structureDescriptions[enclosingEntityName] = structureDescription
                     
@@ -243,7 +244,7 @@ internal extension OpenAPIServiceModel {
     
     static func addOperationResponseFromSchema(schema: JSONSchema, operationName: String, forCode code: Int, index: Int?,
                                                description: inout OperationDescription,
-                                               model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
+                                               model: inout OpenAPIServiceModel, modelOverride: ModelOverride?, document: OpenAPI.Document) {
         switch schema {
         case .object:
             let indexString = index?.description ?? ""
@@ -253,7 +254,7 @@ internal extension OpenAPIServiceModel {
                 fatalError("Not object")
             }
             parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &structureName,
-                              model: &model, objectContext: objectContext, modelOverride: modelOverride)
+                              model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)
             
             model.structureDescriptions[structureName] = structureDescription
             

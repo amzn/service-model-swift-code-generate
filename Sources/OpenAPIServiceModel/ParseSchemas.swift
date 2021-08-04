@@ -23,7 +23,7 @@ import Yams
 
 internal extension OpenAPIServiceModel {
     static func parseDefinitionSchemas(model: inout OpenAPIServiceModel, enclosingEntityName: inout String,
-                                       schema: JSONSchema, modelOverride: ModelOverride?) {
+                                       schema: JSONSchema, modelOverride: ModelOverride?, document: OpenAPI.Document) {
         switch schema {
         case .boolean:
             model.fieldDescriptions[enclosingEntityName] = .boolean
@@ -50,13 +50,13 @@ internal extension OpenAPIServiceModel {
             } else {
                 var structureDescription = StructureDescription()
                 parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
-                                  model: &model, objectContext: objectContext, modelOverride: modelOverride)
+                                  model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)
                 
                 model.structureDescriptions[enclosingEntityName] = structureDescription
             }
         case .array(_, let arrayContext):
             parseArrayDefinitionSchemas(arrayMetadata: arrayContext, enclosingEntityName: &enclosingEntityName,
-                                        model: &model, modelOverride: modelOverride)
+                                        model: &model, modelOverride: modelOverride, document: document)
         case .string(_, let stringContext):
             addStringField(metadata: stringContext, schema: schema,
                            model: &model, fieldName: enclosingEntityName, modelOverride: modelOverride)
@@ -68,7 +68,7 @@ internal extension OpenAPIServiceModel {
                                                                                                            exclusiveMaximum: numberContext.maximum?.exclusive ?? false))
         case .all(let otherSchema, _), .any(let otherSchema, _), .one(let otherSchema, _):
             var structureDescription = StructureDescription()
-            parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride)
+            parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride, document: document)
         case .reference:
             break
         case .fragment:
@@ -80,18 +80,25 @@ internal extension OpenAPIServiceModel {
     
     static func parseObjectSchema(structureDescription: inout StructureDescription, enclosingEntityName: inout String,
                                   model: inout OpenAPIServiceModel, objectContext: JSONSchema.ObjectContext,
-                                  modelOverride: ModelOverride?) {
+                                  modelOverride: ModelOverride?, document: OpenAPI.Document) {
         let sortedKeys = objectContext.properties.keys.sorted(by: <)
         
         for (index, name) in sortedKeys.enumerated() {
             guard let property = objectContext.properties[name] else {
                 continue
             }
-            
-            print("core context:\(property.coreContext?.required)")
-            
+                        
             switch property {
             case .reference(let ref):
+                var deref : DereferencedJSONSchema?
+                do {
+                    deref = try ref.dereferenced(in: document.components)
+                } catch {
+                    
+                }
+                
+                print("core context:\(deref?.coreContext?.required)")
+                
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
                                                                 required: !objectContext.requiredProperties.contains(name),
@@ -100,7 +107,7 @@ internal extension OpenAPIServiceModel {
             default:
                 var enclosingEntityNameForProperty = enclosingEntityName + name.startingWithUppercase
                 parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityNameForProperty,
-                                       schema: property, modelOverride: modelOverride)
+                                       schema: property, modelOverride: modelOverride, document: document)
                 
                 structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
                                                             required: !objectContext.optionalProperties.contains(name),
@@ -134,7 +141,7 @@ internal extension OpenAPIServiceModel {
     static func parseArrayDefinitionSchemas(arrayMetadata: JSONSchema.ArrayContext,
                                             enclosingEntityName: inout String,
                                             model: inout OpenAPIServiceModel,
-                                            modelOverride: ModelOverride?) {
+                                            modelOverride: ModelOverride?, document: OpenAPI.Document) {
         if let value = arrayMetadata.items {
             switch value {
             case .reference(let ref):
@@ -156,7 +163,7 @@ internal extension OpenAPIServiceModel {
                 }
                 
                 parseDefinitionSchemas(model: &model, enclosingEntityName: &arrayElementEntityName,
-                                       schema: value, modelOverride: modelOverride)
+                                       schema: value, modelOverride: modelOverride, document: document)
                 let type = arrayElementEntityName
                 
                 let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
@@ -172,14 +179,14 @@ internal extension OpenAPIServiceModel {
     // Parse all, any, one schemas
     static func parseOtherSchemas(structureDescription: inout StructureDescription, enclosingEntityName: inout String,
                                   model: inout OpenAPIServiceModel, otherSchema: [JSONSchema],
-                                  modelOverride: ModelOverride?) {
+                                  modelOverride: ModelOverride?, document: OpenAPI.Document) {
         for (index, subschema) in otherSchema.enumerated() {
             var enclosingEntityNameForProperty = "\(enclosingEntityName)\(index + 1)"
             
             switch subschema {
             case .object(_, let objectContext):
                 parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityNameForProperty,
-                                  model: &model, objectContext: objectContext, modelOverride: modelOverride)
+                                  model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)
             default:
                 fatalError("Non object/structure allOf schemas are not implemented. \(String(describing: subschema.jsonType))")
             }
