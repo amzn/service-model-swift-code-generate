@@ -90,6 +90,7 @@ internal extension OpenAPIServiceModel {
                         
             switch property {
             case .reference(let ref):
+                /*
                 var deref : DereferencedJSONSchema?
                 do {
                     deref = try ref.dereferenced(in: document.components)
@@ -99,6 +100,7 @@ internal extension OpenAPIServiceModel {
                 
                 print("core context:\(deref?.coreContext?.required)")
                 
+                */
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
                                                                 required: !objectContext.requiredProperties.contains(name),
