@@ -90,20 +90,9 @@ internal extension OpenAPIServiceModel {
                         
             switch property {
             case .reference(let ref):
-                /*
-                var deref : DereferencedJSONSchema?
-                do {
-                    deref = try ref.dereferenced(in: document.components)
-                } catch {
-                    
-                }
-                
-                print("core context:\(deref?.coreContext?.required)")
-                
-                */
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
-                                                                required: !objectContext.requiredProperties.contains(name),
+                                                                required: objectContext.requiredProperties.contains(name),
                                                                 documentation: nil)
             }
             default:
@@ -112,7 +101,7 @@ internal extension OpenAPIServiceModel {
                                        schema: property, modelOverride: modelOverride, document: document)
                 
                 structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
-                                                            required: !objectContext.optionalProperties.contains(name),
+                                                            required: objectContext.requiredProperties.contains(name),
                                                             documentation: nil)
             }
         }
