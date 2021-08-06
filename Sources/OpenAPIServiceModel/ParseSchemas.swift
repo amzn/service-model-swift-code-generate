@@ -136,6 +136,7 @@ internal extension OpenAPIServiceModel {
             switch value {
             case .reference(let ref):
                 if let type = ref.name {
+                    // If minItems is 0, the field is optional and does not required validation
                     if arrayMetadata.minItems == 0 {
                         let lengthConstraint = LengthRangeConstraint<Int>(minimum: nil,
                                                                           maximum: arrayMetadata.maxItems)
@@ -161,7 +162,10 @@ internal extension OpenAPIServiceModel {
                 
                 parseDefinitionSchemas(model: &model, enclosingEntityName: &arrayElementEntityName,
                                        schema: value, modelOverride: modelOverride, document: document)
+                
                 let type = arrayElementEntityName
+                
+                // If minItems is 0, the field is optional and does not required validation
                 if arrayMetadata.minItems == 0 {
                     let lengthConstraint = LengthRangeConstraint<Int>(minimum: nil,
                                                                       maximum: arrayMetadata.maxItems)

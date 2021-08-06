@@ -160,7 +160,8 @@ internal extension OpenAPIServiceModel {
     }
     
     static func getBodyOperationMembers(_ request: OpenAPI.Request, bodyStructureName: inout String?,
-                                        operationName: String, model: inout OpenAPIServiceModel, modelOverride: ModelOverride?, document: OpenAPI.Document) {
+                                        operationName: String, model: inout OpenAPIServiceModel,
+                                        modelOverride: ModelOverride?, document: OpenAPI.Document) {
         for (_,value) in request.content {
             if let schema = value.schema?.b {
                 switch schema {
@@ -363,6 +364,7 @@ internal extension OpenAPIServiceModel {
             }
         }
         
+        // If minLength is 0, the field is optional and does not required validation
         if metadata?.minLength == 0 {
             model.fieldDescriptions[fieldName] = Fields.string(
                 regexConstraint: pattern,
