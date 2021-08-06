@@ -36,10 +36,10 @@ internal extension OpenAPIServiceModel {
                                                                                                         exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
             } else {
                 model.fieldDescriptions[enclosingEntityName] = Fields.integer(rangeConstraint:
-                                                                                NumericRangeConstraint<Int>(minimum: integerContext.minimum?.value,
-                                                                                                            maximum: integerContext.maximum?.value,
-                                                                                                            exclusiveMinimum: integerContext.minimum?.exclusive ?? false,
-                                                                                                            exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
+                                                                            NumericRangeConstraint<Int>(minimum: integerContext.minimum?.value,
+                                                                                                        maximum: integerContext.maximum?.value,
+                                                                                                        exclusiveMinimum: integerContext.minimum?.exclusive ?? false,
+                                                                                                        exclusiveMaximum: integerContext.maximum?.exclusive ?? false))
             }
             
         case .object(_ , let objectContext):
@@ -87,12 +87,11 @@ internal extension OpenAPIServiceModel {
             guard let property = objectContext.properties[name] else {
                 continue
             }
-                        
             switch property {
             case .reference(let ref):
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
-                                                                required: objectContext.requiredProperties.contains(name),
+                                                                required: objectContext.requiredArray.contains(name),
                                                                 documentation: nil)
             }
             default:
@@ -101,7 +100,7 @@ internal extension OpenAPIServiceModel {
                                        schema: property, modelOverride: modelOverride, document: document)
                 
                 structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
-                                                            required: objectContext.requiredProperties.contains(name),
+                                                            required: objectContext.requiredArray.contains(name),
                                                             documentation: nil)
             }
         }
