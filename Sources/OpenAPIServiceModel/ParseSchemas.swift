@@ -136,10 +136,17 @@ internal extension OpenAPIServiceModel {
             switch value {
             case .reference(let ref):
                 if let type = ref.name {
-                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
-                                                                      maximum: arrayMetadata.maxItems)
-                    model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
-                                                                               lengthConstraint: lengthConstraint)
+                    if arrayMetadata.minItems == 0 {
+                        let lengthConstraint = LengthRangeConstraint<Int>(minimum: nil,
+                                                                          maximum: arrayMetadata.maxItems)
+                        model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                                   lengthConstraint: lengthConstraint)
+                    } else {
+                        let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                                                                          maximum: arrayMetadata.maxItems)
+                        model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                                   lengthConstraint: lengthConstraint)
+                    }
                 }
             case .string:
                 var arrayElementEntityName: String
@@ -155,11 +162,17 @@ internal extension OpenAPIServiceModel {
                 parseDefinitionSchemas(model: &model, enclosingEntityName: &arrayElementEntityName,
                                        schema: value, modelOverride: modelOverride, document: document)
                 let type = arrayElementEntityName
-                
-                let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
-                                                                  maximum: arrayMetadata.maxItems)
-                model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
-                                                                           lengthConstraint: lengthConstraint)
+                if arrayMetadata.minItems == 0 {
+                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: nil,
+                                                                      maximum: arrayMetadata.maxItems)
+                    model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                               lengthConstraint: lengthConstraint)
+                } else {
+                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                                                                      maximum: arrayMetadata.maxItems)
+                    model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                               lengthConstraint: lengthConstraint)
+                }
             default:
                 fatalError("Not implemented")
             }
