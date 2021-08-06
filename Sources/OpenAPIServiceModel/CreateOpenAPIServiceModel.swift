@@ -363,10 +363,18 @@ internal extension OpenAPIServiceModel {
             }
         }
         
-        model.fieldDescriptions[fieldName] = Fields.string(
-            regexConstraint: pattern,
-            lengthConstraint: LengthRangeConstraint<Int>(minimum: metadata?.minLength ?? nil,
-                                                         maximum: metadata?.maxLength ?? nil),
-            valueConstraints: newValueConstraints)
+        if metadata?.minLength == 0 {
+            model.fieldDescriptions[fieldName] = Fields.string(
+                regexConstraint: pattern,
+                lengthConstraint: LengthRangeConstraint<Int>(minimum: nil,
+                                                            maximum: metadata?.maxLength ?? nil),
+                valueConstraints: newValueConstraints)
+        } else {
+            model.fieldDescriptions[fieldName] = Fields.string(
+                regexConstraint: pattern,
+                lengthConstraint: LengthRangeConstraint<Int>(minimum: metadata?.minLength ?? nil,
+                                                            maximum: metadata?.maxLength ?? nil),
+                valueConstraints: newValueConstraints)
+        }
     }
 }
