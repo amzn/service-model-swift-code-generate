@@ -20,6 +20,9 @@ import OpenAPIKit
 import ServiceModelEntities
 import ServiceModelCodeGeneration
 import Yams
+
+let nonErrorCodeRange = 200...299
+
 internal extension OpenAPIServiceModel {
     struct OperationInputMembers {
         var queryMembers: [String: Member] = [:]
@@ -142,14 +145,11 @@ internal extension OpenAPIServiceModel {
         
         for (index, parameter) in operation.parameters.enumerated() {
             switch parameter {
-            case .b(let value):
-                switch value.context.location {
-                case .cookie, .header, .path, .query:
-                    if let schemaValue = value.schemaOrContent.schemaValue {
-                        getFixedFieldsOperationMembers(fixedFields: value, operationName: operationName,
-                                                       index: index, members: &members, items: schemaValue,
-                                                       model: &model, modelOverride: modelOverride)
-                    }
+            case .b(let parameterValue):
+                if let schemaValue = parameterValue.schemaOrContent.schemaValue {
+                    getFixedFieldsOperationMembers(fixedFields: parameterValue, operationName: operationName,
+                                                    index: index, members: &members, items: schemaValue,
+                                                    model: &model, modelOverride: modelOverride)
                 }
             case .a(_):
                 fatalError("Not implemented.")
@@ -162,8 +162,8 @@ internal extension OpenAPIServiceModel {
     static func getBodyOperationMembers(_ request: OpenAPI.Request, bodyStructureName: inout String?,
                                         operationName: String, model: inout OpenAPIServiceModel,
                                         modelOverride: ModelOverride?, document: OpenAPI.Document) {
-        for (_,value) in request.content {
-            if let schema = value.schema?.b {
+        for (_, content) in request.content {
+            if let schema = content.schema?.b {
                 switch schema {
                 case .object:
                     var enclosingEntityName = "\(operationName)RequestBody"
@@ -178,9 +178,10 @@ internal extension OpenAPIServiceModel {
                     
                     bodyStructureName = enclosingEntityName
                 default:
+                    // The schemas object and reference are most widely used in the requestBody field
                     fatalError("Not implemented.")
                 }
-            } else if let reference = value.schema?.a {
+            } else if let reference = content.schema?.a {
                 if let refName = reference.name {
                     bodyStructureName = refName
                 }
@@ -251,19 +252,19 @@ internal extension OpenAPIServiceModel {
             let indexString = index?.description ?? ""
             var structureName = "\(operationName)\(code)Response\(indexString)Body"
             var structureDescription = StructureDescription()
-            guard let objectContext = schema.objectContext else {
-                fatalError("Not object")
-            }
-            parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &structureName,
-                              model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)
             
-            model.structureDescriptions[structureName] = structureDescription
-            
-            if code >= 200 && code < 300 {
-                description.output = structureName
-            } else {
-                description.errors.append((type: structureName, code: code))
-                model.errorTypes.insert(structureName)
+            if let objectContext = schema.objectContext {
+                parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &structureName,
+                                  model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)
+                
+                model.structureDescriptions[structureName] = structureDescription
+                
+                if nonErrorCodeRange.contains(code)  {
+                    description.output = structureName
+                } else {
+                    description.errors.append((type: structureName, code: code))
+                    model.errorTypes.insert(structureName)
+                }
             }
         default:
             fatalError("Not implemented.")
@@ -274,7 +275,7 @@ internal extension OpenAPIServiceModel {
                                                   index: Int?, description: inout OperationDescription,
                                                   model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
         if let refName = reference.name {
-            if code >= 200 && code < 300 {
+            if nonErrorCodeRange.contains(code) {
                 description.output = refName
             } else {
                 description.errors.append((type: refName, code: code))
@@ -342,21 +343,18 @@ internal extension OpenAPIServiceModel {
                                model: inout OpenAPIServiceModel,
                                fieldName: String,
                                modelOverride: ModelOverride?) {
-        let pattern: String?
         let newValueConstraints: [(name: String, value: String)]
 
         if modelOverride?.modelStringPatternsAreAlternativeList ?? false,
-            let current = metadata?.pattern,
-            let first = current.first, first == "^",
-            let last = current.last, last == "$" {
-                pattern = nil
+            let regexExpression = metadata?.pattern,
+            regexExpression.first == "^",
+            regexExpression.last == "$" {
                 newValueConstraints =
-                    current.dropFirst().dropLast().split(separator: "|").map { subString in
+                    regexExpression.dropFirst().dropLast().split(separator: "|").map { subString in
                         let value = String(subString)
                         return (name: value, value: value)
-                }
+                    }
         } else {
-            pattern = nil
             if let coreContext = schema?.coreContext {
                 newValueConstraints = getEnumerationValues(metadata: coreContext)
             } else {
@@ -364,16 +362,16 @@ internal extension OpenAPIServiceModel {
             }
         }
         
-        // If minLength is 0, the field is optional and does not required validation
+        // If minLength is 0, the field is optional and does not require validation
         if metadata?.minLength == 0 {
             model.fieldDescriptions[fieldName] = Fields.string(
-                regexConstraint: pattern,
+                regexConstraint: nil,
                 lengthConstraint: LengthRangeConstraint<Int>(minimum: nil,
                                                             maximum: metadata?.maxLength ?? nil),
                 valueConstraints: newValueConstraints)
         } else {
             model.fieldDescriptions[fieldName] = Fields.string(
-                regexConstraint: pattern,
+                regexConstraint: nil,
                 lengthConstraint: LengthRangeConstraint<Int>(minimum: metadata?.minLength ?? nil,
                                                             maximum: metadata?.maxLength ?? nil),
                 valueConstraints: newValueConstraints)

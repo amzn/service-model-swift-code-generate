@@ -68,7 +68,8 @@ internal extension OpenAPIServiceModel {
                                                                                                            exclusiveMaximum: numberContext.maximum?.exclusive ?? false))
         case .all(let otherSchema, _), .any(let otherSchema, _), .one(let otherSchema, _):
             var structureDescription = StructureDescription()
-            parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName, model: &model, otherSchema: otherSchema, modelOverride: modelOverride, document: document)
+            parseOtherSchemas(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
+                              model: &model, otherSchema: otherSchema, modelOverride: modelOverride, document: document)
         case .reference:
             break
         case .fragment:
@@ -89,6 +90,7 @@ internal extension OpenAPIServiceModel {
             }
             switch property {
             case .reference(let ref):
+                // TODO: Once OpenAPIKit adds optionality for references, replace requiredArray with requiredProperties
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
                                                                 required: objectContext.requiredArray.contains(name),
@@ -125,7 +127,6 @@ internal extension OpenAPIServiceModel {
         default:
             fatalError("Not implemented")
         }
-        
     }
     
     static func parseArrayDefinitionSchemas(arrayMetadata: JSONSchema.ArrayContext,
@@ -136,7 +137,7 @@ internal extension OpenAPIServiceModel {
             switch value {
             case .reference(let ref):
                 if let type = ref.name {
-                    // If minItems is 0, the field is optional and does not required validation
+                    // If minItems is 0, the field is optional and does not require validation
                     if arrayMetadata.minItems == 0 {
                         let lengthConstraint = LengthRangeConstraint<Int>(minimum: nil,
                                                                           maximum: arrayMetadata.maxItems)

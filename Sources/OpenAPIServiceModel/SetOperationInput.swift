@@ -52,8 +52,7 @@ internal extension OpenAPIServiceModel {
             model.structureDescriptions[inputModelName] = structureDefinition
             description.input = inputModelName
             
-            if operationInputFields.pathFields.isEmpty && !operationInputFields.queryFields.isEmpty
-                && operationInputFields.bodyFields.isEmpty && operationInputFields.additionalHeaderFields.isEmpty {
+            if !operationInputFields.queryFields.isEmpty {
                 description.inputDescription = OperationInputDescription(
                     pathFields: operationInputFields.pathFields,
                     queryFields: [],
