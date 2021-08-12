@@ -150,7 +150,7 @@ internal extension OpenAPIServiceModel {
                                                                                    lengthConstraint: lengthConstraint)
                     }
                 }
-            case .string:
+            default:
                 var arrayElementEntityName: String
                 
                 // If the enclosingEntityName ends in an "s", swap with element name
@@ -178,8 +178,6 @@ internal extension OpenAPIServiceModel {
                     model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
                                                                                lengthConstraint: lengthConstraint)
                 }
-            default:
-                fatalError("Not implemented")
             }
         }
     }
