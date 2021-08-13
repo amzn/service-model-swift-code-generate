@@ -250,9 +250,16 @@ internal extension OpenAPIServiceModel {
         switch schema {
         case .one(let subschemas, _):
             for (index, subschema) in subschemas.enumerated() {
-                addOperationResponseFromSchema(schema: subschema, operationName: operationName, forCode: code,
-                                               index: index, description: &description,
-                                               model: &model, modelOverride: modelOverride, document: document)
+                switch subschema {
+                case .reference(let ref):
+                addOperationResponseFromReference(reference: ref, operationName: operationName, forCode: code,
+                                                  index: index, description: &description,
+                                                  model: &model, modelOverride: modelOverride)
+                default:
+                    addOperationResponseFromSchema(schema: subschema, operationName: operationName, forCode: code,
+                                                   index: index, description: &description,
+                                                   model: &model, modelOverride: modelOverride, document: document)
+                }
             }
         case .object:
             let indexString = index?.description ?? ""
