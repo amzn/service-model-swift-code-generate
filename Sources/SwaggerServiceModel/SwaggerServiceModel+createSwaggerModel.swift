@@ -78,18 +78,10 @@ internal extension SwaggerServiceModel {
             
             // iterate through the operations
             for (type, operation) in filteredOperations {
-                guard let identifier = operation.identifier else {
+                guard let operationName = operation.identifier else {
                     continue
                 }
-                
-                // if there is more than one operation for this path
-                let operationName: String
-                if filteredOperations.count > 1 {
-                    operationName = identifier + type.rawValue.startingWithUppercase
-                } else {
-                    operationName = identifier
-                }
-                
+
                 let inputDescription =
                         OperationInputDescription(defaultInputLocation: .body)
                 
