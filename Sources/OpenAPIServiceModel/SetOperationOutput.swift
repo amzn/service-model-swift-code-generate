@@ -81,7 +81,6 @@ internal extension OpenAPIServiceModel {
                             let typeName = entry.element.key.safeModelName().startingWithUppercase
                             
                             let headerName = "\(operationName)\(typeName)Header"
-                            
                             if let header = entry.element.value.b  {
                                 if let schema = header.schemaOrContent.schemaValue {
                                     addField(item: schema, fieldName: headerName, model: &model, modelOverride: modelOverride)
