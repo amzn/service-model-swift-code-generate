@@ -71,12 +71,12 @@ internal extension OpenAPIServiceModel {
             case .b(let value):
                 switch code {
                 case .status(let code):
+                    var headerMembers: [String: Member] = [:]
+
                     if let headers = value.headers {
                         let filteredHeaders = filterHeaders(operation: operation, code: code,
                                                             headers: headers, modelOverride: modelOverride)
-                        
-                        var headerMembers: [String: Member] = [:]
-                        
+                                                
                         filteredHeaders.enumerated().forEach { entry in
                             let typeName = entry.element.key.safeModelName().startingWithUppercase
                             
@@ -92,24 +92,24 @@ internal extension OpenAPIServiceModel {
                                 }
                             }
                         }
-                        
-                        let content = value.content
-                            content.enumerated().forEach { entry in
-                            if let schema = entry.element.value.schema?.b {
-                                addOperationResponseFromSchema(schema: schema, operationName: operationName, forCode: code, index: nil,
-                                                               description: &description, model: &model, modelOverride: modelOverride, document: document)
-                            } else if let ref = entry.element.value.schema?.a {
-                                addOperationResponseFromReference(reference: ref, operationName: operationName, forCode: code, index: nil,
-                                                                  description: &description, model: &model, modelOverride: modelOverride)
-                            }
-                        }
-                        
-                        if !headerMembers.isEmpty {
-                            setOperationOutputWithHeaders(description: &description, model: &model, headerMembers: headerMembers,
-                                                          operationName: operationName, code: code)
-                        }
-                        
                     }
+                    
+                    let content = value.content
+                    content.enumerated().forEach { entry in
+                    if let schema = entry.element.value.schema?.b {
+                        addOperationResponseFromSchema(schema: schema, operationName: operationName, forCode: code, index: nil,
+                                                       description: &description, model: &model, modelOverride: modelOverride, document: document)
+                    } else if let ref = entry.element.value.schema?.a {
+                        addOperationResponseFromReference(reference: ref, operationName: operationName, forCode: code, index: nil,
+                                                          description: &description, model: &model, modelOverride: modelOverride)
+                        }
+                    }
+                        
+                    if !headerMembers.isEmpty {
+                        setOperationOutputWithHeaders(description: &description, model: &model, headerMembers: headerMembers,
+                                                      operationName: operationName, code: code)
+                    }
+                        
                 default:
                     fatalError("Range and Default status code types not implemented.")
                 }
