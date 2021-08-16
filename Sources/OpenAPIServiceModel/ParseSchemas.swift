@@ -137,18 +137,10 @@ internal extension OpenAPIServiceModel {
             switch value {
             case .reference(let ref):
                 if let type = ref.name {
-                    // If minItems is 0, the field is optional and does not require validation
-                    if arrayMetadata.minItems == 0 {
-                        let lengthConstraint = LengthRangeConstraint<Int>(minimum: nil,
-                                                                          maximum: arrayMetadata.maxItems)
-                        model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
-                                                                                   lengthConstraint: lengthConstraint)
-                    } else {
-                        let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
-                                                                          maximum: arrayMetadata.maxItems)
-                        model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
-                                                                                   lengthConstraint: lengthConstraint)
-                    }
+                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                                                                      maximum: arrayMetadata.maxItems)
+                    model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                               lengthConstraint: lengthConstraint)
                 }
             default:
                 var arrayElementEntityName: String
@@ -166,18 +158,10 @@ internal extension OpenAPIServiceModel {
                 
                 let type = arrayElementEntityName
                 
-                // If minItems is 0, the field is optional and does not required validation
-                if arrayMetadata.minItems == 0 {
-                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: nil,
-                                                                      maximum: arrayMetadata.maxItems)
-                    model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
-                                                                               lengthConstraint: lengthConstraint)
-                } else {
-                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
-                                                                      maximum: arrayMetadata.maxItems)
-                    model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
-                                                                               lengthConstraint: lengthConstraint)
-                }
+                let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                                                                  maximum: arrayMetadata.maxItems)
+                model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
+                                                                           lengthConstraint: lengthConstraint)
             }
         }
     }
