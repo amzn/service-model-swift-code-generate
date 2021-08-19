@@ -155,7 +155,7 @@ internal extension OpenAPIServiceModel {
                 fatalError("Not implemented.")
             }
         }
-        
+                
         return (members: members, bodyStructureName: bodyStructureName)
     }
     
@@ -340,7 +340,14 @@ internal extension OpenAPIServiceModel {
 
     static func getEnumerationValues(metadata: JSONSchemaContext) -> [(name: String, value: String)] {
        let enumerationValues: [(name: String, value: String)]
-        if let allowedValues = metadata.allowedValues {
+        if let tempValues = metadata.allowedValues {
+            var allowedValues = tempValues
+            for (index, allowedValue) in allowedValues.enumerated() {
+                if allowedValue == false {
+                    allowedValues[index] = "NO"
+                }
+            }
+            
             enumerationValues = allowedValues.filter { allowedValue in allowedValue.value is String }
                 .compactMap { allowedValue in allowedValue.value as? String }
                 .map { value in (name: value, value: value) }
