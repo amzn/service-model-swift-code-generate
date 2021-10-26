@@ -18,9 +18,9 @@
 import Foundation
 import ServiceModelEntities
 
-public enum AsyncAwaitGeneration: String, Codable {
-    case none = "NONE"
-    case experimental = "EXPERIMENTAL"
+public enum CodeGenFeatureStatus: String, Codable {
+    case disabled = "DISABLED"
+    case enabled = "ENABLED"
 }
 
 /**
@@ -31,7 +31,7 @@ public protocol ModelClientDelegate {
     /// The type of client being generated.
     var clientType: ClientType { get }
 
-    var asyncAwaitGeneration: AsyncAwaitGeneration { get }
+    var asyncAwaitAPIs: CodeGenFeatureStatus { get }
         
     /**
      Add any custom file headers to the client file.

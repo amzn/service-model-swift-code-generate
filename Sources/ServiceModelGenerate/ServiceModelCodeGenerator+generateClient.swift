@@ -110,7 +110,7 @@ public extension ServiceModelCodeGenerator {
             }
             
             // for each of the operations
-            if case .experimental = delegate.asyncAwaitGeneration {
+            if case .enabled = delegate.asyncAwaitAPIs {
                 for (index, operation) in sortedOperations.enumerated() {
                     let (name, operationDescription) = operation
                     
@@ -118,7 +118,7 @@ public extension ServiceModelCodeGenerator {
                                  operationDescription: operationDescription,
                                  delegate: delegate, operationInvokeType: .asyncFunction,
                                  forTypeAlias: false, isGenerator: isGenerator,
-                                 prefixLine: (index == 0) ? "#if compiler(>=5.5)" : nil,
+                                 prefixLine: (index == 0) ? "#if compiler(>=5.5) && canImport(_Concurrency)" : nil,
                                  postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
                 }
             }

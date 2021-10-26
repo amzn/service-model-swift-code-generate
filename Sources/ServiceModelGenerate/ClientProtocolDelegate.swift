@@ -27,7 +27,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
     public let clientType: ClientType
     public let baseName: String
     public let typeDescription: String
-    public let asyncAwaitGeneration: AsyncAwaitGeneration
+    public let asyncAwaitAPIs: CodeGenFeatureStatus
     
     /**
      Initializer.
@@ -36,11 +36,11 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         - baseName: The base name of the Service.
         - asyncResultType: The name of the result type to use for async functions.
      */
-    public init(baseName: String, asyncAwaitGeneration: AsyncAwaitGeneration) {
+    public init(baseName: String, asyncAwaitAPIs: CodeGenFeatureStatus) {
         self.baseName = baseName
         self.clientType = .protocol(name: "\(baseName)ClientProtocol")
         self.typeDescription = "Client Protocol for the \(baseName) service."
-        self.asyncAwaitGeneration = asyncAwaitGeneration
+        self.asyncAwaitAPIs = asyncAwaitAPIs
     }
     
     public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
@@ -71,7 +71,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         }
         
         // if there is async/await support
-        if case .experimental = self.asyncAwaitGeneration {
+        if case .enabled = self.asyncAwaitAPIs {
             // add async typealiases for Swift 5.5 and greater
             for (index, operation) in sortedOperations.enumerated() {
                 let (name, operationDescription) = operation
@@ -80,7 +80,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .asyncFunction,
                                            forTypeAlias: true, isGenerator: isGenerator,
-                                           prefixLine: (index == 0) ? "#if compiler(>=5.5)" : nil,
+                                           prefixLine: (index == 0) ? "#if compiler(>=5.5) && canImport(_Concurrency)" : nil,
                                            postfixLine: (index == sortedOperations.count - 1) ? "#else" : nil)
             }
             
