@@ -67,9 +67,8 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendEmptyLine()
         addOperationPathEnum(fileBuilder, sortedOperations)
-        fileBuilder.appendLine("""
-            }
-            """)
+        fileBuilder.appendEmptyLine()
+        addAllowedErrors(sortedOperations: sortedOperations, fileBuilder: fileBuilder, baseName: baseName)
         
         fileBuilder.decIndent()
         fileBuilder.appendLine("}")
@@ -128,6 +127,35 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
                 }
+            """)
+    }
+
+    private func addAllowedErrors(sortedOperations: [(key: String, value: OperationDescription)],
+                                  fileBuilder: FileBuilder,
+                                  baseName: String) {
+        fileBuilder.appendLine("""
+            public var allowedErrors: [\(baseName)ErrorTypes] {
+                switch self {
+            """)
+            
+        fileBuilder.incIndent()
+        // for each of the operations
+        for (name, operation) in sortedOperations {
+            // convert to lower camel case
+            let internalName = name.upperToLowerCamelCase
+            
+            let sortedErrorNames = operation.errors.map { "." + $0.type.normalizedErrorName }.sorted()
+            let errorList = sortedErrorNames.joined(separator: ", ")
+            fileBuilder.appendLine("""
+                case .\(internalName):
+                    return [\(errorList)]
+                """)
+        }
+        fileBuilder.decIndent()
+        
+        fileBuilder.appendLine("""
+                }
+            }
             """)
     }
 }

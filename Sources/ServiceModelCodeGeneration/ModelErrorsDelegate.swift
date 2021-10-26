@@ -123,6 +123,40 @@ public protocol ModelErrorsDelegate {
         */
        func errorTypeAdditionalDescriptionCases(fileBuilder: FileBuilder,
                                                 errorTypes: [ErrorType])
+
+    /**
+        Generator for the error type additional option set items.
+    
+        - Parameters:
+           - fileBuilder: The FileBuilder to output to.
+           - optionSetTypeName: The name of the option set structure.
+           - errorTypes: The sorted list of error types.
+        */
+    func errorTypeAdditionalOptionSetItems(fileBuilder: FileBuilder,
+                                           optionSetTypeName: String,
+                                           errorTypes: [ErrorType])
+    
+    /**
+        Generator for the error type additional option set item descriptions.
+    
+        - Parameters:
+           - fileBuilder: The FileBuilder to output to.
+           - errorTypes: The sorted list of error types.
+        */
+    func errorTypeAdditionalOptionSetItemDescriptions(fileBuilder: FileBuilder,
+                                                      errorTypes: [ErrorType])
+    
+    /**
+        Generator for the error type additional error handling extensions.
+    
+        - Parameters:
+           - fileBuilder: The FileBuilder to output to.
+           - errorTypes: The sorted list of error types.
+           - baseName: The base name for the model.
+        */
+    func errorTypeAdditionalExtensions(fileBuilder: FileBuilder,
+                                       errorTypes: [ErrorType],
+                                       baseName: String)
 }
 
 public extension ModelErrorsDelegate {
@@ -133,6 +167,23 @@ public extension ModelErrorsDelegate {
         default:
             return "CustomStringConvertible"
         }
+    }
+
+    func errorTypeAdditionalOptionSetItems(fileBuilder: FileBuilder,
+                                           optionSetTypeName: String,
+                                           errorTypes: [ErrorType]) {
+        // default implementation, do nothing
+    }
+    
+    func errorTypeAdditionalOptionSetItemDescriptions(fileBuilder: FileBuilder,
+                                                      errorTypes: [ErrorType]) {
+        // default implementation, do nothing
+    }
+    
+    func errorTypeAdditionalExtensions(fileBuilder: FileBuilder,
+                                       errorTypes: [ErrorType],
+                                       baseName: String) {
+        // default implementation, do nothing
     }
 }
 

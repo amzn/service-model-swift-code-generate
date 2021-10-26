@@ -224,6 +224,10 @@ public extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("    public static let \(internalName) = \(baseName)ErrorTypes(rawValue: \(index + 1))")
         }
         
+        delegate.errorTypeAdditionalOptionSetItems(fileBuilder: fileBuilder,
+                                                   optionSetTypeName: "\(baseName)ErrorTypes",
+                                                   errorTypes: sortedErrors)
+
         fileBuilder.appendLine("""
             }
             
@@ -242,6 +246,7 @@ public extension ServiceModelCodeGenerator {
                     return \(internalName)Identity
                 """)
         }
+        delegate.errorTypeAdditionalOptionSetItemDescriptions(fileBuilder: fileBuilder, errorTypes: sortedErrors)
         fileBuilder.decIndent()
         fileBuilder.decIndent()
         
