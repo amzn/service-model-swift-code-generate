@@ -28,7 +28,7 @@ public struct MockClientDelegate: ModelClientDelegate {
     public let isThrowingMock: Bool
     public let clientType: ClientType
     public let defaultBehaviourDescription: String
-    public let asyncAwaitGeneration: AsyncAwaitGeneration
+    public let asyncAwaitAPIs: CodeGenFeatureStatus
     
     /**
      Initializer.
@@ -39,10 +39,10 @@ public struct MockClientDelegate: ModelClientDelegate {
         - asyncResultType: The name of the result type to use for async functions.
      */
     public init(baseName: String, isThrowingMock: Bool,
-                asyncAwaitGeneration: AsyncAwaitGeneration) {
+                asyncAwaitAPIs: CodeGenFeatureStatus) {
         self.baseName = baseName
         self.isThrowingMock = isThrowingMock
-        self.asyncAwaitGeneration = asyncAwaitGeneration
+        self.asyncAwaitAPIs = asyncAwaitAPIs
         
         let name: String
         let implementationProviderProtocol: String
@@ -89,15 +89,6 @@ public struct MockClientDelegate: ModelClientDelegate {
         fileBuilder.appendLine("""
             import SmokeAWSHttp
             """)
-        
-        if case .experimental = self.asyncAwaitGeneration {
-            fileBuilder.appendLine("""
-                
-                #if compiler(>=5.5)
-                import _SmokeAWSHttpConcurrency
-                #endif
-                """)
-        }
     }
     
     private func addCommonFunctionsForOperation(name: String, index: Int,
@@ -290,8 +281,8 @@ public struct MockClientDelegate: ModelClientDelegate {
         
         fileBuilder.incIndent()
         
-        if case .experimental = self.asyncAwaitGeneration, invokeType == .eventLoopFutureAsync {
-            fileBuilder.appendLine("#if compiler(>=5.5)", postInc: true)
+        if case .enabled = self.asyncAwaitAPIs, invokeType == .eventLoopFutureAsync {
+            fileBuilder.appendLine("#if compiler(>=5.5) && canImport(_Concurrency)", postInc: true)
             fileBuilder.appendLine("if #available(macOS 12, iOS 15, tvOS 15, watchOS 8, *) {", postInc: true)
             
             delegateMockImplementationCall(codeGenerator: codeGenerator,
@@ -391,8 +382,8 @@ public struct MockClientDelegate: ModelClientDelegate {
         
         fileBuilder.incIndent()
         
-        if case .experimental = self.asyncAwaitGeneration, invokeType == .eventLoopFutureAsync {
-            fileBuilder.appendLine("#if compiler(>=5.5)", postInc: true)
+        if case .enabled = self.asyncAwaitAPIs, invokeType == .eventLoopFutureAsync {
+            fileBuilder.appendLine("#if compiler(>=5.5) && canImport(_Concurrency)", postInc: true)
             fileBuilder.appendLine("if #available(macOS 12, iOS 15, tvOS 15, watchOS 8, *) {", postInc: true)
             
             delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,

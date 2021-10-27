@@ -35,12 +35,12 @@ public struct CodeGenerationCustomizations {
     public let fileHeader: String?
     /// Custom configuration for http clients
     public let httpClientConfiguration: HttpClientConfiguration
-    /// The mode for generation of async/await APIs
-    public let asyncAwaitGeneration: AsyncAwaitGeneration
+    /// If async/await APIs should be included
+    public let asyncAwaitAPIs: CodeGenFeatureStatus
     
     public init(validationErrorDeclaration: ErrorDeclaration,
                 unrecognizedErrorDeclaration: ErrorDeclaration,
-                asyncAwaitGeneration: AsyncAwaitGeneration,
+                asyncAwaitAPIs: CodeGenFeatureStatus,
                 generateModelShapeConversions: Bool,
                 optionalsInitializeEmpty: Bool,
                 fileHeader: String?,
@@ -51,7 +51,7 @@ public struct CodeGenerationCustomizations {
         self.optionalsInitializeEmpty = optionalsInitializeEmpty
         self.fileHeader = fileHeader
         self.httpClientConfiguration = httpClientConfiguration
-        self.asyncAwaitGeneration = asyncAwaitGeneration
+        self.asyncAwaitAPIs = asyncAwaitAPIs
     }
 }
 
