@@ -282,8 +282,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         fileBuilder.incIndent()
         
         if case .enabled = self.asyncAwaitAPIs, invokeType == .eventLoopFutureAsync {
-            fileBuilder.appendLine("#if compiler(>=5.5) && canImport(_Concurrency)", postInc: true)
-            fileBuilder.appendLine("if #available(macOS 12, iOS 15, tvOS 15, watchOS 8, *) {", postInc: true)
+            fileBuilder.appendLine(asyncAwaitCondition, postInc: true)
             
             delegateMockImplementationCall(codeGenerator: codeGenerator,
                                            functionPrefix: functionPrefix,
@@ -292,9 +291,6 @@ public struct MockClientDelegate: ModelClientDelegate {
                                            hasInput: hasInput,
                                            functionOutputType: functionOutputType,
                                            operationName: operationName)
-            fileBuilder.appendLine("} else {", preDec: true, postInc: true)
-            fileBuilder.appendLine("fatalError( \"Swift >=5.5 unsupported below (macOS 12, iOS 15, tvOS 15, watchOS 8)\")")
-            fileBuilder.appendLine("}", preDec: true)
             fileBuilder.appendLine("#else", preDec: true, postInc: true)
             
             delegateMockImplementationCall(codeGenerator: codeGenerator,
@@ -383,8 +379,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         fileBuilder.incIndent()
         
         if case .enabled = self.asyncAwaitAPIs, invokeType == .eventLoopFutureAsync {
-            fileBuilder.appendLine("#if compiler(>=5.5) && canImport(_Concurrency)", postInc: true)
-            fileBuilder.appendLine("if #available(macOS 12, iOS 15, tvOS 15, watchOS 8, *) {", postInc: true)
+            fileBuilder.appendLine(asyncAwaitCondition, postInc: true)
             
             delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,
                                                    functionPrefix: functionPrefix,
@@ -393,9 +388,6 @@ public struct MockClientDelegate: ModelClientDelegate {
                                                    hasInput: hasInput,
                                                    functionOutputType: functionOutputType,
                                                    operationName: operationName)
-            fileBuilder.appendLine("} else {", preDec: true, postInc: true)
-            fileBuilder.appendLine("fatalError( \"Swift >=5.5 unsupported below (macOS 12, iOS 15, tvOS 15, watchOS 8)\")")
-            fileBuilder.appendLine("}", preDec: true)
             fileBuilder.appendLine("#else", preDec: true, postInc: true)
             
             delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,

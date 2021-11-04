@@ -80,7 +80,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .asyncFunction,
                                            forTypeAlias: true, isGenerator: isGenerator,
-                                           prefixLine: (index == 0) ? "#if compiler(>=5.5) && canImport(_Concurrency)" : nil,
+                                           prefixLine: (index == 0) ? asyncAwaitCondition : nil,
                                            postfixLine: (index == sortedOperations.count - 1) ? "#else" : nil)
             }
             
