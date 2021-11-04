@@ -19,6 +19,8 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
+internal let asyncAwaitCondition = "#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)"
+
 public extension ServiceModelCodeGenerator {
     private struct OperationSignature {
         let input: String
@@ -118,7 +120,7 @@ public extension ServiceModelCodeGenerator {
                                  operationDescription: operationDescription,
                                  delegate: delegate, operationInvokeType: .asyncFunction,
                                  forTypeAlias: false, isGenerator: isGenerator,
-                                 prefixLine: (index == 0) ? "#if compiler(>=5.5) && canImport(_Concurrency)" : nil,
+                                 prefixLine: (index == 0) ? asyncAwaitCondition : nil,
                                  postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
                 }
             }
@@ -293,9 +295,6 @@ public extension ServiceModelCodeGenerator {
         if !forTypeAlias {
             fileBuilder.appendLine(" */")
             
-            if case .asyncFunction = invokeType {
-                fileBuilder.appendLine("@available(macOS 12, iOS 15, tvOS 15, watchOS 8, *)")
-            }
             functionName = name.upperToLowerCamelCase
         } else {
             functionName = name.getNormalizedTypeName(forModel: model)
