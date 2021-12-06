@@ -372,7 +372,7 @@ public extension ServiceModelCodeGenerator {
             case .eventLoopFutureAsync:
                 invokeDescription = "returning immediately with an `EventLoopFuture` that will be completed at a later time"
             case .asyncFunction:
-                invokeDescription = "returning aynchronously at a later time once the operation is complete"
+                invokeDescription = "returning asynchronously at a later time once the operation is complete"
             }
             fileBuilder.appendEmptyLine()
         } else {
