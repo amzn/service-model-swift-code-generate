@@ -127,6 +127,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
                 }
+            }
             """)
     }
 
