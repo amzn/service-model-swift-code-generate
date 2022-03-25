@@ -136,7 +136,14 @@ internal extension OpenAPIServiceModel {
             switch items.value {
             case .reference(let ref, _):
                 if let type = ref.name {
-                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                    let optionalMinItems: Int?
+                    if arrayMetadata.minItems > 0 {
+                        optionalMinItems = arrayMetadata.minItems
+                    } else {
+                        optionalMinItems = nil
+                    }
+                    
+                    let lengthConstraint = LengthRangeConstraint<Int>(minimum: optionalMinItems,
                                                                       maximum: arrayMetadata.maxItems)
                     model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
                                                                                lengthConstraint: lengthConstraint)
@@ -157,7 +164,14 @@ internal extension OpenAPIServiceModel {
                 
                 let type = arrayElementEntityName
                 
-                let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
+                let optionalMinItems: Int?
+                if arrayMetadata.minItems > 0 {
+                    optionalMinItems = arrayMetadata.minItems
+                } else {
+                    optionalMinItems = nil
+                }
+                
+                let lengthConstraint = LengthRangeConstraint<Int>(minimum: optionalMinItems,
                                                                   maximum: arrayMetadata.maxItems)
                 model.fieldDescriptions[enclosingEntityName] = Fields.list(type: type,
                                                                            lengthConstraint: lengthConstraint)
