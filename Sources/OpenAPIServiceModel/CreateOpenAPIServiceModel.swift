@@ -16,7 +16,7 @@
 //
 
 import Foundation
-import OpenAPIKit
+import OpenAPIKit30
 import ServiceModelEntities
 import ServiceModelCodeGeneration
 import Yams
@@ -247,11 +247,11 @@ internal extension OpenAPIServiceModel {
     static func addOperationResponseFromSchema(schema: JSONSchema, operationName: String, forCode code: Int, index: Int?,
                                                description: inout OperationDescription,
                                                model: inout OpenAPIServiceModel, modelOverride: ModelOverride?, document: OpenAPI.Document) {
-        switch schema {
+        switch schema.value {
         case .one(let subschemas, _):
             for (index, subschema) in subschemas.enumerated() {
-                switch subschema {
-                case .reference(let ref):
+                switch subschema.value {
+                case .reference(let ref, _):
                     addOperationResponseFromReference(reference: ref, operationName: operationName, forCode: code,
                                                       index: index, description: &description,
                                                       model: &model, modelOverride: modelOverride)
@@ -299,7 +299,7 @@ internal extension OpenAPIServiceModel {
     
     static func addField(item: JSONSchema, fieldName: String,
                          model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
-        switch item {
+        switch item.value {
         case .string(_, let context):
             addStringField(metadata: context,
                            schema: nil,

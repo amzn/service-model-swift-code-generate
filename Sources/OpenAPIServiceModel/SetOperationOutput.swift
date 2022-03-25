@@ -16,7 +16,7 @@
 //
 
 import Foundation
-import OpenAPIKit
+import OpenAPIKit30
 import ServiceModelEntities
 import ServiceModelCodeGeneration
 import Yams
@@ -69,7 +69,7 @@ internal extension OpenAPIServiceModel {
         for (code, response) in operation.responses {
             switch response {
             case .b(let value):
-                switch code {
+                switch code.value {
                 case .status(let code):
                     var headerMembers: [String: Member] = [:]
 

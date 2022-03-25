@@ -16,7 +16,7 @@
 //
 
 import Foundation
-import OpenAPIKit
+import OpenAPIKit30
 import ServiceModelEntities
 import ServiceModelCodeGeneration
 import Yams
@@ -24,7 +24,7 @@ import Yams
 internal extension OpenAPIServiceModel {
     static func parseDefinitionSchemas(model: inout OpenAPIServiceModel, enclosingEntityName: inout String,
                                        schema: JSONSchema, modelOverride: ModelOverride?, document: OpenAPI.Document) {
-        switch schema {
+        switch schema.value {
         case .boolean:
             model.fieldDescriptions[enclosingEntityName] = .boolean
         case .integer(let integerFormat, let integerContext):
@@ -88,12 +88,11 @@ internal extension OpenAPIServiceModel {
             guard let property = objectContext.properties[name] else {
                 continue
             }
-            switch property {
-            case .reference(let ref):
-                // TODO: Once OpenAPIKit adds optionality for references, replace requiredArray with requiredProperties
+            switch property.value {
+            case .reference(let ref, _):
                 if let referenceName = ref.name {
                     structureDescription.members[name] = Member(value: referenceName, position: index,
-                                                                required: objectContext.requiredArray.contains(name),
+                                                                required: objectContext.requiredProperties.contains(name),
                                                                 documentation: nil)
             }
             default:
@@ -102,7 +101,7 @@ internal extension OpenAPIServiceModel {
                                        schema: property, modelOverride: modelOverride, document: document)
                 
                 structureDescription.members[name] = Member(value: enclosingEntityNameForProperty, position: index,
-                                                            required: objectContext.requiredArray.contains(name),
+                                                            required: objectContext.requiredProperties.contains(name),
                                                             documentation: nil)
             }
         }
@@ -112,8 +111,8 @@ internal extension OpenAPIServiceModel {
                                          enclosingEntityName: inout String,
                                          model: inout OpenAPIServiceModel) {
         let valueType: String
-        switch mapSchema {
-        case .reference(let ref):
+        switch mapSchema.value {
+        case .reference(let ref, _):
             if let valueType = ref.name {
                 model.fieldDescriptions[enclosingEntityName] = Fields.map(
                     keyType: "String", valueType: valueType,
@@ -133,9 +132,9 @@ internal extension OpenAPIServiceModel {
                                             enclosingEntityName: inout String,
                                             model: inout OpenAPIServiceModel,
                                             modelOverride: ModelOverride?, document: OpenAPI.Document) {
-        if let value = arrayMetadata.items {
-            switch value {
-            case .reference(let ref):
+        if let items = arrayMetadata.items {
+            switch items.value {
+            case .reference(let ref, _):
                 if let type = ref.name {
                     let lengthConstraint = LengthRangeConstraint<Int>(minimum: arrayMetadata.minItems,
                                                                       maximum: arrayMetadata.maxItems)
@@ -154,7 +153,7 @@ internal extension OpenAPIServiceModel {
                 }
                 
                 parseDefinitionSchemas(model: &model, enclosingEntityName: &arrayElementEntityName,
-                                       schema: value, modelOverride: modelOverride, document: document)
+                                       schema: items, modelOverride: modelOverride, document: document)
                 
                 let type = arrayElementEntityName
                 
@@ -173,7 +172,7 @@ internal extension OpenAPIServiceModel {
         for (index, subschema) in otherSchema.enumerated() {
             var enclosingEntityNameForProperty = "\(enclosingEntityName)\(index + 1)"
             
-            switch subschema {
+            switch subschema.value {
             case .object(_, let objectContext):
                 parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityNameForProperty,
                                   model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)

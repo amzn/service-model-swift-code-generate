@@ -16,7 +16,7 @@
 //
 
 import Foundation
-import OpenAPIKit
+import OpenAPIKit30
 import ServiceModelEntities
 import ServiceModelCodeGeneration
 import Yams
