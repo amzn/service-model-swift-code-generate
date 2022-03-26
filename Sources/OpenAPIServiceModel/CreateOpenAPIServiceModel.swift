@@ -16,7 +16,7 @@
 //
 
 import Foundation
-import OpenAPIKit
+import OpenAPIKit30
 import ServiceModelEntities
 import ServiceModelCodeGeneration
 import Yams
@@ -84,8 +84,16 @@ internal extension OpenAPIServiceModel {
                                                       modelOverride: modelOverride)
             
             for (type, operation) in filteredOperations {
-                guard let operationName = operation.operationId else {
+                guard let operationId = operation.operationId else {
                     continue
+                }
+                
+                // if there is more than one operation for this path
+                let operationName: String
+                if filteredOperations.count > 1 {
+                    operationName = operationId + type.rawValue.lowercased().startingWithUppercase
+                } else {
+                    operationName = operationId
                 }
                 
                 let inputDescription =
@@ -136,11 +144,14 @@ internal extension OpenAPIServiceModel {
         var members = OperationInputMembers()
         var bodyStructureName: String?
         
-        if let requestBody = operation.requestBody?.b {
-            getBodyOperationMembers(requestBody, bodyStructureName: &bodyStructureName,
-                                    operationName: operationName, model: &model, modelOverride: modelOverride, document: document)
-        } else {
-            fatalError("no request body")
+        if let requestBody = operation.requestBody {
+            switch requestBody {
+            case .a:
+                fatalError("Unsupported request body reference.")
+            case .b(let request):
+                getBodyOperationMembers(request, bodyStructureName: &bodyStructureName,
+                                        operationName: operationName, model: &model, modelOverride: modelOverride, document: document)
+            }
         }
         
         for (index, parameter) in operation.parameters.enumerated() {
@@ -163,27 +174,30 @@ internal extension OpenAPIServiceModel {
                                         operationName: String, model: inout OpenAPIServiceModel,
                                         modelOverride: ModelOverride?, document: OpenAPI.Document) {
         for (_, content) in request.content {
-            if let schema = content.schema?.b {
-                switch schema {
-                case .object:
-                    var enclosingEntityName = "\(operationName)RequestBody"
-                    var structureDescription = StructureDescription()
-                    guard let objectContext = schema.objectContext else {
-                       continue
+            if let either = content.schema {
+                switch either {
+                case .a(let reference):
+                    if let refName = reference.name {
+                        bodyStructureName = refName
                     }
-                    parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
-                                      model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)
-                    
-                    model.structureDescriptions[enclosingEntityName] = structureDescription
-                    
-                    bodyStructureName = enclosingEntityName
-                default:
-                    // The schemas object and reference are most widely used in the requestBody field
-                    fatalError("Not implemented.")
-                }
-            } else if let reference = content.schema?.a {
-                if let refName = reference.name {
-                    bodyStructureName = refName
+                case .b(let schema):
+                    switch schema.value {
+                    case .object:
+                        var enclosingEntityName = "\(operationName)RequestBody"
+                        var structureDescription = StructureDescription()
+                        guard let objectContext = schema.objectContext else {
+                           continue
+                        }
+                        parseObjectSchema(structureDescription: &structureDescription, enclosingEntityName: &enclosingEntityName,
+                                          model: &model, objectContext: objectContext, modelOverride: modelOverride, document: document)
+                        
+                        model.structureDescriptions[enclosingEntityName] = structureDescription
+                        
+                        bodyStructureName = enclosingEntityName
+                    default:
+                        // The schemas object and reference are most widely used in the requestBody field
+                        fatalError("Not implemented.")
+                    }
                 }
             }
         }
@@ -247,11 +261,11 @@ internal extension OpenAPIServiceModel {
     static func addOperationResponseFromSchema(schema: JSONSchema, operationName: String, forCode code: Int, index: Int?,
                                                description: inout OperationDescription,
                                                model: inout OpenAPIServiceModel, modelOverride: ModelOverride?, document: OpenAPI.Document) {
-        switch schema {
+        switch schema.value {
         case .one(let subschemas, _):
             for (index, subschema) in subschemas.enumerated() {
-                switch subschema {
-                case .reference(let ref):
+                switch subschema.value {
+                case .reference(let ref, _):
                     addOperationResponseFromReference(reference: ref, operationName: operationName, forCode: code,
                                                       index: index, description: &description,
                                                       model: &model, modelOverride: modelOverride)
@@ -299,7 +313,7 @@ internal extension OpenAPIServiceModel {
     
     static func addField(item: JSONSchema, fieldName: String,
                          model: inout OpenAPIServiceModel, modelOverride: ModelOverride?) {
-        switch item {
+        switch item.value {
         case .string(_, let context):
             addStringField(metadata: context,
                            schema: nil,

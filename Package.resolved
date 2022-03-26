@@ -3,11 +3,11 @@
     "pins": [
       {
         "package": "OpenAPIKit",
-        "repositoryURL": "https://github.com/mndzup/OpenAPIKit.git",
+        "repositoryURL": "https://github.com/mattpolzin/OpenAPIKit.git",
         "state": {
-          "branch": "main",
-          "revision": "fc227db5879429e0f8b8245878689c43212542ca",
-          "version": null
+          "branch": null,
+          "revision": "0c668112f9803c1858ed070f9e8ce84922a0b41f",
+          "version": "3.0.0-alpha.4"
         }
       },
       {
