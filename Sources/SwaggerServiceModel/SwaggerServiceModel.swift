@@ -26,6 +26,7 @@ import Yams
  */
 public struct SwaggerServiceModel: ServiceModel {
     var documentationDescriptions: [String: String] = [:]
+    public var serviceInformation: ServiceInformation? = nil
     public var serviceDescriptions: [String: ServiceDescription] = [:]
     public var structureDescriptions: [String: StructureDescription] = [:]
     public var operationDescriptions: [String: OperationDescription] = [:]
