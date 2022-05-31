@@ -18,6 +18,21 @@
 import Foundation
 
 /**
+ Metadata about the servide.
+ */
+public struct ServiceInformation {
+    public let title: String
+    public let description: String?
+    public let version: String
+
+    public init (title: String, description: String?, version: String) {
+        self.title = title
+        self.description = description
+        self.version = version
+    }
+}
+
+/**
  Description of a service in the model.
  */
 public struct ServiceDescription {

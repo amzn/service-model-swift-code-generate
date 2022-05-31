@@ -65,6 +65,11 @@ internal extension SwaggerServiceModel {
     
     static func createSwaggerModel(definition: Swagger, modelOverride: ModelOverride?) -> SwaggerServiceModel {
         var model = SwaggerServiceModel()
+
+        model.serviceInformation = ServiceInformation(
+            title: definition.information.title,
+            description: definition.information.description,
+            version: definition.information.version)
         
         for (name, schema) in definition.definitions {
             var enclosingEntityName = name

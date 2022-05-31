@@ -31,6 +31,7 @@ public enum ServiceModelError: Error {
  Protocol for a Service Model description.
  */
 public protocol ServiceModel {
+    var serviceInformation: ServiceInformation? { get }
     var serviceDescriptions: [String: ServiceDescription] { get }
     var structureDescriptions: [String: StructureDescription] { get }
     var operationDescriptions: [String: OperationDescription] { get }
@@ -53,6 +54,9 @@ public protocol ServiceModel {
 }
 
 public extension ServiceModel {
+    // Provide default value for backwards compatibility
+    var serviceInformation: ServiceInformation? { nil }
+
     static func create(dataList: [Data], modelFormat: ModelFormat, modelOverride: ModelOverride?) throws -> Self {
         throw ServiceModelError.notImplementedException
     }

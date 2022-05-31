@@ -67,6 +67,11 @@ internal extension OpenAPIServiceModel {
     static func createOpenAPIModel(definition: OpenAPI.Document, modelOverride: ModelOverride?) -> OpenAPIServiceModel {
         var model = OpenAPIServiceModel()
 
+        model.serviceInformation = ServiceInformation(
+            title: definition.info.title,
+            description: definition.info.description,
+            version: definition.info.version)
+
         for (name, schema) in definition.components.schemas {
             var enclosingEntityName = name.rawValue
             parseDefinitionSchemas(model: &model, enclosingEntityName: &enclosingEntityName,
