@@ -40,7 +40,7 @@ extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine(" Enumeration restricting the values of the \(typeName) field.")
         fileBuilder.appendLine(" */")
-        fileBuilder.appendLine("public enum \(typeName): String, Codable, CustomStringConvertible {", postInc: true)
+        fileBuilder.appendLine("public enum \(typeName): String, Codable, CustomStringConvertible, CaseIterable {", postInc: true)
         
         let sortedValues = valueConstraints.sorted { (left, right) in left.name < right.name }
         // iterate through the values
