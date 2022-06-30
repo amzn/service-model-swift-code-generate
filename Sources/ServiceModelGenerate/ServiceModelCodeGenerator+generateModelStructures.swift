@@ -55,8 +55,12 @@ public extension ServiceModelCodeGenerator {
             import Foundation
             """)
         
+        let validatableProtocolExists: Bool
         if case let .external(libraryImport: libraryImport, _) = customizations.validationErrorDeclaration {
             fileBuilder.appendLine("import \(libraryImport)")
+            validatableProtocolExists = true
+        } else {
+            validatableProtocolExists = false
         }
         
         // sort the structures in alphabetical order for output
@@ -70,7 +74,8 @@ public extension ServiceModelCodeGenerator {
                               structureDescription: structureDescription,
                               fileBuilder: fileBuilder,
                               includeVariableDocumentation: true,
-                              generateShapeProtocol: customizations.generateModelShapeConversions)
+                              generateShapeProtocol: customizations.generateModelShapeConversions,
+                              validatableProtocolExists: validatableProtocolExists)
         }
         
         let fileName = "\(baseName)ModelStructures.swift"
@@ -243,6 +248,7 @@ public extension ServiceModelCodeGenerator {
                            fileBuilder: FileBuilder,
                            includeVariableDocumentation: Bool,
                            generateShapeProtocol: Bool,
+                           validatableProtocolExists: Bool? = nil,
                            modelName: String? = nil) {
         let internalTypeName = name.getNormalizedTypeName(forModel: model)
         
@@ -263,7 +269,8 @@ public extension ServiceModelCodeGenerator {
         addStructureDefinition(name: internalTypeName,
                                documentation: structureDescription.documentation,
                                fileBuilder: fileBuilder, structureElements: structureElements, members: sortedMembers,
-                               conformToShapeProtocol: generateShapeProtocol)
+                               conformToShapeProtocol: generateShapeProtocol,
+                               conformToValidatableProtocol: generateShapeProtocol && validatableProtocolExists == true)
         
         if generateShapeProtocol {
             addShapeProtocol(name: internalTypeName, fileBuilder: fileBuilder,
@@ -338,7 +345,8 @@ public extension ServiceModelCodeGenerator {
                                 documentation: String?, fileBuilder: FileBuilder,
                                 structureElements: StructureElements,
                                 members: [(key: String, value: Member)],
-                                conformToShapeProtocol: Bool) {
+                                conformToShapeProtocol: Bool,
+                                conformToValidatableProtocol: Bool) {
         fileBuilder.appendEmptyLine()
         
         if let documentation = documentation {
@@ -348,9 +356,11 @@ public extension ServiceModelCodeGenerator {
             formattedDocumentation.forEach { line in fileBuilder.appendLine(" \(line)") }
             fileBuilder.appendLine(" */")
         }
-        
-        if !conformToShapeProtocol {
+
+        if !conformToShapeProtocol && !conformToValidatableProtocol {
             fileBuilder.appendLine("public struct \(name): Codable, Equatable {", postInc: true)
+        } else if !conformToValidatableProtocol {
+            fileBuilder.appendLine("public struct \(name): Codable, Equatable, \(name)Shape {", postInc: true)
         } else {
             fileBuilder.appendLine("public struct \(name): Codable, Validatable, Equatable, \(name)Shape {", postInc: true)
         }
