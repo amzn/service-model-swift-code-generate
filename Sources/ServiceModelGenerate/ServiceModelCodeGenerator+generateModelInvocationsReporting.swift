@@ -53,7 +53,7 @@ public extension ServiceModelCodeGenerator {
             /**
              Invocations reporting for the \(baseName)Model.
              */
-            public struct \(baseName)InvocationsReporting<InvocationReportingType: HTTPClientCoreInvocationReporting> {
+            public struct \(baseName)InvocationsReporting<InvocationReportingType: HTTPClientCoreInvocationReporting & Sendable> {
             """)
         
         let sortedOperations = model.operationDescriptions.sorted { (left, right) in left.key < right.key }

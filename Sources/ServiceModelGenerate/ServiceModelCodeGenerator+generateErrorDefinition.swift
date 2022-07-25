@@ -93,7 +93,7 @@ public extension ServiceModelCodeGenerator {
         if modelOverride?.additionalErrors?.count ?? 0 > 0 {
             fileBuilder.appendEmptyLine()
             fileBuilder.appendLine("""
-                public struct \(errorPayloadTypeName): Codable {
+                public struct \(errorPayloadTypeName): Codable, Sendable {
                     public let type: String
                     public let message: String
                 """)

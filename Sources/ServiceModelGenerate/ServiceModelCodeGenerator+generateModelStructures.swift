@@ -53,6 +53,8 @@ public extension ServiceModelCodeGenerator {
             //
             
             import Foundation
+            
+            extension Foundation.Data: @unchecked Sendable { }
             """)
         
         if case let .external(libraryImport: libraryImport, _) = customizations.validationErrorDeclaration {
@@ -350,9 +352,9 @@ public extension ServiceModelCodeGenerator {
         }
         
         if !conformToShapeProtocol {
-            fileBuilder.appendLine("public struct \(name): Codable, Equatable {", postInc: true)
+            fileBuilder.appendLine("public struct \(name): Codable, Equatable, Sendable {", postInc: true)
         } else {
-            fileBuilder.appendLine("public struct \(name): Codable, Validatable, Equatable, \(name)Shape {", postInc: true)
+            fileBuilder.appendLine("public struct \(name): Codable, Validatable, Equatable, Sendable, \(name)Shape {", postInc: true)
         }
         
         structureElements.variableDeclarationLines.forEach { lineDeclaration in
