@@ -48,12 +48,18 @@ public extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("import \(libraryImport)")
         }
         
+        var reportingTypeConformance = ["HTTPClientCoreInvocationReporting"]
+        if case .enabled = self.customizations.addSendableConformance {
+            reportingTypeConformance.append("Sendable")
+        }
+        
+        let reportingTypeConformanceString = reportingTypeConformance.joined(separator: " & ")
         fileBuilder.appendLine("""
             
             /**
              Invocations reporting for the \(baseName)Model.
              */
-            public struct \(baseName)InvocationsReporting<InvocationReportingType: HTTPClientCoreInvocationReporting> {
+            public struct \(baseName)InvocationsReporting<InvocationReportingType: \(reportingTypeConformanceString)> {
             """)
         
         let sortedOperations = model.operationDescriptions.sorted { (left, right) in left.key < right.key }

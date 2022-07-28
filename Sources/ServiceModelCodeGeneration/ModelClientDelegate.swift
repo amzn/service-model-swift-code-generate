@@ -32,6 +32,8 @@ public protocol ModelClientDelegate {
     var clientType: ClientType { get }
 
     var asyncAwaitAPIs: CodeGenFeatureStatus { get }
+    var eventLoopFutureClientAPIs: CodeGenFeatureStatus { get }
+    var minimumCompilerSupport: MinimumCompilerSupport { get }
         
     /**
      Add any custom file headers to the client file.
@@ -115,6 +117,14 @@ public enum InvokeType: String {
 }
 
 public extension ModelClientDelegate {
+    var eventLoopFutureClientAPIs: CodeGenFeatureStatus {
+        return .enabled
+    }
+    
+    var minimumCompilerSupport: MinimumCompilerSupport {
+        return .unknown
+    }
+    
     func getHttpClientForOperation(name: String, httpClientConfiguration: HttpClientConfiguration?) -> String {
         if let additionalClients = httpClientConfiguration?.additionalClients {
             for (key, value) in additionalClients {

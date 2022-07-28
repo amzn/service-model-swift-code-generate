@@ -29,6 +29,8 @@ public struct MockClientDelegate: ModelClientDelegate {
     public let clientType: ClientType
     public let defaultBehaviourDescription: String
     public let asyncAwaitAPIs: CodeGenFeatureStatus
+    public let eventLoopFutureClientAPIs: CodeGenFeatureStatus
+    public let minimumCompilerSupport: MinimumCompilerSupport
     
     /**
      Initializer.
@@ -39,10 +41,14 @@ public struct MockClientDelegate: ModelClientDelegate {
         - asyncResultType: The name of the result type to use for async functions.
      */
     public init(baseName: String, isThrowingMock: Bool,
-                asyncAwaitAPIs: CodeGenFeatureStatus) {
+                asyncAwaitAPIs: CodeGenFeatureStatus,
+                eventLoopFutureClientAPIs: CodeGenFeatureStatus = .enabled,
+                minimumCompilerSupport: MinimumCompilerSupport = .unknown) {
         self.baseName = baseName
         self.isThrowingMock = isThrowingMock
         self.asyncAwaitAPIs = asyncAwaitAPIs
+        self.eventLoopFutureClientAPIs = eventLoopFutureClientAPIs
+        self.minimumCompilerSupport = minimumCompilerSupport
         
         let name: String
         let implementationProviderProtocol: String
@@ -64,20 +70,37 @@ public struct MockClientDelegate: ModelClientDelegate {
                                    delegate: ModelClientDelegate,
                                    fileBuilder: FileBuilder,
                                    isGenerator: Bool) {
+        let functionDetail: String
+        let overrideDetail: String
+        if case .enabled = eventLoopFutureClientAPIs {
+            functionDetail = """
+                At initialization, a function override directly returning a result - which can be async for Swift 5.5 or greater - and/or
+                an EventLoopFuture override returning an `EventLoopFuture` that will provide a result at a later time can be provided for each API
+                on this client.
+                """
+            
+            overrideDetail = """
+                
+                Otherwise, if the `EventLoopFuture` override is provided, the corresponding API on this client will return the result
+                provided by the `EventLoopFuture` or will throw any error that fails the future. This override is ignored if the first
+                function override is provided.
+                
+                """
+        } else {
+            functionDetail = """
+                At initialization, a function override directly returning a result can be provided for each API on this client.
+                """
+            
+            overrideDetail = ""
+        }
         fileBuilder.appendLine("""
             Mock Client for the \(self.baseName) service.
             
-            At initialization, a function override directly returning a result - which can be async for Swift 5.5 or greater - and/or
-            an EventLoopFuture override returning an `EventLoopFuture` that will provide a result at a later time can be provided for each API
-            on this client.
+            \(functionDetail)
             
             If the function override is provided, the corresponding API on this client will return the result provided by
             this override or will throw any error thrown by the override.
-            
-            Otherwise, if the `EventLoopFuture` override is provided, the corresponding API on this client will return the result
-            provided by the `EventLoopFuture` or will throw any error that fails the future. This override is ignored if the first
-            function override is provided.
-            
+            \(overrideDetail)
             Otherwise, the API will \(self.defaultBehaviourDescription)
             """)
     }
@@ -101,7 +124,9 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
         
         let variableName = name.upperToLowerCamelCase
-        fileBuilder.appendLine("\(variableName)EventLoopFutureAsync: \(name.startingWithUppercase)EventLoopFutureAsyncType? = nil,")
+        if case .enabled = eventLoopFutureClientAPIs {
+            fileBuilder.appendLine("\(variableName)EventLoopFutureAsync: \(name.startingWithUppercase)EventLoopFutureAsyncType? = nil,")
+        }
         fileBuilder.appendLine("\(variableName): \(name.startingWithUppercase)FunctionType? = nil\(postfix)")
     }
     
@@ -114,15 +139,22 @@ public struct MockClientDelegate: ModelClientDelegate {
             fileBuilder.appendLine("let error: \(baseName)Error")
         }
         
+        if case .enabled = eventLoopFutureClientAPIs {
+            fileBuilder.appendLine("""
+                let eventLoop: EventLoop
+                """)
+        }
+        
         fileBuilder.appendLine("""
-            let eventLoop: EventLoop
             let typedErrorProvider: (Swift.Error) -> \(codeGenerator.applicationDescription.baseName)Error = { $0.asTypedError() }
             """)
         
         // for each of the operations
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
-            fileBuilder.appendLine("let \(variableName)EventLoopFutureAsyncOverride: \(name.startingWithUppercase)EventLoopFutureAsyncType?")
+            if case .enabled = eventLoopFutureClientAPIs {
+                fileBuilder.appendLine("let \(variableName)EventLoopFutureAsyncOverride: \(name.startingWithUppercase)EventLoopFutureAsyncType?")
+            }
             fileBuilder.appendLine("let \(variableName)FunctionOverride: \(name.startingWithUppercase)FunctionType?")
         }
         fileBuilder.appendEmptyLine()
@@ -134,29 +166,54 @@ public struct MockClientDelegate: ModelClientDelegate {
              */
             """)
         
-        if isThrowingMock {
-            if !sortedOperations.isEmpty {
-                fileBuilder.appendLine("""
-                    public init(
-                            error: \(baseName)Error,
-                            eventLoop: EventLoop,
-                    """)
+        if case .enabled = eventLoopFutureClientAPIs {
+            if isThrowingMock {
+                if !sortedOperations.isEmpty {
+                    fileBuilder.appendLine("""
+                        public init(
+                                error: \(baseName)Error,
+                                eventLoop: EventLoop,
+                        """)
+                } else {
+                    fileBuilder.appendLine("""
+                        public init(error: \(baseName)Error,
+                                    eventLoop: EventLoop) {
+                        """)
+                }
             } else {
-                fileBuilder.appendLine("""
-                    public init(error: \(baseName)Error,
-                                eventLoop: EventLoop) {
-                    """)
+                if !sortedOperations.isEmpty {
+                    fileBuilder.appendLine("""
+                        public init(
+                                eventLoop: EventLoop,
+                        """)
+                } else {
+                    fileBuilder.appendLine("""
+                        public init(eventLoop: EventLoop) {
+                        """)
+                }
             }
         } else {
-            if !sortedOperations.isEmpty {
-                fileBuilder.appendLine("""
-                    public init(
-                            eventLoop: EventLoop,
-                    """)
+            if isThrowingMock {
+                if !sortedOperations.isEmpty {
+                    fileBuilder.appendLine("""
+                        public init(
+                                error: \(baseName)Error,
+                        """)
+                } else {
+                    fileBuilder.appendLine("""
+                        public init(error: \(baseName)Error) {
+                        """)
+                }
             } else {
-                fileBuilder.appendLine("""
-                    public init(eventLoop: EventLoop) {
-                    """)
+                if !sortedOperations.isEmpty {
+                    fileBuilder.appendLine("""
+                        public init(
+                        """)
+                } else {
+                    fileBuilder.appendLine("""
+                        public init() {
+                        """)
+                }
             }
         }
         
@@ -172,15 +229,19 @@ public struct MockClientDelegate: ModelClientDelegate {
             fileBuilder.appendLine("self.error = error")
         }
         
-        fileBuilder.appendLine("""
-            self.eventLoop = eventLoop
-            
-            """)
+        if case .enabled = eventLoopFutureClientAPIs {
+            fileBuilder.appendLine("""
+                self.eventLoop = eventLoop
+                
+                """)
+        }
         
         // for each of the operations
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
-            fileBuilder.appendLine("self.\(variableName)EventLoopFutureAsyncOverride = \(variableName)EventLoopFutureAsync")
+            if case .enabled = eventLoopFutureClientAPIs {
+                fileBuilder.appendLine("self.\(variableName)EventLoopFutureAsyncOverride = \(variableName)EventLoopFutureAsync")
+            }
             fileBuilder.appendLine("self.\(variableName)FunctionOverride = \(variableName)")
         }
         
@@ -264,6 +325,30 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
     }
     
+    private func delegateAsyncOnlyMockImplementationCall(codeGenerator: ServiceModelCodeGenerator,
+                                                         fileBuilder: FileBuilder, functionOutputType: String?,
+                                                         operationName: String) {
+        let variableName = operationName.upperToLowerCamelCase
+        
+        if let outputType = functionOutputType {
+            let typeName = outputType.getNormalizedTypeName(forModel: codeGenerator.model)
+            
+            fileBuilder.appendLine("""
+                if let functionOverride = self.\(variableName)FunctionOverride {
+                    return try await functionOverride(input)
+                }
+                
+                return \(typeName).__default
+                """)
+        } else {
+            fileBuilder.appendLine("""
+                if let functionOverride = self.\(variableName)FunctionOverride {
+                    try await functionOverride(input)
+                }
+                """)
+        }
+    }
+    
     private func addMockClientOperationBody(codeGenerator: ServiceModelCodeGenerator,
                                             fileBuilder: FileBuilder, hasInput: Bool,
                                             functionOutputType: String?, invokeType: InvokeType,
@@ -282,7 +367,9 @@ public struct MockClientDelegate: ModelClientDelegate {
         fileBuilder.incIndent()
         
         if case .enabled = self.asyncAwaitAPIs, invokeType == .eventLoopFutureAsync {
-            fileBuilder.appendLine(asyncAwaitCondition, postInc: true)
+            if case .unknown = minimumCompilerSupport {
+                fileBuilder.appendLine(asyncAwaitCondition, postInc: true)
+            }
             
             delegateMockImplementationCall(codeGenerator: codeGenerator,
                                            functionPrefix: functionPrefix,
@@ -291,7 +378,9 @@ public struct MockClientDelegate: ModelClientDelegate {
                                            hasInput: hasInput,
                                            functionOutputType: functionOutputType,
                                            operationName: operationName)
-            fileBuilder.appendLine("#else", preDec: true, postInc: true)
+            if case .unknown = minimumCompilerSupport {
+                fileBuilder.appendLine("#else", preDec: true, postInc: true)
+            }
             
             delegateMockImplementationCall(codeGenerator: codeGenerator,
                                            functionPrefix: functionPrefix,
@@ -301,15 +390,24 @@ public struct MockClientDelegate: ModelClientDelegate {
                                            functionOutputType: functionOutputType,
                                            operationName: operationName)
             
-            fileBuilder.appendLine("#endif", preDec: true)
+            if case .unknown = minimumCompilerSupport {
+                fileBuilder.appendLine("#endif", preDec: true)
+            }
         } else {
-            delegateMockImplementationCall(codeGenerator: codeGenerator,
-                                           functionPrefix: functionPrefix,
-                                           functionInfix: functionInfix,
-                                           fileBuilder: fileBuilder,
-                                           hasInput: hasInput,
-                                           functionOutputType: functionOutputType,
-                                           operationName: operationName)
+            if case .enabled = eventLoopFutureClientAPIs {
+                delegateMockImplementationCall(codeGenerator: codeGenerator,
+                                               functionPrefix: functionPrefix,
+                                               functionInfix: functionInfix,
+                                               fileBuilder: fileBuilder,
+                                               hasInput: hasInput,
+                                               functionOutputType: functionOutputType,
+                                               operationName: operationName)
+            } else {
+                delegateAsyncOnlyMockImplementationCall(codeGenerator: codeGenerator,
+                                                        fileBuilder: fileBuilder,
+                                                        functionOutputType: functionOutputType,
+                                                        operationName: operationName)
+            }
         }
     
         fileBuilder.appendLine("}", preDec: true)
@@ -362,6 +460,30 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
     }
     
+    private func delegateAsyncOnlyMockThrowingImplementationCall(codeGenerator: ServiceModelCodeGenerator,
+                                                                 fileBuilder: FileBuilder, functionOutputType: String?,
+                                                                 operationName: String) {
+        let variableName = operationName.upperToLowerCamelCase
+        
+        if functionOutputType != nil {
+            fileBuilder.appendLine("""
+                if let functionOverride = self.\(variableName)FunctionOverride {
+                    return try await functionOverride(input)
+                }
+
+                throw self.error
+                """)
+        } else {
+            fileBuilder.appendLine("""
+                if let functionOverride = self.\(variableName)FunctionOverride {
+                    try await functionOverride(input)
+                }
+
+                throw self.error
+                """)
+        }
+    }
+    
     private func addThrowingClientOperationBody(codeGenerator: ServiceModelCodeGenerator,
                                                 fileBuilder: FileBuilder, hasInput: Bool, functionOutputType: String?,
                                                 invokeType: InvokeType, operationName: String) {
@@ -379,7 +501,9 @@ public struct MockClientDelegate: ModelClientDelegate {
         fileBuilder.incIndent()
         
         if case .enabled = self.asyncAwaitAPIs, invokeType == .eventLoopFutureAsync {
-            fileBuilder.appendLine(asyncAwaitCondition, postInc: true)
+            if case .unknown = minimumCompilerSupport {
+                fileBuilder.appendLine(asyncAwaitCondition, postInc: true)
+            }
             
             delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,
                                                    functionPrefix: functionPrefix,
@@ -388,7 +512,9 @@ public struct MockClientDelegate: ModelClientDelegate {
                                                    hasInput: hasInput,
                                                    functionOutputType: functionOutputType,
                                                    operationName: operationName)
-            fileBuilder.appendLine("#else", preDec: true, postInc: true)
+            if case .unknown = minimumCompilerSupport {
+                fileBuilder.appendLine("#else", preDec: true, postInc: true)
+            }
             
             delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,
                                                    functionPrefix: functionPrefix,
@@ -398,15 +524,24 @@ public struct MockClientDelegate: ModelClientDelegate {
                                                    functionOutputType: functionOutputType,
                                                    operationName: operationName)
             
-            fileBuilder.appendLine("#endif", preDec: true)
+            if case .unknown = minimumCompilerSupport {
+                fileBuilder.appendLine("#endif", preDec: true)
+            }
         } else {
-            delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,
-                                                   functionPrefix: functionPrefix,
-                                                   functionInfix: functionInfix,
-                                                   fileBuilder: fileBuilder,
-                                                   hasInput: hasInput,
-                                                   functionOutputType: functionOutputType,
-                                                   operationName: operationName)
+            if case .enabled = eventLoopFutureClientAPIs {
+                delegateMockThrowingImplementationCall(codeGenerator: codeGenerator,
+                                                       functionPrefix: functionPrefix,
+                                                       functionInfix: functionInfix,
+                                                       fileBuilder: fileBuilder,
+                                                       hasInput: hasInput,
+                                                       functionOutputType: functionOutputType,
+                                                       operationName: operationName)
+            } else {
+                delegateAsyncOnlyMockThrowingImplementationCall(codeGenerator: codeGenerator,
+                                                                fileBuilder: fileBuilder,
+                                                                functionOutputType: functionOutputType,
+                                                                operationName: operationName)
+            }
         }
     
         fileBuilder.appendLine("}", preDec: true)

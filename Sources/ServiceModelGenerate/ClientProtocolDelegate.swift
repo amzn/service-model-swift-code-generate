@@ -28,6 +28,8 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
     public let baseName: String
     public let typeDescription: String
     public let asyncAwaitAPIs: CodeGenFeatureStatus
+    public let eventLoopFutureClientAPIs: CodeGenFeatureStatus
+    public let minimumCompilerSupport: MinimumCompilerSupport
     
     /**
      Initializer.
@@ -36,11 +38,15 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         - baseName: The base name of the Service.
         - asyncResultType: The name of the result type to use for async functions.
      */
-    public init(baseName: String, asyncAwaitAPIs: CodeGenFeatureStatus) {
+    public init(baseName: String, asyncAwaitAPIs: CodeGenFeatureStatus,
+                eventLoopFutureClientAPIs: CodeGenFeatureStatus = .enabled,
+                minimumCompilerSupport: MinimumCompilerSupport = .unknown) {
         self.baseName = baseName
         self.clientType = .protocol(name: "\(baseName)ClientProtocol")
         self.typeDescription = "Client Protocol for the \(baseName) service."
         self.asyncAwaitAPIs = asyncAwaitAPIs
+        self.eventLoopFutureClientAPIs = eventLoopFutureClientAPIs
+        self.minimumCompilerSupport = minimumCompilerSupport
     }
     
     public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
@@ -62,12 +68,21 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                    fileBuilder: FileBuilder,
                                    sortedOperations: [(String, OperationDescription)],
                                    isGenerator: Bool) {
-        // for each of the operations
-        for (name, operationDescription) in sortedOperations {
-            codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
-                                       operationDescription: operationDescription,
-                                       delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
-                                       forTypeAlias: true, isGenerator: isGenerator)
+        if case .enabled = self.eventLoopFutureClientAPIs {
+            // for each of the operations
+            for (name, operationDescription) in sortedOperations {
+                codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
+                                           operationDescription: operationDescription,
+                                           delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
+                                           forTypeAlias: true, isGenerator: isGenerator)
+            }
+        }
+        
+        let requiresAsyncAwaitCondition: Bool
+        if case .unknown = minimumCompilerSupport {
+            requiresAsyncAwaitCondition = true
+        } else {
+            requiresAsyncAwaitCondition = false
         }
         
         // if there is async/await support
@@ -80,19 +95,21 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .asyncFunction,
                                            forTypeAlias: true, isGenerator: isGenerator,
-                                           prefixLine: (index == 0) ? asyncAwaitCondition : nil,
-                                           postfixLine: (index == sortedOperations.count - 1) ? "#else" : nil)
+                                           prefixLine: (index == 0 && requiresAsyncAwaitCondition) ? asyncAwaitCondition : nil,
+                                           postfixLine: (index == sortedOperations.count - 1 && requiresAsyncAwaitCondition) ? "#else" : nil)
             }
             
-            // add sync typealiases for Swift 5.5 and greater
-            for (index, operation) in sortedOperations.enumerated() {
-                let (name, operationDescription) = operation
-                
-                codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
-                                           operationDescription: operationDescription,
-                                           delegate: delegate, operationInvokeType: .syncFunctionForNoAsyncAwaitSupport,
-                                           forTypeAlias: true, isGenerator: isGenerator,
-                                           postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
+            if requiresAsyncAwaitCondition {
+                // add sync typealiases for Swift 5.5 and greater
+                for (index, operation) in sortedOperations.enumerated() {
+                    let (name, operationDescription) = operation
+                    
+                    codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
+                                               operationDescription: operationDescription,
+                                               delegate: delegate, operationInvokeType: .syncFunctionForNoAsyncAwaitSupport,
+                                               forTypeAlias: true, isGenerator: isGenerator,
+                                               postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
+                }
             }
         // otherwise just add sync typealiases
         } else {

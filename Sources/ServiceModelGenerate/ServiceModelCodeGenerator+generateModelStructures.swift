@@ -356,14 +356,21 @@ public extension ServiceModelCodeGenerator {
             formattedDocumentation.forEach { line in fileBuilder.appendLine(" \(line)") }
             fileBuilder.appendLine(" */")
         }
-
-        if !conformToShapeProtocol && !conformToValidatableProtocol {
-            fileBuilder.appendLine("public struct \(name): Codable, Equatable {", postInc: true)
-        } else if !conformToValidatableProtocol {
-            fileBuilder.appendLine("public struct \(name): Codable, Equatable, \(name)Shape {", postInc: true)
-        } else {
-            fileBuilder.appendLine("public struct \(name): Codable, Validatable, Equatable, \(name)Shape {", postInc: true)
+        
+        var conformingProtocols: [String] = ["Codable"]
+        if conformToValidatableProtocol {
+            conformingProtocols.append("Validatable")
         }
+        conformingProtocols.append("Equatable")
+        if case .enabled = self.customizations.addSendableConformance {
+            conformingProtocols.append("Sendable")
+        }
+        if conformToShapeProtocol {
+            conformingProtocols.append("\(name)Shape")
+        }
+        
+        let conformingProtocolsString = conformingProtocols.joined(separator: ", ")
+        fileBuilder.appendLine("public struct \(name): \(conformingProtocolsString) {", postInc: true)
         
         structureElements.variableDeclarationLines.forEach { lineDeclaration in
             if let documentation = lineDeclaration.documentation {
