@@ -38,9 +38,15 @@ extension ServiceModelCodeGenerator {
         fileBuilder.appendEmptyLine()
         fileBuilder.appendLine("/**")
         
+        var conformingProtocols: [String] = ["String", "Codable", "CustomStringConvertible", "CaseIterable"]
+        if case .enabled = self.customizations.addSendableConformance {
+            conformingProtocols.append("Sendable")
+        }
+        
+        let conformingProtocolsString = conformingProtocols.joined(separator: ", ")
         fileBuilder.appendLine(" Enumeration restricting the values of the \(typeName) field.")
         fileBuilder.appendLine(" */")
-        fileBuilder.appendLine("public enum \(typeName): String, Codable, CustomStringConvertible, CaseIterable {", postInc: true)
+        fileBuilder.appendLine("public enum \(typeName): \(conformingProtocolsString) {", postInc: true)
         
         let sortedValues = valueConstraints.sorted { (left, right) in left.name < right.name }
         // iterate through the values

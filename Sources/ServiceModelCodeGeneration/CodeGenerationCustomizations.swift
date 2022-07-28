@@ -18,6 +18,12 @@
 import Foundation
 import ServiceModelEntities
 
+public enum MinimumCompilerSupport: String, Codable {
+    case unknown = "UNKNOWN"
+    case v5_6 = "5.6"
+    case v5_7 = "5.7"
+}
+
 /**
  Specifies customizations to the code generation.
  */
@@ -37,10 +43,16 @@ public struct CodeGenerationCustomizations {
     public let httpClientConfiguration: HttpClientConfiguration
     /// If async/await APIs should be included
     public let asyncAwaitAPIs: CodeGenFeatureStatus
+    public let addSendableConformance: CodeGenFeatureStatus
+    public let eventLoopFutureClientAPIs: CodeGenFeatureStatus
+    public let minimumCompilerSupport: MinimumCompilerSupport
     
     public init(validationErrorDeclaration: ErrorDeclaration,
                 unrecognizedErrorDeclaration: ErrorDeclaration,
                 asyncAwaitAPIs: CodeGenFeatureStatus,
+                eventLoopFutureClientAPIs: CodeGenFeatureStatus = .enabled,
+                addSendableConformance: CodeGenFeatureStatus = .disabled,
+                minimumCompilerSupport: MinimumCompilerSupport = .unknown,
                 generateModelShapeConversions: Bool,
                 optionalsInitializeEmpty: Bool,
                 fileHeader: String?,
@@ -48,6 +60,9 @@ public struct CodeGenerationCustomizations {
         self.validationErrorDeclaration = validationErrorDeclaration
         self.unrecognizedErrorDeclaration = unrecognizedErrorDeclaration
         self.generateModelShapeConversions = generateModelShapeConversions
+        self.eventLoopFutureClientAPIs = eventLoopFutureClientAPIs
+        self.addSendableConformance = addSendableConformance
+        self.minimumCompilerSupport = minimumCompilerSupport
         self.optionalsInitializeEmpty = optionalsInitializeEmpty
         self.fileHeader = fileHeader
         self.httpClientConfiguration = httpClientConfiguration

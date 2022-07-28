@@ -102,13 +102,22 @@ public extension ServiceModelCodeGenerator {
                                     fileBuilder: fileBuilder,
                                     sortedOperations: sortedOperations, isGenerator: isGenerator)
         
+        let requiresAsyncAwaitCondition: Bool
+        if case .unknown = delegate.minimumCompilerSupport {
+            requiresAsyncAwaitCondition = true
+        } else {
+            requiresAsyncAwaitCondition = false
+        }
+        
         if !isGenerator {
             // for each of the operations
-            for (name, operationDescription) in sortedOperations {
-                addOperation(fileBuilder: fileBuilder, name: name,
-                             operationDescription: operationDescription,
-                             delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
-                             forTypeAlias: false, isGenerator: isGenerator)
+            if case .enabled = delegate.eventLoopFutureClientAPIs {
+                for (name, operationDescription) in sortedOperations {
+                    addOperation(fileBuilder: fileBuilder, name: name,
+                                 operationDescription: operationDescription,
+                                 delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
+                                 forTypeAlias: false, isGenerator: isGenerator)
+                }
             }
             
             // for each of the operations
@@ -120,8 +129,8 @@ public extension ServiceModelCodeGenerator {
                                  operationDescription: operationDescription,
                                  delegate: delegate, operationInvokeType: .asyncFunction,
                                  forTypeAlias: false, isGenerator: isGenerator,
-                                 prefixLine: (index == 0) ? asyncAwaitCondition : nil,
-                                 postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
+                                 prefixLine: (index == 0 && requiresAsyncAwaitCondition) ? asyncAwaitCondition : nil,
+                                 postfixLine: (index == sortedOperations.count - 1 && requiresAsyncAwaitCondition) ? "#endif" : nil)
                 }
             }
         }
@@ -452,7 +461,14 @@ public extension ServiceModelCodeGenerator {
             import SmokeHTTPClient
             """)
         
-        if !isGenerator {
+        let requiresNIOImport: Bool
+        if case .enabled = delegate.eventLoopFutureClientAPIs {
+            requiresNIOImport = true
+        } else {
+            requiresNIOImport = false
+        }
+        
+        if requiresNIOImport && !isGenerator {
             fileBuilder.appendLine("""
                 import NIO
                 """)
