@@ -117,42 +117,24 @@ public extension ServiceModelCodeGenerator {
             return protocolTypeName + typePostfix
         case .struct(name: let structTypeName, _, _):
             if case .operationsClient = entityType {
-                return self.applicationDescription.baseName + typePostfix
-            } else {
-                return structTypeName + typePostfix
+                if structTypeName.hasSuffix("Client") {
+                    return structTypeName.dropLast("Client".count) + typePostfix
+                }
             }
+               
+            return structTypeName + typePostfix
         }
     }
     
     private func generateClient(delegate: ModelClientDelegate, entityType: ClientEntityType,
                                 fileBuilder: FileBuilder) {
-        let typeName: String
-        
-        let typePostfix: String
-        switch entityType {
-        case .clientImplementation:
-            typePostfix = ""
-        case .configurationObject:
-            typePostfix = "Configuration"
-        case .operationsClient:
-            typePostfix = "OperationsClient"
-        case .clientGenerator:
-            typePostfix = "Generator"
-        }
-        
+        let typeName = getTypeName(delegate: delegate, entityType: entityType)
         
         let typeDecaration: String
         switch delegate.clientType {
-        case .protocol(name: let protocolTypeName):
-            typeName = protocolTypeName + typePostfix
+        case .protocol:
             typeDecaration = "protocol \(typeName)"
-        case .struct(name: let structTypeName, genericParameters: let genericParameters, conformingProtocolNames: let protocolTypeNames):
-            if case .operationsClient = entityType {
-                typeName = self.applicationDescription.baseName + typePostfix
-            } else {
-                typeName = structTypeName + typePostfix
-            }
-            
+        case .struct(_, genericParameters: let genericParameters, conformingProtocolNames: let protocolTypeNames):
             if entityType.isGenerator {
                 typeDecaration = "struct \(typeName)"
             } else {
