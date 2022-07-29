@@ -52,14 +52,14 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
     public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
                                    delegate: ModelClientDelegate,
                                    fileBuilder: FileBuilder,
-                                   isGenerator: Bool) {
+                                   entityType: ClientEntityType) {
         fileBuilder.appendLine(self.typeDescription)
     }
     
     public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,
                                     delegate: ModelClientDelegate,
                                     fileBuilder: FileBuilder,
-                                    isGenerator: Bool) {
+                                    fileType: ClientFileType) {
         // no custom file header
     }
     
@@ -67,14 +67,14 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                    delegate: ModelClientDelegate,
                                    fileBuilder: FileBuilder,
                                    sortedOperations: [(String, OperationDescription)],
-                                   isGenerator: Bool) {
+                                   entityType: ClientEntityType) {
         if case .enabled = self.eventLoopFutureClientAPIs {
             // for each of the operations
             for (name, operationDescription) in sortedOperations {
                 codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
-                                           forTypeAlias: true, isGenerator: isGenerator)
+                                           forTypeAlias: true, entityType: entityType)
             }
         }
         
@@ -94,7 +94,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                 codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .asyncFunction,
-                                           forTypeAlias: true, isGenerator: isGenerator,
+                                           forTypeAlias: true, entityType: entityType,
                                            prefixLine: (index == 0 && requiresAsyncAwaitCondition) ? asyncAwaitCondition : nil,
                                            postfixLine: (index == sortedOperations.count - 1 && requiresAsyncAwaitCondition) ? "#else" : nil)
             }
@@ -107,7 +107,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                     codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
                                                operationDescription: operationDescription,
                                                delegate: delegate, operationInvokeType: .syncFunctionForNoAsyncAwaitSupport,
-                                               forTypeAlias: true, isGenerator: isGenerator,
+                                               forTypeAlias: true, entityType: entityType,
                                                postfixLine: (index == sortedOperations.count - 1) ? "#endif" : nil)
                 }
             }
@@ -119,7 +119,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                 codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .syncFunctionForNoAsyncAwaitSupport,
-                                           forTypeAlias: true, isGenerator: isGenerator)
+                                           forTypeAlias: true, entityType: entityType)
             }
         }
     }
@@ -131,7 +131,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                                  operationDescription: OperationDescription,
                                  functionInputType: String?,
                                  functionOutputType: String?,
-                                 isGenerator: Bool) {
+                                 entityType: ClientEntityType) {
         // nothing to do
     }
 }
