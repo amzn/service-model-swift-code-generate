@@ -46,8 +46,10 @@ public extension ServiceModelCodeGenerator {
         switch fileType {
         case .clientImplementation:
             fileNamePostfix = ""
-        case .clientGenerator, .clientConfiguration:
+        case .clientGenerator:
             fileNamePostfix = "Generator"
+        case .clientConfiguration:
+            fileNamePostfix = "Configuration"
         }
                 
         switch delegate.clientType {
