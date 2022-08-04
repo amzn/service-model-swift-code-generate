@@ -24,6 +24,11 @@ public enum MinimumCompilerSupport: String, Codable {
     case v5_7 = "5.7"
 }
 
+public enum ClientConfigurationType: String, Codable {
+    case configurationObject = "CONFIGURATION_OBJECT"
+    case generator = "GENERATOR"
+}
+
 /**
  Specifies customizations to the code generation.
  */
@@ -46,6 +51,7 @@ public struct CodeGenerationCustomizations {
     public let addSendableConformance: CodeGenFeatureStatus
     public let eventLoopFutureClientAPIs: CodeGenFeatureStatus
     public let minimumCompilerSupport: MinimumCompilerSupport
+    public let clientConfigurationType: ClientConfigurationType
     
     public init(validationErrorDeclaration: ErrorDeclaration,
                 unrecognizedErrorDeclaration: ErrorDeclaration,
@@ -53,6 +59,7 @@ public struct CodeGenerationCustomizations {
                 eventLoopFutureClientAPIs: CodeGenFeatureStatus = .enabled,
                 addSendableConformance: CodeGenFeatureStatus = .disabled,
                 minimumCompilerSupport: MinimumCompilerSupport = .unknown,
+                clientConfigurationType: ClientConfigurationType = .generator,
                 generateModelShapeConversions: Bool,
                 optionalsInitializeEmpty: Bool,
                 fileHeader: String?,
@@ -63,6 +70,7 @@ public struct CodeGenerationCustomizations {
         self.eventLoopFutureClientAPIs = eventLoopFutureClientAPIs
         self.addSendableConformance = addSendableConformance
         self.minimumCompilerSupport = minimumCompilerSupport
+        self.clientConfigurationType = clientConfigurationType
         self.optionalsInitializeEmpty = optionalsInitializeEmpty
         self.fileHeader = fileHeader
         self.httpClientConfiguration = httpClientConfiguration

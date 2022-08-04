@@ -69,7 +69,7 @@ public struct MockClientDelegate: ModelClientDelegate {
     public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
                                    delegate: ModelClientDelegate,
                                    fileBuilder: FileBuilder,
-                                   isGenerator: Bool) {
+                                   entityType: ClientEntityType) {
         let functionDetail: String
         let overrideDetail: String
         if case .enabled = eventLoopFutureClientAPIs {
@@ -108,7 +108,7 @@ public struct MockClientDelegate: ModelClientDelegate {
     public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,
                                     delegate: ModelClientDelegate,
                                     fileBuilder: FileBuilder,
-                                    isGenerator: Bool) {
+                                    fileType: ClientFileType) {
         fileBuilder.appendLine("""
             import SmokeAWSHttp
             """)
@@ -134,7 +134,7 @@ public struct MockClientDelegate: ModelClientDelegate {
                                    delegate: ModelClientDelegate,
                                    fileBuilder: FileBuilder,
                                    sortedOperations: [(String, OperationDescription)],
-                                   isGenerator: Bool) {
+                                   entityType: ClientEntityType) {
         if isThrowingMock {
             fileBuilder.appendLine("let error: \(baseName)Error")
         }
@@ -260,7 +260,7 @@ public struct MockClientDelegate: ModelClientDelegate {
                                  operationDescription: OperationDescription,
                                  functionInputType: String?,
                                  functionOutputType: String?,
-                                 isGenerator: Bool) {
+                                 entityType: ClientEntityType) {
         let hasInput = functionInputType != nil
         
         if isThrowingMock {

@@ -36,23 +36,107 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - delegate: The delegate to use when generating this client.
      */
-    func generateClient(delegate: ModelClientDelegate, isGenerator: Bool) {
+    func generateClient(delegate: ModelClientDelegate, fileType: ClientFileType) {
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
         
-        let typeName: String
+        let fileName: String
         
-        let typePostfix = isGenerator ? "Generator" : ""
+        let fileNamePostfix: String
+        switch fileType {
+        case .clientImplementation:
+            fileNamePostfix = ""
+        case .clientGenerator:
+            fileNamePostfix = "Generator"
+        case .clientConfiguration:
+            fileNamePostfix = "Configuration"
+        }
+                
+        switch delegate.clientType {
+        case .protocol(name: let protocolTypeName):
+            fileName = protocolTypeName + fileNamePostfix
+        case .struct(name: let structTypeName, _, _):
+            fileName = structTypeName + fileNamePostfix
+        }
+        
+        addFileHeader(fileBuilder: fileBuilder, fileName: fileName,
+                      delegate: delegate, fileType: fileType)
+        
+        delegate.addCustomFileHeader(codeGenerator: self, delegate: delegate,
+                                     fileBuilder: fileBuilder, fileType: fileType)
+        
+        switch fileType {
+        case .clientImplementation:
+            let initializationStructs: InitializationStructs?
+            if case .configurationObject = self.customizations.clientConfigurationType {
+                let configurationObjectName = getTypeName(delegate: delegate, entityType: .configurationObject)
+                let operationsClientName = getTypeName(delegate: delegate,
+                                                       entityType: .operationsClient(configurationObjectName: configurationObjectName))
+                
+                initializationStructs = InitializationStructs(configurationObjectName: configurationObjectName,
+                                                              operationsClientName: operationsClientName)
+            } else {
+                initializationStructs = nil
+            }
+            
+            generateClient(delegate: delegate, entityType: .clientImplementation(initializationStructs: initializationStructs),
+                           fileBuilder: fileBuilder)
+        case .clientConfiguration:
+            generateClient(delegate: delegate, entityType: .configurationObject, fileBuilder: fileBuilder)
+            fileBuilder.appendEmptyLine()
+            
+            let configurationObjectName = getTypeName(delegate: delegate, entityType: .configurationObject)
+            
+            generateClient(delegate: delegate, entityType: .operationsClient(configurationObjectName: configurationObjectName),
+                           fileBuilder: fileBuilder)
+        case .clientGenerator:
+            generateClient(delegate: delegate, entityType: .clientGenerator, fileBuilder: fileBuilder)
+        }
+        
+        let baseFilePath = applicationDescription.baseFilePath
+        
+        let fileNameWithExtension = "\(fileName).swift"
+        fileBuilder.write(toFile: fileNameWithExtension,
+                          atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
+    }
+    
+    private func getTypeName(delegate: ModelClientDelegate, entityType: ClientEntityType) -> String {
+        let typePostfix: String
+        switch entityType {
+        case .clientImplementation:
+            typePostfix = ""
+        case .configurationObject:
+            typePostfix = "Configuration"
+        case .operationsClient:
+            typePostfix = "OperationsClient"
+        case .clientGenerator:
+            typePostfix = "Generator"
+        }
+        
+        switch delegate.clientType {
+        case .protocol(name: let protocolTypeName):
+            return protocolTypeName + typePostfix
+        case .struct(name: let structTypeName, _, _):
+            if case .operationsClient = entityType {
+                if structTypeName.hasSuffix("Client") {
+                    return structTypeName.dropLast("Client".count) + typePostfix
+                }
+            }
+               
+            return structTypeName + typePostfix
+        }
+    }
+    
+    private func generateClient(delegate: ModelClientDelegate, entityType: ClientEntityType,
+                                fileBuilder: FileBuilder) {
+        let typeName = getTypeName(delegate: delegate, entityType: entityType)
         
         let typeDecaration: String
         switch delegate.clientType {
-        case .protocol(name: let protocolTypeName):
-            typeName = protocolTypeName + typePostfix
+        case .protocol:
             typeDecaration = "protocol \(typeName)"
-        case .struct(name: let structTypeName, genericParameters: let genericParameters, conformingProtocolNames: let protocolTypeNames):
-            typeName = structTypeName + typePostfix
-            
-            if isGenerator {
+        case .struct(_, genericParameters: let genericParameters, conformingProtocolNames: let protocolTypeNames):
+            if entityType.isGenerator {
                 typeDecaration = "struct \(typeName)"
             } else {
                 let genericParametersString: String
@@ -69,15 +153,14 @@ public extension ServiceModelCodeGenerator {
                 } else {
                     genericParametersString = ""
                 }
-                typeDecaration = "struct \(typeName)\(genericParametersString): \(protocolTypeNames.joined(separator: ", "))"
+                
+                if case .clientImplementation = entityType {
+                    typeDecaration = "struct \(typeName)\(genericParametersString): \(protocolTypeNames.joined(separator: ", "))"
+                } else {
+                    typeDecaration = "struct \(typeName)\(genericParametersString)"
+                }
             }
         }
-        
-        addFileHeader(fileBuilder: fileBuilder, typeName: typeName,
-                      delegate: delegate, isGenerator: isGenerator)
-        
-        delegate.addCustomFileHeader(codeGenerator: self, delegate: delegate,
-                                     fileBuilder: fileBuilder, isGenerator: isGenerator)
         
         fileBuilder.appendLine("""
             
@@ -86,7 +169,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.inCommentBlock {
             delegate.addTypeDescription(codeGenerator: self, delegate: delegate,
-                                        fileBuilder: fileBuilder, isGenerator: isGenerator)
+                                        fileBuilder: fileBuilder, entityType: entityType)
         }
 
         fileBuilder.appendLine("""
@@ -100,7 +183,7 @@ public extension ServiceModelCodeGenerator {
         
         delegate.addCommonFunctions(codeGenerator: self, delegate: delegate,
                                     fileBuilder: fileBuilder,
-                                    sortedOperations: sortedOperations, isGenerator: isGenerator)
+                                    sortedOperations: sortedOperations, entityType: entityType)
         
         let requiresAsyncAwaitCondition: Bool
         if case .unknown = delegate.minimumCompilerSupport {
@@ -109,14 +192,14 @@ public extension ServiceModelCodeGenerator {
             requiresAsyncAwaitCondition = false
         }
         
-        if !isGenerator {
+        if case .clientImplementation = entityType {
             // for each of the operations
             if case .enabled = delegate.eventLoopFutureClientAPIs {
                 for (name, operationDescription) in sortedOperations {
                     addOperation(fileBuilder: fileBuilder, name: name,
                                  operationDescription: operationDescription,
                                  delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
-                                 forTypeAlias: false, isGenerator: isGenerator)
+                                 forTypeAlias: false, entityType: entityType)
                 }
             }
             
@@ -128,18 +211,13 @@ public extension ServiceModelCodeGenerator {
                     addOperation(fileBuilder: fileBuilder, name: name,
                                  operationDescription: operationDescription,
                                  delegate: delegate, operationInvokeType: .asyncFunction,
-                                 forTypeAlias: false, isGenerator: isGenerator,
+                                 forTypeAlias: false, entityType: entityType,
                                  prefixLine: (index == 0 && requiresAsyncAwaitCondition) ? asyncAwaitCondition : nil,
                                  postfixLine: (index == sortedOperations.count - 1 && requiresAsyncAwaitCondition) ? "#endif" : nil)
                 }
             }
         }
         fileBuilder.appendLine("}", preDec: true)
-        let baseFilePath = applicationDescription.baseFilePath
-        
-        let fileName = "\(typeName).swift"
-        fileBuilder.write(toFile: fileName,
-                          atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
     }
     
     private func addOperationInput(fileBuilder: FileBuilder,
@@ -299,7 +377,7 @@ public extension ServiceModelCodeGenerator {
                                   delegate: ModelClientDelegate,
                                   invokeType: InvokeType, forTypeAlias: Bool,
                                   operationSignature: OperationSignature,
-                                  isGenerator: Bool) {
+                                  entityType: ClientEntityType) {
         let functionName: String
         if !forTypeAlias {
             fileBuilder.appendLine(" */")
@@ -339,7 +417,7 @@ public extension ServiceModelCodeGenerator {
                                   operationDescription: operationDescription,
                                   functionInputType: operationSignature.functionInputType,
                                   functionOutputType: operationSignature.functionOutputType,
-                                  isGenerator: isGenerator)
+                                  entityType: entityType)
     }
     
     enum OperationInvokeType {
@@ -364,7 +442,7 @@ public extension ServiceModelCodeGenerator {
                                operationDescription: OperationDescription,
                                delegate: ModelClientDelegate,
                                operationInvokeType: OperationInvokeType, forTypeAlias: Bool,
-                               isGenerator: Bool, prefixLine: String? = nil, postfixLine: String? = nil) {
+                               entityType: ClientEntityType, prefixLine: String? = nil, postfixLine: String? = nil) {
         // OperationInvokeType.syncFunctionForNoAsyncAwaitSupport is only an internal invoke state
         // for legacy support so we ignore it other than for where it is necessary
         let invokeType: InvokeType
@@ -422,7 +500,7 @@ public extension ServiceModelCodeGenerator {
         
         addOperationBody(fileBuilder: fileBuilder, name: name, operationDescription: operationDescription,
                          delegate: delegate, invokeType: invokeType, forTypeAlias: forTypeAlias,
-                         operationSignature: operationSignature, isGenerator: isGenerator)
+                         operationSignature: operationSignature, entityType: entityType)
         
         if let postfixLine = postfixLine {
             fileBuilder.appendLine(postfixLine)
@@ -440,9 +518,9 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func addFileHeader(fileBuilder: FileBuilder,
-                               typeName: String,
+                               fileName: String,
                                delegate: ModelClientDelegate,
-                               isGenerator: Bool) {
+                               fileType: ClientFileType) {
         let baseName = applicationDescription.baseName
         if let fileHeader = customizations.fileHeader {
             fileBuilder.appendLine(fileHeader)
@@ -451,7 +529,7 @@ public extension ServiceModelCodeGenerator {
         addGeneratedFileHeader(fileBuilder: fileBuilder)
         
         fileBuilder.appendLine("""
-            // \(typeName).swift
+            // \(fileName).swift
             // \(baseName)Client
             //
             
@@ -468,7 +546,7 @@ public extension ServiceModelCodeGenerator {
             requiresNIOImport = false
         }
         
-        if requiresNIOImport && !isGenerator {
+        if requiresNIOImport && !fileType.isGenerator {
             fileBuilder.appendLine("""
                 import NIO
                 """)

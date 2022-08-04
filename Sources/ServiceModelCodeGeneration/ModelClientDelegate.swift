@@ -23,6 +23,54 @@ public enum CodeGenFeatureStatus: String, Codable {
     case enabled = "ENABLED"
 }
 
+public enum ClientFileType {
+    case clientImplementation
+    case clientConfiguration
+    case clientGenerator
+    
+    public var isGenerator: Bool {
+        if case .clientGenerator = self {
+            return true
+        }
+        
+        return false
+    }
+}
+
+public struct InitializationStructs {
+    public let configurationObjectName: String
+    public let operationsClientName: String
+    
+    public init(configurationObjectName: String,
+                operationsClientName: String) {
+        self.configurationObjectName = configurationObjectName
+        self.operationsClientName = operationsClientName
+    }
+}
+
+public enum ClientEntityType {
+    case clientImplementation(initializationStructs: InitializationStructs?)
+    case configurationObject
+    case operationsClient(configurationObjectName: String)
+    case clientGenerator
+    
+    public var isGenerator: Bool {
+        if case .clientGenerator = self {
+            return true
+        }
+        
+        return false
+    }
+    
+    public var isClientImplementation: Bool {
+        if case .clientImplementation = self {
+            return true
+        }
+        
+        return false
+    }
+}
+
 /**
  Delegate protocol that can customize the generation of a client
  from the Service Model.
@@ -46,7 +94,7 @@ public protocol ModelClientDelegate {
     func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,
                              delegate: ModelClientDelegate,
                              fileBuilder: FileBuilder,
-                             isGenerator: Bool)
+                             fileType: ClientFileType)
     
     /**
      Adds the type description to the header comment.
@@ -59,7 +107,7 @@ public protocol ModelClientDelegate {
     func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
                             delegate: ModelClientDelegate,
                             fileBuilder: FileBuilder,
-                            isGenerator: Bool)
+                            entityType: ClientEntityType)
     
     /**
      Add any common functions to the body of the client type.
@@ -74,7 +122,7 @@ public protocol ModelClientDelegate {
                             delegate: ModelClientDelegate,
                             fileBuilder: FileBuilder,
                             sortedOperations: [(String, OperationDescription)],
-                            isGenerator: Bool)
+                            entityType: ClientEntityType)
     
     /**
      Add the body for an operation to the client type.
@@ -97,7 +145,7 @@ public protocol ModelClientDelegate {
                           operationDescription: OperationDescription,
                           functionInputType: String?,
                           functionOutputType: String?,
-                          isGenerator: Bool)
+                          entityType: ClientEntityType)
 }
 
 /// The type of client being generated.
