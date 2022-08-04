@@ -85,7 +85,6 @@ public extension ServiceModelCodeGenerator {
             generateClient(delegate: delegate, entityType: .configurationObject, fileBuilder: fileBuilder)
             fileBuilder.appendEmptyLine()
             
-            
             let configurationObjectName = getTypeName(delegate: delegate, entityType: .configurationObject)
             
             generateClient(delegate: delegate, entityType: .operationsClient(configurationObjectName: configurationObjectName),
