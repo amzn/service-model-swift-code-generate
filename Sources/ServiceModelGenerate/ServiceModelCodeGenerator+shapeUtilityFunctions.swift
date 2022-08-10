@@ -218,7 +218,7 @@ public extension ServiceModelCodeGenerator {
         }
         let internalName = modelTypeName.prefix(1).lowercased() + modelTypeName.dropFirst()
         
-        let variableName = reservedWordsAllowed ? internalName : String.escapeReservedWords(name: internalName)
+        let variableName = reservedWordsAllowed ? internalName : internalName.escapeReservedWords()
         
         return variableName.safeModelName(replacement: "",
                                  wildCardReplacement: "Star")
@@ -239,20 +239,20 @@ public extension ServiceModelCodeGenerator {
                                                                     wildCardReplacement: "Star")
             
             // convert from upper camel case
-            return String.escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
+            return modifiedModelTypeName.upperToLowerCamelCase.escapeReservedWords()
         } else if let usingUpperCamelCase = modelOverride?.enumerations?.usingUpperCamelCase,
             usingUpperCamelCase.contains("\(inStructure).\(modelTypeName)") {
             let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "",
                                                                     wildCardReplacement: "Star")
             
             // convert from upper camel case
-            return String.escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
+            return modifiedModelTypeName.upperToLowerCamelCase.escapeReservedWords()
         } else if usingUpperCamelCase {
             let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "",
                                                                     wildCardReplacement: "Star")
             
             // convert from upper camel case
-            return String.escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
+            return modifiedModelTypeName.upperToLowerCamelCase.escapeReservedWords()
         }
         
         let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "_",
@@ -276,6 +276,6 @@ public extension ServiceModelCodeGenerator {
             firstCharacter.unicodeScalars[firstCharacter.startIndex]) {
             return "_\(convertedName)"
         }
-        return String.escapeReservedWords(name: convertedName)
+        return convertedName.escapeReservedWords()
     }
 }

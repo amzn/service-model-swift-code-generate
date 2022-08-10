@@ -85,15 +85,15 @@ public extension String {
         } else if normalizedName.hasSuffix("Exception") {
             return String(normalizedName.dropLast("Exception".count))
         }
-
+        
         return normalizedName
     }
     
-    static func escapeReservedWords(name: String) -> String {
-        if reservedWords.contains(name) {
-            return "`\(name)`"
+    func escapeReservedWords() -> String {
+        if reservedWords.contains(self) {
+            return "`\(self)`"
         }
         
-        return name
+        return self
     }
 }

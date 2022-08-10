@@ -221,7 +221,7 @@ public extension ServiceModelCodeGenerator {
         // for each of the errors
         for (index, error) in sortedErrors.enumerated() {
             let internalName = error.normalizedName
-            fileBuilder.appendLine("    public static let \(String.escapeReservedWords(name: internalName)) = \(baseName)ErrorTypes(rawValue: \(index + 1))")
+            fileBuilder.appendLine("    public static let \(internalName.escapeReservedWords()) = \(baseName)ErrorTypes(rawValue: \(index + 1))")
         }
         
         delegate.errorTypeAdditionalOptionSetItems(fileBuilder: fileBuilder,
