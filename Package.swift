@@ -73,6 +73,7 @@ let package = Package(
         .target(
             name: "ServiceModelGenerate", dependencies: [
                 .target(name: "SwaggerServiceModel"),
+                .target(name: "ServiceModelEntities")
             ]
         ),
         .testTarget(

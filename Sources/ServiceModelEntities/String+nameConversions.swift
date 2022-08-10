@@ -17,6 +17,9 @@
 
 import Foundation
 
+private let reservedWords: Set<String> = ["in", "protocol", "return", "default", "public", "self",
+                                          "static", "private", "internal", "do", "is", "as", "true", "false", "import"]
+
 public extension String {
     /**
      This string starting with an uppercase.
@@ -84,5 +87,13 @@ public extension String {
         }
 
         return normalizedName
+    }
+    
+    static func escapeReservedWords(name: String) -> String {
+        if reservedWords.contains(name) {
+            return "`\(name)`"
+        }
+        
+        return name
     }
 }

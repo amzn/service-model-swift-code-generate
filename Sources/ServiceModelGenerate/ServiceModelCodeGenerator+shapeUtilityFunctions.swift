@@ -17,9 +17,7 @@
 
 import Foundation
 import ServiceModelCodeGeneration
-
-private let reservedWords: Set<String> = ["in", "protocol", "return", "default", "public", "self",
-                                          "static", "private", "internal", "do", "is", "as", "true", "false", "import"]
+import ServiceModelEntities
 
 public enum ShapeCategory {
     case protocolType(String)
@@ -204,14 +202,6 @@ public extension ServiceModelCodeGenerator {
         return shapeCategory
     }
     
-    private func escapeReservedWords(name: String) -> String {
-        if reservedWords.contains(name) {
-            return "`\(name)`"
-        }
-        
-        return name
-    }
-    
     /**
      Returns the normalized name of variable for a type.
      
@@ -228,7 +218,7 @@ public extension ServiceModelCodeGenerator {
         }
         let internalName = modelTypeName.prefix(1).lowercased() + modelTypeName.dropFirst()
         
-        let variableName = reservedWordsAllowed ? internalName : escapeReservedWords(name: internalName)
+        let variableName = reservedWordsAllowed ? internalName : String.escapeReservedWords(name: internalName)
         
         return variableName.safeModelName(replacement: "",
                                  wildCardReplacement: "Star")
@@ -249,20 +239,20 @@ public extension ServiceModelCodeGenerator {
                                                                     wildCardReplacement: "Star")
             
             // convert from upper camel case
-            return escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
+            return String.escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
         } else if let usingUpperCamelCase = modelOverride?.enumerations?.usingUpperCamelCase,
             usingUpperCamelCase.contains("\(inStructure).\(modelTypeName)") {
             let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "",
                                                                     wildCardReplacement: "Star")
             
             // convert from upper camel case
-            return escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
+            return String.escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
         } else if usingUpperCamelCase {
             let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "",
                                                                     wildCardReplacement: "Star")
             
             // convert from upper camel case
-            return escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
+            return String.escapeReservedWords(name: modifiedModelTypeName.upperToLowerCamelCase)
         }
         
         let modifiedModelTypeName = modelTypeName.safeModelName(replacement: "_",
@@ -286,6 +276,6 @@ public extension ServiceModelCodeGenerator {
             firstCharacter.unicodeScalars[firstCharacter.startIndex]) {
             return "_\(convertedName)"
         }
-        return escapeReservedWords(name: convertedName)
+        return String.escapeReservedWords(name: convertedName)
     }
 }
