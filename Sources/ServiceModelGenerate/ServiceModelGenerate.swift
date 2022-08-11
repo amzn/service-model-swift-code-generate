@@ -29,27 +29,34 @@ public struct ServiceModelGenerate {
             fatalError("Specified model file '\(modelFilePath) doesn't exist.'")
         }
         
-        let modelFormat: ModelFormat
-        if modelFilePath.lowercased().hasSuffix(".yaml") || modelFilePath.lowercased().hasSuffix(".yml") {
-            modelFormat = .yaml
-        } else if modelFilePath.lowercased().hasSuffix(".json") {
-            modelFormat = .json
-        } else if modelFilePath.lowercased().hasSuffix(".xml") {
-            modelFormat = .xml
-        } else {
-            fatalError("File path '\(modelFilePath) with unknown extension.'")
+        if let index = modelFilePath.lastIndex(of: ".") {
+            let extensionStartIndex = modelFilePath.index(after: index)
+            let fileExtension = String(modelFilePath[extensionStartIndex...])
+            
+            if let modelFormat = getModelFormat(fromFileExtension: fileExtension) {
+                return (data, modelFormat)
+            }
         }
         
-        return (data, modelFormat)
+        fatalError("File path '\(modelFilePath) with unknown extension.'")
     }
     
-    private static func getModelFormat(fromFileExtension fileExtension: String) -> ModelFormat {
-        if fileExtension == "yaml" || fileExtension == "yml" {
+    private static func getModelFormat(fromFileExtension fileExtension: String) -> ModelFormat? {
+        let lowercasedFileExtension = fileExtension.lowercased()
+        if lowercasedFileExtension == "yaml" || lowercasedFileExtension == "yml" {
             return .yaml
-        } else if fileExtension == "json" {
+        } else if lowercasedFileExtension == "json" {
             return .json
-        } else if fileExtension == "xml" {
+        } else if lowercasedFileExtension == "xml" {
             return .xml
+        } else {
+            return nil
+        }
+    }
+    
+    private static func getKnownModelFormat(fromFileExtension fileExtension: String) -> ModelFormat {
+        if let modelFormat = getModelFormat(fromFileExtension: fileExtension) {
+            return modelFormat
         } else {
             fatalError("Unknown '\(fileExtension) extension.'")
         }
@@ -157,7 +164,7 @@ public struct ServiceModelGenerate {
     -> ModelType {
         let dataList = try getDataListForModelFiles(atPath: modelDirectoryPath, fileExtension: fileExtension)
         
-        let modelFormat = getModelFormat(fromFileExtension: fileExtension)
+        let modelFormat = getKnownModelFormat(fromFileExtension: fileExtension)
         
         let model = try ModelType.create(dataList: dataList, modelFormat: modelFormat, modelOverride: modelOverride)
         
@@ -196,7 +203,7 @@ public struct ServiceModelGenerate {
             try getDataListForModelFiles(atPath: path, fileExtension: fileExtension)
         }.flatMap { $0 }
         
-        let modelFormat = getModelFormat(fromFileExtension: fileExtension)
+        let modelFormat = getKnownModelFormat(fromFileExtension: fileExtension)
         
         let model = try ModelType.create(dataList: dataList, modelFormat: modelFormat, modelOverride: modelOverride)
         
