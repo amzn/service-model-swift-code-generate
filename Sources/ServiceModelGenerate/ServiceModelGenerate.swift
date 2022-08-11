@@ -22,6 +22,46 @@ import SwaggerParser
 import Yams
 
 public struct ServiceModelGenerate {
+    private static func getModelDataForFilePath(modelFilePath: String) -> (data: Data, modelFormat: ModelFormat) {
+        let file = FileHandle(forReadingAtPath: modelFilePath)
+        
+        guard let data = file?.readDataToEndOfFile() else {
+            fatalError("Specified model file '\(modelFilePath) doesn't exist.'")
+        }
+        
+        if let index = modelFilePath.lastIndex(of: ".") {
+            let extensionStartIndex = modelFilePath.index(after: index)
+            let fileExtension = String(modelFilePath[extensionStartIndex...])
+            
+            if let modelFormat = getModelFormat(fromFileExtension: fileExtension) {
+                return (data, modelFormat)
+            }
+        }
+        
+        fatalError("File path '\(modelFilePath) with unknown extension.'")
+    }
+    
+    private static func getModelFormat(fromFileExtension fileExtension: String) -> ModelFormat? {
+        let lowercasedFileExtension = fileExtension.lowercased()
+        if lowercasedFileExtension == "yaml" || lowercasedFileExtension == "yml" {
+            return .yaml
+        } else if lowercasedFileExtension == "json" {
+            return .json
+        } else if lowercasedFileExtension == "xml" {
+            return .xml
+        } else {
+            return nil
+        }
+    }
+    
+    private static func getKnownModelFormat(fromFileExtension fileExtension: String) -> ModelFormat {
+        if let modelFormat = getModelFormat(fromFileExtension: fileExtension) {
+            return modelFormat
+        } else {
+            fatalError("Unknown '\(fileExtension) extension.'")
+        }
+    }
+    
     /**
      Helper function to initialize code generation from the path to a service model.
  
@@ -38,26 +78,58 @@ public struct ServiceModelGenerate {
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws -> ModelType {
-            
-        let file = FileHandle(forReadingAtPath: modelFilePath)
-        
-        guard let data = file?.readDataToEndOfFile() else {
-            fatalError("Specified model file '\(modelFilePath) doesn't exist.'")
-        }
-        
-        let modelFormat: ModelFormat
-        if modelFilePath.lowercased().hasSuffix(".yaml") || modelFilePath.lowercased().hasSuffix(".yml") {
-            modelFormat = .yaml
-        } else if modelFilePath.lowercased().hasSuffix(".json") {
-            modelFormat = .json
-        } else if modelFilePath.lowercased().hasSuffix(".xml") {
-            modelFormat = .xml
-        } else {
-            fatalError("File path '\(modelFilePath) with unknown extension.'")
-        }
+        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws
+    -> ModelType {
+        let (data, modelFormat) = getModelDataForFilePath(modelFilePath: modelFilePath)
         
         let model = try ModelType.create(data: data, modelFormat: modelFormat, modelOverride: modelOverride)
+        
+        let codeGenerator = ServiceModelCodeGenerator(
+            model: model,
+            applicationDescription: applicationDescription,
+            customizations: customizations,
+            modelOverride: modelOverride)
+        
+        try generatorFunction(codeGenerator, model)
+        
+        return model
+    }
+    
+    /**
+     Helper function to initialize code generation from the path to a service model.
+ 
+     - Parameters:
+         - modelFilePaths: the file paths to the service model files. Supports either xml, json or yaml encoded models. All files must be a consistent format.
+         - customizations: any customizations provided external to the model.
+         - applicationDescription: the description of the application being code generated.
+         - modelOverride: any overrides for values in the model.
+         - generatorFunction: a function that will be provided a code generator and an instantiated ServiceModel
+                              which can be used to generate any code that is required.
+     */
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelFilePaths: [String],
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws
+    -> ModelType {
+        var modelFormat: ModelFormat?
+        let dataList: [Data] = modelFilePaths.map { modelFilePath in
+            let (data, thisModelFormat) = getModelDataForFilePath(modelFilePath: modelFilePath)
+            
+            if let modelFormat = modelFormat, thisModelFormat != modelFormat {
+                fatalError("Multiple model files provided of different format: '\(thisModelFormat)' and '\(modelFormat)'")
+            }
+            modelFormat = thisModelFormat
+            
+            return data
+        }
+        
+        guard let modelFormat = modelFormat else {
+            fatalError("At least one model file needs to be provided.")
+        }
+        
+        let model = try ModelType.create(dataList: dataList, modelFormat: modelFormat, modelOverride: modelOverride)
         
         let codeGenerator = ServiceModelCodeGenerator(
             model: model,
@@ -88,20 +160,11 @@ public struct ServiceModelGenerate {
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws -> ModelType {
-        
+        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws
+    -> ModelType {
         let dataList = try getDataListForModelFiles(atPath: modelDirectoryPath, fileExtension: fileExtension)
         
-        let modelFormat: ModelFormat
-        if fileExtension == "yaml" || fileExtension == "yml" {
-            modelFormat = .yaml
-        } else if fileExtension == "json" {
-            modelFormat = .json
-        } else if fileExtension == "xml" {
-            modelFormat = .xml
-        } else {
-            fatalError("Unknown '\(fileExtension) extension.'")
-        }
+        let modelFormat = getKnownModelFormat(fromFileExtension: fileExtension)
         
         let model = try ModelType.create(dataList: dataList, modelFormat: modelFormat, modelOverride: modelOverride)
         
@@ -134,22 +197,13 @@ public struct ServiceModelGenerate {
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws -> ModelType {
-        
+        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws
+    -> ModelType {
         let dataList = try modelDirectoryPaths.map { path in
             try getDataListForModelFiles(atPath: path, fileExtension: fileExtension)
         }.flatMap { $0 }
         
-        let modelFormat: ModelFormat
-        if fileExtension == "yaml" || fileExtension == "yml" {
-            modelFormat = .yaml
-        } else if fileExtension == "json" {
-            modelFormat = .json
-        } else if fileExtension == "xml" {
-            modelFormat = .xml
-        } else {
-            fatalError("Unknown '\(fileExtension) extension.'")
-        }
+        let modelFormat = getKnownModelFormat(fromFileExtension: fileExtension)
         
         let model = try ModelType.create(dataList: dataList, modelFormat: modelFormat, modelOverride: modelOverride)
         
