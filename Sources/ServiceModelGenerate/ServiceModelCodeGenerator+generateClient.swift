@@ -65,13 +65,16 @@ public extension ServiceModelCodeGenerator {
         delegate.addCustomFileHeader(codeGenerator: self, delegate: delegate,
                                      fileBuilder: fileBuilder, fileType: fileType)
         
+        let defaultInvocationReportingType = "StandardHTTPClientCoreInvocationReporting<AWSClientInvocationTraceContext>"
+        
         switch fileType {
         case .clientImplementation:
             let initializationStructs: InitializationStructs?
             if case .configurationObject = self.customizations.clientConfigurationType {
-                let configurationObjectName = getTypeName(delegate: delegate, entityType: .configurationObject)
+                let configurationObjectName = getTypeName(delegate: delegate, entityType: .configurationObject, genericType: true)
                 let operationsClientName = getTypeName(delegate: delegate,
-                                                       entityType: .operationsClient(configurationObjectName: configurationObjectName))
+                                                       entityType: .operationsClient(configurationObjectName: configurationObjectName),
+                                                       genericType: true)
                 
                 initializationStructs = InitializationStructs(configurationObjectName: configurationObjectName,
                                                               operationsClientName: operationsClientName)
@@ -79,18 +82,51 @@ public extension ServiceModelCodeGenerator {
                 initializationStructs = nil
             }
             
-            generateClient(delegate: delegate, entityType: .clientImplementation(initializationStructs: initializationStructs),
-                           fileBuilder: fileBuilder)
+            let clientEntityType: ClientEntityType = .clientImplementation(initializationStructs: initializationStructs)
+            let genericType: Bool
+            if case .struct(_, let genericParameters, _) = delegate.clientType, !genericParameters.isEmpty {
+                genericType = true
+                let clientName = getTypeName(delegate: delegate, entityType: clientEntityType, genericType: true)
+                let clientTypealiasName = getTypeName(delegate: delegate, entityType: clientEntityType, genericType: false)
+                
+                fileBuilder.appendLine("""
+                    
+                    public typealias \(clientTypealiasName)
+                        = \(clientName)<\(defaultInvocationReportingType)>
+                    """)
+            } else {
+                genericType = false
+            }
+            
+            generateClient(delegate: delegate, entityType: clientEntityType,
+                           genericType: genericType, fileBuilder: fileBuilder)
         case .clientConfiguration:
-            generateClient(delegate: delegate, entityType: .configurationObject, fileBuilder: fileBuilder)
+            let configurationObjectName = getTypeName(delegate: delegate, entityType: .configurationObject, genericType: true)
+            let configurationObjectTypealiasName = getTypeName(delegate: delegate, entityType: .configurationObject, genericType: false)
+            
+            fileBuilder.appendLine("""
+                
+                public typealias \(configurationObjectTypealiasName)
+                    = \(configurationObjectName)<\(defaultInvocationReportingType)>
+                """)
+            
+            generateClient(delegate: delegate, entityType: .configurationObject, genericType: true, fileBuilder: fileBuilder)
             fileBuilder.appendEmptyLine()
             
-            let configurationObjectName = getTypeName(delegate: delegate, entityType: .configurationObject)
+            let operationsClientEntityType: ClientEntityType = .operationsClient(configurationObjectName: configurationObjectName)
+            let operationsClientName = getTypeName(delegate: delegate, entityType: operationsClientEntityType, genericType: true)
+            let operationsClientTypealiasName = getTypeName(delegate: delegate, entityType: operationsClientEntityType, genericType: false)
+            
+            fileBuilder.appendLine("""
+                public typealias \(operationsClientTypealiasName)
+                    = \(operationsClientName)<\(defaultInvocationReportingType)>
+                
+                """)
             
             generateClient(delegate: delegate, entityType: .operationsClient(configurationObjectName: configurationObjectName),
-                           fileBuilder: fileBuilder)
+                           genericType: true, fileBuilder: fileBuilder)
         case .clientGenerator:
-            generateClient(delegate: delegate, entityType: .clientGenerator, fileBuilder: fileBuilder)
+            generateClient(delegate: delegate, entityType: .clientGenerator, genericType: false, fileBuilder: fileBuilder)
         }
         
         let baseFilePath = applicationDescription.baseFilePath
@@ -100,7 +136,8 @@ public extension ServiceModelCodeGenerator {
                           atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
     }
     
-    private func getTypeName(delegate: ModelClientDelegate, entityType: ClientEntityType) -> String {
+    private func getTypeName(delegate: ModelClientDelegate, entityType: ClientEntityType, genericType: Bool) -> String {
+        let typePrefix = genericType ? "Generic" : ""
         let typePostfix: String
         switch entityType {
         case .clientImplementation:
@@ -119,17 +156,17 @@ public extension ServiceModelCodeGenerator {
         case .struct(name: let structTypeName, _, _):
             if case .operationsClient = entityType {
                 if structTypeName.hasSuffix("Client") {
-                    return structTypeName.dropLast("Client".count) + typePostfix
+                    return "\(typePrefix)\(structTypeName.dropLast("Client".count))\(typePostfix)"
                 }
             }
                
-            return structTypeName + typePostfix
+            return "\(typePrefix)\(structTypeName)\(typePostfix)"
         }
     }
     
     private func generateClient(delegate: ModelClientDelegate, entityType: ClientEntityType,
-                                fileBuilder: FileBuilder) {
-        let typeName = getTypeName(delegate: delegate, entityType: entityType)
+                                genericType: Bool, fileBuilder: FileBuilder) {
+        let typeName = getTypeName(delegate: delegate, entityType: entityType, genericType: genericType)
         
         let typeDecaration: String
         switch delegate.clientType {
