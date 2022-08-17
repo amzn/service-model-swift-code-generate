@@ -326,16 +326,17 @@ public struct MockClientDelegate: ModelClientDelegate {
     }
     
     private func delegateAsyncOnlyMockImplementationCall(codeGenerator: ServiceModelCodeGenerator,
-                                                         fileBuilder: FileBuilder, functionOutputType: String?,
-                                                         operationName: String) {
+                                                         fileBuilder: FileBuilder, hasInput: Bool,
+                                                         functionOutputType: String?, operationName: String) {
         let variableName = operationName.upperToLowerCamelCase
+        let overrideParameters = hasInput ? "input" : ""
         
         if let outputType = functionOutputType {
             let typeName = outputType.getNormalizedTypeName(forModel: codeGenerator.model)
             
             fileBuilder.appendLine("""
                 if let functionOverride = self.\(variableName)FunctionOverride {
-                    return try await functionOverride(input)
+                    return try await functionOverride(\(overrideParameters))
                 }
                 
                 return \(typeName).__default
@@ -343,7 +344,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         } else {
             fileBuilder.appendLine("""
                 if let functionOverride = self.\(variableName)FunctionOverride {
-                    try await functionOverride(input)
+                    try await functionOverride(\(overrideParameters))
                 }
                 """)
         }
@@ -404,7 +405,7 @@ public struct MockClientDelegate: ModelClientDelegate {
                                                operationName: operationName)
             } else {
                 delegateAsyncOnlyMockImplementationCall(codeGenerator: codeGenerator,
-                                                        fileBuilder: fileBuilder,
+                                                        fileBuilder: fileBuilder, hasInput: hasInput,
                                                         functionOutputType: functionOutputType,
                                                         operationName: operationName)
             }
@@ -461,14 +462,15 @@ public struct MockClientDelegate: ModelClientDelegate {
     }
     
     private func delegateAsyncOnlyMockThrowingImplementationCall(codeGenerator: ServiceModelCodeGenerator,
-                                                                 fileBuilder: FileBuilder, functionOutputType: String?,
-                                                                 operationName: String) {
+                                                                 fileBuilder: FileBuilder, hasInput: Bool,
+                                                                 functionOutputType: String?, operationName: String) {
         let variableName = operationName.upperToLowerCamelCase
+        let overrideParameters = hasInput ? "input" : ""
         
         if functionOutputType != nil {
             fileBuilder.appendLine("""
                 if let functionOverride = self.\(variableName)FunctionOverride {
-                    return try await functionOverride(input)
+                    return try await functionOverride(\(overrideParameters))
                 }
 
                 throw self.error
@@ -476,7 +478,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         } else {
             fileBuilder.appendLine("""
                 if let functionOverride = self.\(variableName)FunctionOverride {
-                    try await functionOverride(input)
+                    try await functionOverride(\(overrideParameters))
                 }
 
                 throw self.error
@@ -538,7 +540,7 @@ public struct MockClientDelegate: ModelClientDelegate {
                                                        operationName: operationName)
             } else {
                 delegateAsyncOnlyMockThrowingImplementationCall(codeGenerator: codeGenerator,
-                                                                fileBuilder: fileBuilder,
+                                                                fileBuilder: fileBuilder, hasInput: hasInput,
                                                                 functionOutputType: functionOutputType,
                                                                 operationName: operationName)
             }
