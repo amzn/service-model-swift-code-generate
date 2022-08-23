@@ -381,17 +381,15 @@ public struct MockClientDelegate: ModelClientDelegate {
                                            operationName: operationName)
             if case .unknown = minimumCompilerSupport {
                 fileBuilder.appendLine("#else", preDec: true, postInc: true)
-            }
             
-            delegateMockImplementationCall(codeGenerator: codeGenerator,
-                                           functionPrefix: functionPrefix,
-                                           functionInfix: functionInfix,
-                                           fileBuilder: fileBuilder,
-                                           hasInput: hasInput,
-                                           functionOutputType: functionOutputType,
-                                           operationName: operationName)
+                delegateMockImplementationCall(codeGenerator: codeGenerator,
+                                               functionPrefix: functionPrefix,
+                                               functionInfix: functionInfix,
+                                               fileBuilder: fileBuilder,
+                                               hasInput: hasInput,
+                                               functionOutputType: functionOutputType,
+                                               operationName: operationName)
             
-            if case .unknown = minimumCompilerSupport {
                 fileBuilder.appendLine("#endif", preDec: true)
             }
         } else {
