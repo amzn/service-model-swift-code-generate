@@ -155,12 +155,31 @@ public extension ServiceModelCodeGenerator {
     
     private func addMapFieldDeclaration(name: String, fieldName: String, keyType: String,
                                         valueType: String, fileBuilder: FileBuilder) -> String? {
-        let keyTypeName = keyType.getNormalizedTypeName(forModel: model)
+        // Detect enums and replace them with a plain String.
+        // Maps with enum keys encode into an array of alternating keys and values, instead of a dictionary.
+        // And vice versa, JSON dictionary fails to be decoded into such a map, instead expects an array.
+        // See: https://github.com/apple/swift-corelibs-foundation/issues/3690
+        let keyTypeName: String
+        let additionalComment: String?
+        if let keyTypeFieldDescription = model.fieldDescriptions[keyType],
+           case .string(regexConstraint: _, lengthConstraint: _, valueConstraints: let valueConstraints) = keyTypeFieldDescription,
+           !valueConstraints.isEmpty {
+            keyTypeName = "String"
+            additionalComment = """
+                 Enum type \(keyType.getNormalizedTypeName(forModel: model)) is replaced with String.
+                 See: https://github.com/apple/swift-corelibs-foundation/issues/3690
+                """
+        } else {
+            keyTypeName = keyType.getNormalizedTypeName(forModel: model)
+            additionalComment = nil
+        }
+
         let valueTypeName = valueType.getNormalizedTypeName(forModel: model)
 
         // create the field declaration
         createModelTypeAlias(fileBuilder: fileBuilder,
-                             name: name, innerType: "[\(keyTypeName): \(valueTypeName)]")
+                             name: name, innerType: "[\(keyTypeName): \(valueTypeName)]",
+                             additionalComment: additionalComment)
 
         if customizations.generateModelShapeConversions {
             createMapConversionFunction(fileBuilder: fileBuilder,
@@ -223,7 +242,8 @@ public extension ServiceModelCodeGenerator {
     }
     
     func createModelTypeAlias(fileBuilder: FileBuilder,
-                              name: String, innerType: String) {
+                              name: String, innerType: String,
+                              additionalComment: String? = nil) {
         let typeName = name.getNormalizedTypeName(forModel: model)
         
         // avoid redundant declarations
@@ -235,6 +255,15 @@ public extension ServiceModelCodeGenerator {
             
             /**
              Type definition for the \(typeName) field.
+            """)
+
+        if let additionalComment = additionalComment {
+            fileBuilder.appendLine("""
+                \(additionalComment)
+                """)
+        }
+
+        fileBuilder.appendLine("""
              */
             public typealias \(typeName) = \(innerType)
             """)
