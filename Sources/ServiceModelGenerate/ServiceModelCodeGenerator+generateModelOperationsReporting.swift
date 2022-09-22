@@ -23,7 +23,8 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate an operation enumeration for the model.
      */
-    func generateOperationsReporting() {
+    func generateOperationsReporting(modelTargetName: String,
+                                     clientTargetName: String) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -35,12 +36,12 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)OperationsReporting.swift
-            // \(baseName)Client
+            // \(clientTargetName)
             //
             
             import Foundation
             import SmokeAWSCore
-            import \(baseName)Model
+            import \(modelTargetName)
             """)
         
         if case let .external(libraryImport: libraryImport, _) = customizations.validationErrorDeclaration {
@@ -50,7 +51,7 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.appendLine("""
             
             /**
-             Operation reporting for the \(baseName)Model.
+             Operation reporting for the \(modelTargetName).
              */
             public struct \(baseName)OperationsReporting {
             """)
@@ -58,21 +59,24 @@ public extension ServiceModelCodeGenerator {
         let sortedOperations = model.operationDescriptions.sorted { (left, right) in left.key < right.key }
         
         fileBuilder.incIndent()
-        addOperationReportingParameters(fileBuilder: fileBuilder, baseName: baseName, sortedOperations: sortedOperations)
+        addOperationReportingParameters(fileBuilder: fileBuilder, baseName: baseName,
+                                        modelTargetName: modelTargetName, sortedOperations: sortedOperations)
         
         fileBuilder.appendEmptyLine()
-        addOperationReportingInitializer(fileBuilder: fileBuilder, baseName: baseName, sortedOperations: sortedOperations)
+        addOperationReportingInitializer(fileBuilder: fileBuilder, baseName: baseName,
+                                         modelTargetName: modelTargetName, sortedOperations: sortedOperations)
         
         fileBuilder.decIndent()
         fileBuilder.appendLine("}")
         
         let fileName = "\(baseName)OperationsReporting.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(clientTargetName)")
     }
     
     private func addOperationReportingParameters(fileBuilder: FileBuilder, baseName: String,
-                                               sortedOperations: [(String, OperationDescription)]) {
+                                                 modelTargetName: String,
+                                                 sortedOperations: [(String, OperationDescription)]) {
         sortedOperations.forEach { (name, operation) in
             let variableName = getNormalizedVariableName(modelTypeName: name)
             
@@ -83,6 +87,7 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func addOperationReportingInitializer(fileBuilder: FileBuilder, baseName: String,
+                                                  modelTargetName: String,
                                                   sortedOperations: [(String, OperationDescription)]) {
         fileBuilder.appendLine("public init(clientName: String, reportingConfiguration: SmokeAWSClientReportingConfiguration<\(baseName)ModelOperations>) {",
                                postInc: true)

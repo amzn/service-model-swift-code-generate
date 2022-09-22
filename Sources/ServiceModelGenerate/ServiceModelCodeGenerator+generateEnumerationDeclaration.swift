@@ -31,9 +31,9 @@ extension ServiceModelCodeGenerator {
      */
     func generateEnumerationDeclaration(fileBuilder: FileBuilder,
                                         name: String,
+                                        modelTargetName: String,
                                         valueConstraints: [(name: String, value: String)]) {
         let typeName = name.getNormalizedTypeName(forModel: model)
-        let baseName = applicationDescription.baseName
         
         fileBuilder.appendEmptyLine()
         fileBuilder.appendLine("/**")
@@ -85,12 +85,12 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendEmptyLine()
             fileBuilder.appendLine("""
                 public extension CustomStringConvertible {
-                    func as\(baseName)Model\(typeName)() throws -> \(baseName)Model.\(typeName) {
+                    func as\(modelTargetName)\(typeName)() throws -> \(modelTargetName).\(typeName) {
                         let description = self.description
                 
                         guard let result = \(typeName)(rawValue: description) else {
                             throw \(validationErrorType).validationError(reason: "Unable to convert value '"
-                                + description + "' to a \(baseName)Model.\(name) value.")
+                                + description + "' to a \(modelTargetName).\(name) value.")
                         }
                 
                         return result

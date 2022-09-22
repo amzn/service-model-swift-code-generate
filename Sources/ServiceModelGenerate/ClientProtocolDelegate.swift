@@ -26,6 +26,7 @@ import ServiceModelEntities
 public struct ClientProtocolDelegate: ModelClientDelegate {
     public let clientType: ClientType
     public let baseName: String
+    public let modelTargetName: String
     public let typeDescription: String
     public let asyncAwaitAPIs: CodeGenFeatureStatus
     public let eventLoopFutureClientAPIs: CodeGenFeatureStatus
@@ -38,10 +39,11 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         - baseName: The base name of the Service.
         - asyncResultType: The name of the result type to use for async functions.
      */
-    public init(baseName: String, asyncAwaitAPIs: CodeGenFeatureStatus,
+    public init(baseName: String, modelTargetName: String, asyncAwaitAPIs: CodeGenFeatureStatus,
                 eventLoopFutureClientAPIs: CodeGenFeatureStatus = .enabled,
                 minimumCompilerSupport: MinimumCompilerSupport = .unknown) {
         self.baseName = baseName
+        self.modelTargetName = modelTargetName
         self.clientType = .protocol(name: "\(baseName)ClientProtocol")
         self.typeDescription = "Client Protocol for the \(baseName) service."
         self.asyncAwaitAPIs = asyncAwaitAPIs
@@ -71,7 +73,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
         if case .enabled = self.eventLoopFutureClientAPIs {
             // for each of the operations
             for (name, operationDescription) in sortedOperations {
-                codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
+                codeGenerator.addOperation(modelTargetName: self.modelTargetName, fileBuilder: fileBuilder, name: name,
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
                                            forTypeAlias: true, entityType: entityType)
@@ -91,7 +93,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
             for (index, operation) in sortedOperations.enumerated() {
                 let (name, operationDescription) = operation
                 
-                codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
+                codeGenerator.addOperation(modelTargetName: modelTargetName, fileBuilder: fileBuilder, name: name,
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .asyncFunction,
                                            forTypeAlias: true, entityType: entityType,
@@ -104,7 +106,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
                 for (index, operation) in sortedOperations.enumerated() {
                     let (name, operationDescription) = operation
                     
-                    codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
+                    codeGenerator.addOperation(modelTargetName: modelTargetName, fileBuilder: fileBuilder, name: name,
                                                operationDescription: operationDescription,
                                                delegate: delegate, operationInvokeType: .syncFunctionForNoAsyncAwaitSupport,
                                                forTypeAlias: true, entityType: entityType,
@@ -116,7 +118,7 @@ public struct ClientProtocolDelegate: ModelClientDelegate {
             for operation in sortedOperations {
                 let (name, operationDescription) = operation
                 
-                codeGenerator.addOperation(fileBuilder: fileBuilder, name: name,
+                codeGenerator.addOperation(modelTargetName: modelTargetName, fileBuilder: fileBuilder, name: name,
                                            operationDescription: operationDescription,
                                            delegate: delegate, operationInvokeType: .syncFunctionForNoAsyncAwaitSupport,
                                            forTypeAlias: true, entityType: entityType)

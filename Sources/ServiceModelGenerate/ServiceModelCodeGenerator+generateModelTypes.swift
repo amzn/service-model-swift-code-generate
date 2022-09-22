@@ -23,7 +23,7 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate the declarations for structures specified in a Service Model.
      */
-    func generateModelTypes() {
+    func generateModelTypes(modelTargetName: String) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -35,7 +35,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelTypes.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -50,47 +50,50 @@ public extension ServiceModelCodeGenerator {
             return entry1.key < entry2.key
         }
         
-        addFieldDeclarations(sortedFields: sortedFields, fileBuilder: fileBuilder)
+        addFieldDeclarations(sortedFields: sortedFields, modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         
-        addFieldValidations(sortedFields: sortedFields, fileBuilder: fileBuilder)
+        addFieldValidations(sortedFields: sortedFields, modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         
         let fileName = "\(baseName)ModelTypes.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(modelTargetName)")
     }
     
     private func addStringFieldValidation(name: String, fieldValueConstraints: [(name: String, value: String)], regexConstraint: String?,
-                                          lengthConstraint: LengthRangeConstraint<Int>, fileBuilder: FileBuilder) {
+                                          lengthConstraint: LengthRangeConstraint<Int>, modelTargetName: String, fileBuilder: FileBuilder) {
         if fieldValueConstraints.isEmpty && (regexConstraint != nil || lengthConstraint.hasContraints) {
             // create the field validation
             createFieldValidation(fileBuilder: fileBuilder,
-                                  name: name, isListWithInnerType: nil, rangeValidation: validateLengthRange,
+                                  name: name, modelTargetName: modelTargetName, isListWithInnerType: nil, rangeValidation: validateLengthRange,
                                   regexConstraint: regexConstraint, lengthConstraint: lengthConstraint)
             
         }
     }
     
-    private func addIntegerFieldValidation(name: String, rangeConstraint: NumericRangeConstraint<Int>, fileBuilder: FileBuilder) {
+    private func addIntegerFieldValidation(name: String, rangeConstraint: NumericRangeConstraint<Int>,
+                                           modelTargetName: String, fileBuilder: FileBuilder) {
         if rangeConstraint.hasContraints {
             // create the field validation
             createFieldValidation(fileBuilder: fileBuilder,
-                                  name: name, isListWithInnerType: nil, rangeValidation: validateNumericRange,
+                                  name: name, modelTargetName: modelTargetName, isListWithInnerType: nil, rangeValidation: validateNumericRange,
                                   regexConstraint: nil, lengthConstraint: rangeConstraint)
             
         }
     }
     
-    private func addDoubleFieldValidation(name: String, rangeConstraint: NumericRangeConstraint<Double>, fileBuilder: FileBuilder) {
+    private func addDoubleFieldValidation(name: String, rangeConstraint: NumericRangeConstraint<Double>,
+                                          modelTargetName: String, fileBuilder: FileBuilder) {
         if rangeConstraint.hasContraints {
             // create the field validation
             createFieldValidation(fileBuilder: fileBuilder,
-                                  name: name, isListWithInnerType: nil, rangeValidation: validateNumericRange,
+                                  name: name, modelTargetName: modelTargetName, isListWithInnerType: nil, rangeValidation: validateNumericRange,
                                   regexConstraint: nil, lengthConstraint: rangeConstraint)
             
         }
     }
     
-    private func addFieldValidations(sortedFields: [(key: String, value: Fields)], fileBuilder: FileBuilder) {
+    private func addFieldValidations(sortedFields: [(key: String, value: Fields)],
+                                     modelTargetName: String, fileBuilder: FileBuilder) {
         // for each of the fields
         for (name, field) in sortedFields {
             switch field {
@@ -99,16 +102,19 @@ public extension ServiceModelCodeGenerator {
                          valueConstraints: let fieldValueConstraints):
                 addStringFieldValidation(name: name, fieldValueConstraints: fieldValueConstraints,
                                          regexConstraint: regexConstraint, lengthConstraint: lengthConstraint,
-                                         fileBuilder: fileBuilder)
+                                         modelTargetName: modelTargetName, fileBuilder: fileBuilder)
             case .integer(rangeConstraint: let rangeConstraint):
-                addIntegerFieldValidation(name: name, rangeConstraint: rangeConstraint, fileBuilder: fileBuilder)
+                addIntegerFieldValidation(name: name, rangeConstraint: rangeConstraint,
+                                          modelTargetName: modelTargetName, fileBuilder: fileBuilder)
             case .long(rangeConstraint: let rangeConstraint):
-                addIntegerFieldValidation(name: name, rangeConstraint: rangeConstraint, fileBuilder: fileBuilder)
+                addIntegerFieldValidation(name: name, rangeConstraint: rangeConstraint,
+                                          modelTargetName: modelTargetName, fileBuilder: fileBuilder)
             case .double(rangeConstraint: let rangeConstraint):
-                addDoubleFieldValidation(name: name, rangeConstraint: rangeConstraint, fileBuilder: fileBuilder)
+                addDoubleFieldValidation(name: name, rangeConstraint: rangeConstraint,
+                                         modelTargetName: modelTargetName, fileBuilder: fileBuilder)
             case .list(type: let type, lengthConstraint: let lengthConstraint):
                 // create the field validation
-                createFieldValidation(fileBuilder: fileBuilder, name: name,
+                createFieldValidation(fileBuilder: fileBuilder, name: name, modelTargetName: modelTargetName,
                                       isListWithInnerType: type, rangeValidation: validateLengthRange,
                                       regexConstraint: nil, lengthConstraint: lengthConstraint)
             default:
@@ -119,12 +125,13 @@ public extension ServiceModelCodeGenerator {
     
     private func addStringFieldDeclaration(name: String, overrideType: String?, regexConstraint: String?,
                                            lengthConstraint: LengthRangeConstraint<Int>,
-                                           valueConstraints: [(name: String, value: String)], fileBuilder: FileBuilder) -> String? {
+                                           valueConstraints: [(name: String, value: String)],
+                                           modelTargetName: String, fileBuilder: FileBuilder) -> String? {
         // if this is an enumeration
         if !valueConstraints.isEmpty {
             // create the enumeration declaration
             generateEnumerationDeclaration(fileBuilder: fileBuilder,
-                                           name: name, valueConstraints: valueConstraints)
+                                           name: name, modelTargetName: modelTargetName, valueConstraints: valueConstraints)
             
             return nil
         } else if regexConstraint != nil || lengthConstraint.hasContraints {
@@ -138,7 +145,8 @@ public extension ServiceModelCodeGenerator {
         return overrideType ?? "String"
     }
     
-    private func addListFieldDeclaration(fieldName: String, type: String, fileBuilder: FileBuilder) -> String? {
+    private func addListFieldDeclaration(fieldName: String, type: String,
+                                         modelTargetName: String, fileBuilder: FileBuilder) -> String? {
         let typeName = type.getNormalizedTypeName(forModel: model)
         
         // create the field declaration
@@ -146,7 +154,7 @@ public extension ServiceModelCodeGenerator {
                              name: fieldName, innerType: "[\(typeName)]")
 
         if customizations.generateModelShapeConversions {
-            createArrayConversionFunction(fileBuilder: fileBuilder,
+            createArrayConversionFunction(modelTargetName: modelTargetName, fileBuilder: fileBuilder,
                                           name: fieldName, innerType: type)
         }
         
@@ -154,7 +162,8 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func addMapFieldDeclaration(name: String, fieldName: String, keyType: String,
-                                        valueType: String, fileBuilder: FileBuilder) -> String? {
+                                        valueType: String, modelTargetName: String,
+                                        fileBuilder: FileBuilder) -> String? {
         // Detect enums and replace them with a plain String.
         // Maps with enum keys encode into an array of alternating keys and values, instead of a dictionary.
         // And vice versa, JSON dictionary fails to be decoded into such a map, instead expects an array.
@@ -182,14 +191,14 @@ public extension ServiceModelCodeGenerator {
                              additionalComment: additionalComment)
 
         if customizations.generateModelShapeConversions {
-            createMapConversionFunction(fileBuilder: fileBuilder,
+            createMapConversionFunction(modelTargetName: modelTargetName, fileBuilder: fileBuilder,
                                         name: fieldName, valueType: valueType)
         }
         
         return nil
     }
     
-    private func addFieldDeclaration(fieldName: String, field: Fields,
+    private func addFieldDeclaration(fieldName: String, field: Fields, modelTargetName: String,
                                      fileBuilder: FileBuilder, createdFields: inout Set<String>) {
         let name = fieldName.startingWithUppercase
         let overrideType = modelOverride?.fieldRawTypeOverride?[field.typeDescription]?.typeName
@@ -199,13 +208,14 @@ public extension ServiceModelCodeGenerator {
                      lengthConstraint: let lengthConstraint,
                      valueConstraints: let valueConstraints):
             innerType = addStringFieldDeclaration(name: name, overrideType: overrideType,
-                                                   regexConstraint: regexConstraint, lengthConstraint: lengthConstraint,
-                                                   valueConstraints: valueConstraints, fileBuilder: fileBuilder)
+                                                  regexConstraint: regexConstraint, lengthConstraint: lengthConstraint,
+                                                  valueConstraints: valueConstraints,
+                                                  modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         case .list(type: let type, lengthConstraint: _):
-            innerType = addListFieldDeclaration(fieldName: fieldName, type: type, fileBuilder: fileBuilder)
+            innerType = addListFieldDeclaration(fieldName: fieldName, type: type, modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         case .map(keyType: let keyType, valueType: let valueType, lengthConstraint: _):
             innerType = addMapFieldDeclaration(name: name, fieldName: fieldName, keyType: keyType,
-                                                valueType: valueType, fileBuilder: fileBuilder)
+                                               valueType: valueType, modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         case .integer:
             innerType = overrideType ?? "Int"
         case .boolean:
@@ -232,12 +242,14 @@ public extension ServiceModelCodeGenerator {
                              name: fieldName, innerType: currentInnerType)
     }
     
-    private func addFieldDeclarations(sortedFields: [(key: String, value: Fields)], fileBuilder: FileBuilder) {
+    private func addFieldDeclarations(sortedFields: [(key: String, value: Fields)],
+                                      modelTargetName: String, fileBuilder: FileBuilder) {
         var createdFields: Set<String> = []
         
         // for each of the fields
         for (fieldName, field) in sortedFields {
-            addFieldDeclaration(fieldName: fieldName, field: field, fileBuilder: fileBuilder, createdFields: &createdFields)
+            addFieldDeclaration(fieldName: fieldName, field: field, modelTargetName: modelTargetName,
+                                fileBuilder: fileBuilder, createdFields: &createdFields)
         }
     }
     

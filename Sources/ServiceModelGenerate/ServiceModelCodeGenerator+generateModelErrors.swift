@@ -26,7 +26,8 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - delegate: The delegate to use when generating this client.
      */
-    func generateModelErrors(delegate: ModelErrorsDelegate) {
+    func generateModelErrors(delegate: ModelErrorsDelegate,
+                             modelTargetName: String) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -38,7 +39,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelErrors.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -89,7 +90,7 @@ public extension ServiceModelCodeGenerator {
         }
         
         let fileName = "\(baseName)ModelErrors.swift"
-        fileBuilder.write(toFile: fileName, atFilePath: "\(applicationDescription.baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(applicationDescription.baseFilePath)/Sources/\(modelTargetName)")
     }
     
     func getSortedErrors(allErrorTypes: Set<String>) -> [ErrorType] {

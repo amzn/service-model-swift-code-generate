@@ -30,7 +30,7 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate client output for each operation.
      */
-    func generateModelOperationClientOutput() {
+    func generateModelOperationClientOutput(modelTargetName: String, clientTargetName: String) {
         let baseName = applicationDescription.baseName
         
         let fileBuilder = FileBuilder()
@@ -43,12 +43,12 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)OperationsClientOutput.swift
-            // \(baseName)Client
+            // \(clientTargetName)
             //
             
             import Foundation
             import SmokeHTTPClient
-            import \(baseName)Model
+            import \(modelTargetName)
             """)
         
         if case let .external(libraryImport: libraryImport, _) = customizations.validationErrorDeclaration {
@@ -59,16 +59,14 @@ public extension ServiceModelCodeGenerator {
         
         var alreadyEmittedTypes: [String: OperationOutputDescription] = [:]
         sortedOperations.forEach { operation in
-            addOperationHTTPRequestOutput(operation: operation.key,
-                                         operationDescription: operation.value,
-                                         generationType: .responseOutput,
-                                         fileBuilder: fileBuilder,
-                                         alreadyEmittedTypes: &alreadyEmittedTypes)
+            addOperationHTTPRequestOutput(operation: operation.key, operationDescription: operation.value,
+                                          generationType: .responseOutput, modelTargetName: modelTargetName,
+                                          fileBuilder: fileBuilder, alreadyEmittedTypes: &alreadyEmittedTypes)
         }
         
         let fileName = "\(baseName)OperationsClientOutput.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(clientTargetName)")
     }
     
     private func addBodyOperationHTTPResponseOutput(bodyMembers: [String: Member],
@@ -76,6 +74,7 @@ public extension ServiceModelCodeGenerator {
                                                     operationPrefix: String,
                                                     name: String,
                                                     generationType: ServiceModelCodeGenerator.ClientOutputGenerationType,
+                                                    modelTargetName: String,
                                                     fileBuilder: FileBuilder) -> String {
         let bodyTypeName: String
         if !bodyMembers.isEmpty {
@@ -86,7 +85,7 @@ public extension ServiceModelCodeGenerator {
             
             if case .supportingStructures = generationType {
                 generateStructure(name: bodyTypeName,
-                                  structureDescription: structureDefinition,
+                                  structureDescription: structureDefinition, modelTargetName: modelTargetName,
                                   fileBuilder: fileBuilder,
                                   includeVariableDocumentation: false,
                                   generateShapeProtocol: false,
@@ -95,6 +94,7 @@ public extension ServiceModelCodeGenerator {
                 createConversionFunction(originalTypeName: outputTypeName,
                                          derivedTypeName: bodyTypeName,
                                          members: bodyMembers,
+                                         modelTargetName: modelTargetName,
                                          fileBuilder: fileBuilder)
             }
         } else {
@@ -109,6 +109,7 @@ public extension ServiceModelCodeGenerator {
                                                        operationPrefix: String,
                                                        name: String,
                                                        generationType: ServiceModelCodeGenerator.ClientOutputGenerationType,
+                                                       modelTargetName: String,
                                                        fileBuilder: FileBuilder)
         -> String {
             let headersTypeName: String
@@ -120,7 +121,7 @@ public extension ServiceModelCodeGenerator {
                 
                 if case .supportingStructures = generationType {
                     generateStructure(name: headersTypeName,
-                                      structureDescription: structureDefinition,
+                                      structureDescription: structureDefinition, modelTargetName: modelTargetName,
                                       fileBuilder: fileBuilder,
                                       includeVariableDocumentation: false,
                                       generateShapeProtocol: false,
@@ -129,6 +130,7 @@ public extension ServiceModelCodeGenerator {
                     createConversionFunction(originalTypeName: outputTypeName,
                                              derivedTypeName: headersTypeName,
                                              members: headersMembers,
+                                             modelTargetName: modelTargetName,
                                              fileBuilder: fileBuilder)
                 }
             } else {
@@ -150,6 +152,7 @@ public extension ServiceModelCodeGenerator {
             generationType: ServiceModelCodeGenerator.ClientOutputGenerationType,
             fileBuilder: FileBuilder,
             name: String, outputTypeName: String,
+            modelTargetName: String,
             httpResponseOutputTypes: HTTPResponseOutputTypes) {
         if case .responseOutput = generationType {
             fileBuilder.appendLine("""
@@ -174,7 +177,8 @@ public extension ServiceModelCodeGenerator {
                                               fileBuilder: fileBuilder,
                                               declarationPrefix: "return",
                                               memberLocation: httpResponseOutputTypes.membersLocation,
-                                              payloadAsMember: httpResponseOutputTypes.payloadAsMember)
+                                              payloadAsMember: httpResponseOutputTypes.payloadAsMember,
+                                              modelTargetName: modelTargetName)
             fileBuilder.decIndent()
             fileBuilder.decIndent()
                 
@@ -193,6 +197,7 @@ public extension ServiceModelCodeGenerator {
         operationPrefix: String,
         name: String,
         generationType: ServiceModelCodeGenerator.ClientOutputGenerationType,
+        modelTargetName: String,
         fileBuilder: FileBuilder) {
             var unassignedMembers = structureDefinition.members
             var bodyMembers: [String: Member] = [:]
@@ -239,11 +244,11 @@ public extension ServiceModelCodeGenerator {
                 bodyTypeName = addBodyOperationHTTPResponseOutput(
                     bodyMembers: bodyMembers, outputTypeName: outputTypeName,
                     operationPrefix: operationPrefix, name: name,
-                    generationType: generationType, fileBuilder: fileBuilder)
+                    generationType: generationType, modelTargetName: modelTargetName, fileBuilder: fileBuilder)
             }
             let headersTypeName = addHeadersOperationHTTPResponseOutput(
                 headersMembers: headersMembers, outputTypeName: outputTypeName, operationPrefix: operationPrefix, name: name,
-                generationType: generationType, fileBuilder: fileBuilder)
+                generationType: generationType, modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         
             let httpResponseOutputTypes = HTTPResponseOutputTypes(
                 bodyTypeName: bodyTypeName,
@@ -252,7 +257,7 @@ public extension ServiceModelCodeGenerator {
                 payloadAsMember: outputDescription.payloadAsMember)
         
             addResponseOutputStructure(generationType: generationType, fileBuilder: fileBuilder, name: name,
-                                       outputTypeName: outputTypeName, httpResponseOutputTypes: httpResponseOutputTypes)
+                                       outputTypeName: outputTypeName, modelTargetName: modelTargetName, httpResponseOutputTypes: httpResponseOutputTypes)
     }
     
     private func addSingleLocationOperationHttpResponseOutput(
@@ -289,6 +294,7 @@ public extension ServiceModelCodeGenerator {
     func addOperationHTTPRequestOutput(operation: String,
                                        operationDescription: OperationDescription,
                                        generationType: ClientOutputGenerationType,
+                                       modelTargetName: String,
                                        fileBuilder: FileBuilder,
                                        alreadyEmittedTypes: inout [String: OperationOutputDescription]) {
         
@@ -340,7 +346,7 @@ public extension ServiceModelCodeGenerator {
                 outputTypeName: outputTypeName,
                 operationPrefix: operationPrefix,
                 name: name,
-                generationType: generationType,
+                generationType: generationType, modelTargetName: modelTargetName,
                 fileBuilder: fileBuilder)
         }
     }

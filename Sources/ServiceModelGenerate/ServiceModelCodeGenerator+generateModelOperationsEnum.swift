@@ -23,7 +23,7 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate an operation enumeration for the model.
      */
-    func generateModelOperationsEnum() {
+    func generateModelOperationsEnum(modelTargetName: String) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -35,7 +35,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelOperations.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -48,7 +48,7 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.appendLine("""
             
             /**
-             Operation enumeration for the \(baseName)Model.
+             Operation enumeration for the \(modelTargetName).
              */
             public enum \(baseName)ModelOperations: String, Hashable, CustomStringConvertible {
             """)
@@ -78,18 +78,19 @@ public extension ServiceModelCodeGenerator {
             addOperationHTTPRequestInput(operation: operation.key,
                                          operationDescription: operation.value,
                                          generationType: .supportingStructures,
+                                         modelTargetName: modelTargetName,
                                          fileBuilder: fileBuilder)
             
             addOperationHTTPRequestOutput(operation: operation.key,
                                           operationDescription: operation.value,
-                                          generationType: .supportingStructures,
+                                          generationType: .supportingStructures, modelTargetName: modelTargetName,
                                           fileBuilder: fileBuilder,
                                           alreadyEmittedTypes: &alreadyEmittedTypes)
         }
         
         let fileName = "\(baseName)ModelOperations.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(modelTargetName)")
     }
     
     private func addOperationCases(sortedOperations: [(key: String, value: OperationDescription)], fileBuilder: FileBuilder) {

@@ -20,9 +20,9 @@ import ServiceModelCodeGeneration
 import ServiceModelEntities
 
 internal extension ServiceModelCodeGenerator {
-    func addShapeProtocol(name: String, fileBuilder: FileBuilder,
+    func addShapeProtocol(name: String, modelTargetName: String,
+                          fileBuilder: FileBuilder,
                           structureElements: StructureElements) {
-        let baseName = applicationDescription.baseName
         // add conformance to Equatable
         fileBuilder.appendLine("""
             
@@ -51,14 +51,14 @@ internal extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             
-                func as\(baseName)Model\(name)()\(failPostix) -> \(baseName)Model.\(name)
+                func as\(modelTargetName)\(name)()\(failPostix) -> \(modelTargetName).\(name)
             }
             """)
     }
 
-    func addShapeDefaultFunctions(name: String, fileBuilder: FileBuilder,
+    func addShapeDefaultFunctions(name: String, modelTargetName: String,
+                                  fileBuilder: FileBuilder,
                                   structureElements: StructureElements) {
-        let baseName = applicationDescription.baseName
         let willConversionFail = willShapeConversionFail(fieldName: name, alreadySeenShapes: [])
         let failPostix = willConversionFail ? " throws" : ""
         
@@ -67,7 +67,7 @@ internal extension ServiceModelCodeGenerator {
             
             public extension \(name)Shape {
             
-                func as\(baseName)Model\(name)()\(failPostix) -> \(baseName)Model.\(name) {
+                func as\(modelTargetName)\(name)()\(failPostix) -> \(modelTargetName).\(name) {
                     if let modelInstance = self as? \(name) {
                         // don't need to convert, already can be serialized
                         return modelInstance

@@ -34,12 +34,12 @@ internal extension ServiceModelCodeGenerator {
             aborted as early as possible.
      */
     func createStructureStubVariable(type: String,
+                                     modelTargetName: String,
                                      fileBuilder: FileBuilder,
                                      declarationPrefix: String,
                                      fatalOnError: Bool,
                                      overrideFieldNameProvider: ((String) -> String?)? = nil) {
         var outputLines: [String] = []
-        let baseName = applicationDescription.baseName
         
         // if there isn't actually a structure of the type, this is a fatal
         guard let structureDefinition = model.structureDescriptions[type] else {
@@ -70,9 +70,9 @@ internal extension ServiceModelCodeGenerator {
         }
         
         if sortedMembers.isEmpty {
-            outputLines.append("\(declarationPrefix) \(baseName)Model.\(type)()")
+            outputLines.append("\(declarationPrefix) \(modelTargetName).\(type)()")
         } else {
-            outputLines.append("\(declarationPrefix) \(baseName)Model.\(type)(")
+            outputLines.append("\(declarationPrefix) \(modelTargetName).\(type)(")
         }
         
         // iterate through each property
@@ -85,7 +85,7 @@ internal extension ServiceModelCodeGenerator {
         
         // output the declaration
         if outputLines.isEmpty {
-            fileBuilder.appendLine("\(declarationPrefix) \(baseName)Model.\(type)()")
+            fileBuilder.appendLine("\(declarationPrefix) \(modelTargetName).\(type)()")
         } else {
             outputLines.forEach { line in fileBuilder.appendLine(line) }
         }

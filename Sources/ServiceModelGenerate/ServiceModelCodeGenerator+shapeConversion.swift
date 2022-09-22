@@ -23,8 +23,8 @@ internal extension ServiceModelCodeGenerator {
     func createConversionFunction(originalTypeName: String,
                                   derivedTypeName: String,
                                   members: [String: Member],
+                                  modelTargetName: String,
                                   fileBuilder: FileBuilder) {
-        let baseName = applicationDescription.baseName
         let postfix: String
         if members.isEmpty {
             postfix = ")"
@@ -34,7 +34,7 @@ internal extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             public extension \(originalTypeName) {
-                func as\(baseName)Model\(derivedTypeName)() -> \(derivedTypeName) {
+                func as\(modelTargetName)\(derivedTypeName)() -> \(derivedTypeName) {
                     return \(derivedTypeName)(\(postfix)
             """)
         
@@ -68,7 +68,7 @@ internal extension ServiceModelCodeGenerator {
     }
     
     private func getStringShapeToInstanceConversion(valueConstraints: [(name: String, value: String)], isRequired: Bool,
-                                                    fieldName: String, baseName: String,
+                                                    fieldName: String, modelTargetName: String,
                                                     variableName: String) -> (setup: String?, fieldShape: String) {
         let setup: String?
         let fieldShape: String
@@ -76,20 +76,20 @@ internal extension ServiceModelCodeGenerator {
             let capitalizedVariableName = variableName.lowerToUpperCamelCase
             if isRequired {
                 setup = """
-                guard let converted\(capitalizedVariableName) = \(baseName)Model.\(fieldName)(rawValue: \(variableName).description) else {
+                guard let converted\(capitalizedVariableName) = \(modelTargetName).\(fieldName)(rawValue: \(variableName).description) else {
                     throw \(validationErrorType).validationError(reason: "Unable to convert value '"
-                        + \(variableName).description + "' of field '\(variableName)' to a \(baseName)Model.\(fieldName) value.")
+                        + \(variableName).description + "' of field '\(variableName)' to a \(modelTargetName).\(fieldName) value.")
                 }
                 """
             } else {
                 setup = """
-                let converted\(capitalizedVariableName): \(baseName)Model.\(fieldName)?
+                let converted\(capitalizedVariableName): \(modelTargetName).\(fieldName)?
                 if let description = \(variableName)?.description {
-                    if let new\(fieldName) = \(baseName)Model.\(fieldName)(rawValue: description) {
+                    if let new\(fieldName) = \(modelTargetName).\(fieldName)(rawValue: description) {
                         converted\(capitalizedVariableName) = new\(fieldName)
                     } else {
                         throw \(validationErrorType).validationError(reason: "Unable to convert value '"
-                            + description + "' of field '\(variableName)' to a \(baseName)Model.\(fieldName) value.")
+                            + description + "' of field '\(variableName)' to a \(modelTargetName).\(fieldName) value.")
                     }
                 } else {
                     converted\(capitalizedVariableName) = nil
@@ -107,16 +107,17 @@ internal extension ServiceModelCodeGenerator {
     }
     
     private func getListShapeToInstanceConversion(fieldName: String, type: String,
-                                                  variableName: String, isRequired: Bool) -> (setup: String?, fieldShape: String) {
+                                                  variableName: String, modelTargetName: String,
+                                                  isRequired: Bool) -> (setup: String?, fieldShape: String) {
         let willConversionFail = willShapeConversionFail(fieldName: type, alreadySeenShapes: [])
         let failPostfix = willConversionFail ? "try " : ""
         let optionalInfix = isRequired ? "" : "?"
 
         let typeName = type.getNormalizedTypeName(forModel: model)
-        let baseName = applicationDescription.baseName
 
         let conversionDetails = getShapeToInstanceConversion(fieldType: type,
                                                              variableName: "entry",
+                                                             modelTargetName: modelTargetName,
                                                              isRequired: true)
         
         var setupBuilder: String
@@ -125,7 +126,7 @@ internal extension ServiceModelCodeGenerator {
         if conversionDetails.conversion == "entry" {
             setupBuilder = "let converted\(capitalizedVariableName) = \(variableName)"
         } else {
-            let fieldType = "[\(baseName)Model.\(typeName)]\(optionalInfix)"
+            let fieldType = "[\(modelTargetName).\(typeName)]\(optionalInfix)"
             setupBuilder = "let converted\(capitalizedVariableName): \(fieldType) = \(failPostfix)\(variableName)\(optionalInfix).map { entry in\n"
 
             if let setup = conversionDetails.setup {
@@ -142,6 +143,7 @@ internal extension ServiceModelCodeGenerator {
     
     private func getMapShapeToInstanceConversion(fieldName: String, keyType: String,
                                                  valueType: String, variableName: String,
+                                                 modelTargetName: String,
                                                  isRequired: Bool) -> (setup: String?, fieldShape: String) {
         let willConversionFail = willShapeConversionFail(fieldName: valueType, alreadySeenShapes: [])
         let failPostfix = willConversionFail ? "try " : ""
@@ -149,17 +151,17 @@ internal extension ServiceModelCodeGenerator {
 
         let keyTypeName = keyType.getNormalizedTypeName(forModel: model)
         let valueTypeName = valueType.getNormalizedTypeName(forModel: model)
-        let baseName = applicationDescription.baseName
 
         let conversionDetails = getShapeToInstanceConversion(fieldType: valueType,
                                                              variableName: "entry",
+                                                             modelTargetName: modelTargetName,
                                                              isRequired: true)
         
-        let fullKeyTypeName = keyTypeName.isBuiltinType ? keyTypeName : "\(baseName)Model.\(keyTypeName)"
+        let fullKeyTypeName = keyTypeName.isBuiltinType ? keyTypeName : "\(modelTargetName).\(keyTypeName)"
         
         // if there is actually conversion on each element
         if conversionDetails.conversion != "entry" && !valueTypeName.isBuiltinType {
-            let fullValueTypeName = "\(baseName)Model.\(valueTypeName)"
+            let fullValueTypeName = "\(modelTargetName).\(valueTypeName)"
             
             let capitalizedVariableName = variableName.lowerToUpperCamelCase
             let fieldType = "[\(fullKeyTypeName): \(fullValueTypeName)]\(optionalInfix)"
@@ -182,10 +184,9 @@ internal extension ServiceModelCodeGenerator {
     }
     
     func getShapeToInstanceConversion(fieldType: String, variableName: String,
+                                      modelTargetName: String,
                                       isRequired: Bool)
-        -> (conversion: String, setup: String?) {
-            
-        let baseName = applicationDescription.baseName
+    -> (conversion: String, setup: String?) {
         let fieldName = fieldType.getNormalizedTypeName(forModel: model)
         let fieldShape: String
         var setup: String?
@@ -193,13 +194,14 @@ internal extension ServiceModelCodeGenerator {
             switch field {
             case .string(_, _, let valueConstraints):
                 (setup, fieldShape) = getStringShapeToInstanceConversion(valueConstraints: valueConstraints, isRequired: isRequired,
-                                                                         fieldName: fieldName, baseName: baseName, variableName: variableName)
+                                                                         fieldName: fieldName, modelTargetName: modelTargetName, variableName: variableName)
             case .list(let type, _):
                 (setup, fieldShape) = getListShapeToInstanceConversion(fieldName: fieldName, type: type,
-                                                                       variableName: variableName, isRequired: isRequired)
+                                                                       variableName: variableName, modelTargetName: modelTargetName, isRequired: isRequired)
             case .map(let keyType, let valueType, _):
                 (setup, fieldShape) = getMapShapeToInstanceConversion(fieldName: fieldName, keyType: keyType,
-                                                                      valueType: valueType, variableName: variableName, isRequired: isRequired)
+                                                                      valueType: valueType, variableName: variableName, modelTargetName: modelTargetName,
+                                                                      isRequired: isRequired)
             default:
                 fieldShape = variableName
             }
@@ -209,7 +211,7 @@ internal extension ServiceModelCodeGenerator {
             let willConversionFail = willShapeConversionFail(fieldName: fieldName, alreadySeenShapes: [])
             let failPostfix = willConversionFail ? "try " : ""
             
-            fieldShape = "\(failPostfix)\(variableName)\(optionalInfix).as\(baseName)Model\(fieldName)()"
+            fieldShape = "\(failPostfix)\(variableName)\(optionalInfix).as\(modelTargetName)\(fieldName)()"
         }
         
         return (fieldShape, setup)

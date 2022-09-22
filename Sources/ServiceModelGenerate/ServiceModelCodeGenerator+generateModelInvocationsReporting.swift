@@ -23,7 +23,8 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate an operation enumeration for the model.
      */
-    func generateInvocationsReporting() {
+    func generateInvocationsReporting(modelTargetName: String,
+                                      clientTargetName: String) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -35,13 +36,13 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)InvocationsReporting.swift
-            // \(baseName)Client
+            // \(clientTargetName)
             //
             
             import Foundation
             import SmokeHTTPClient
             import SmokeAWSHttp
-            import \(baseName)Model
+            import \(modelTargetName)
             """)
         
         if case let .external(libraryImport: libraryImport, _) = customizations.validationErrorDeclaration {
@@ -57,7 +58,7 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.appendLine("""
             
             /**
-             Invocations reporting for the \(baseName)Model.
+             Invocations reporting for the \(modelTargetName).
              */
             public struct \(baseName)InvocationsReporting<InvocationReportingType: \(reportingTypeConformanceString)> {
             """)
@@ -75,7 +76,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileName = "\(baseName)InvocationsReporting.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(clientTargetName)")
     }
     
     private func addOperationReportingParameters(fileBuilder: FileBuilder, baseName: String,

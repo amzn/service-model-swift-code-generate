@@ -31,7 +31,8 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - generationType: The type of test input to generate.
      */
-    func generateDefaultInstances(generationType: DefaultInstancesGenerationType) {
+    func generateDefaultInstances(generationType: DefaultInstancesGenerationType,
+                                  modelTargetName: String) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -43,7 +44,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelDefaultInstances.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -67,13 +68,13 @@ public extension ServiceModelCodeGenerator {
         
         // iterate through the structures
         for (name, _) in sortedStructures {
-            addDefaultStructureInstance(generationType: generationType, fileBuilder: fileBuilder, name: name,
-                                        baseName: baseName, getOverrideFieldName: getOverrideFieldName)
+            addDefaultStructureInstance(generationType: generationType, modelTargetName: modelTargetName, fileBuilder: fileBuilder,
+                                        name: name, getOverrideFieldName: getOverrideFieldName)
         }
         
         let fileName = "\(baseName)ModelDefaultInstances.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(modelTargetName)")
     }
     
     private func addDefaultValues(_ fileBuilder: FileBuilder) {
@@ -98,8 +99,8 @@ public extension ServiceModelCodeGenerator {
         }
     }
     
-    private func addDefaultStructureInstance(generationType: DefaultInstancesGenerationType, fileBuilder: FileBuilder,
-                                             name: String, baseName: String, getOverrideFieldName: @escaping (String) -> String?) {
+    private func addDefaultStructureInstance(generationType: DefaultInstancesGenerationType, modelTargetName: String,
+                                             fileBuilder: FileBuilder, name: String, getOverrideFieldName: @escaping (String) -> String?) {
         switch generationType {
         case .internalTypes:
             // create a function that returns the default instance of this structure
@@ -109,11 +110,11 @@ public extension ServiceModelCodeGenerator {
                     /**
                      Default instance of the \(name) structure.
                      */
-                    static let __default: \(baseName)Model.\(name) = {
+                    static let __default: \(modelTargetName).\(name) = {
                 """)
             fileBuilder.incIndent()
             fileBuilder.incIndent()
-            createStructureStubVariable(type: name,
+            createStructureStubVariable(type: name, modelTargetName: modelTargetName,
                                         fileBuilder: fileBuilder,
                                         declarationPrefix: "let defaultInstance =",
                                         fatalOnError: true,

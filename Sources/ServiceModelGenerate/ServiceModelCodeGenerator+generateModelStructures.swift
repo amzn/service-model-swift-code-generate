@@ -37,7 +37,7 @@ public extension ServiceModelCodeGenerator {
     /**
      Generate the declarations for types specified in a Service Model.
      */
-    func generateModelStructures() {
+    func generateModelStructures(modelTargetName: String) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -49,7 +49,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelStructures.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -72,6 +72,7 @@ public extension ServiceModelCodeGenerator {
         for (name, structureDescription) in sortedStructures {
             generateStructure(name: name,
                               structureDescription: structureDescription,
+                              modelTargetName: modelTargetName,
                               fileBuilder: fileBuilder,
                               includeVariableDocumentation: true,
                               generateShapeProtocol: customizations.generateModelShapeConversions,
@@ -80,7 +81,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileName = "\(baseName)ModelStructures.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(modelTargetName)")
     }
     
     private func addCodingKeyLines(name: String, modelName: String?,
@@ -163,7 +164,7 @@ public extension ServiceModelCodeGenerator {
     
     private func updateStructureElementsForMember(
             member: Member, index: Int, internalTypeName: String,
-            isRequired: Bool, variableName: String,
+            modelTargetName: String, isRequired: Bool, variableName: String,
             includeVariableDocumentation: Bool, sortedMembersCount: Int,
             structureElements: inout StructureElements) {
         let typeName = member.value.getNormalizedTypeName(forModel: model)
@@ -173,7 +174,7 @@ public extension ServiceModelCodeGenerator {
         
         let shapeToInstanceConversionDetails =
             getShapeToInstanceConversion(fieldType: member.value,
-                                         variableName: variableName,
+                                         variableName: variableName, modelTargetName: modelTargetName,
                                          isRequired: isRequired)
         let shapeToInstanceConversion = shapeToInstanceConversionDetails.conversion
         
@@ -223,6 +224,7 @@ public extension ServiceModelCodeGenerator {
                                                name: String,
                                                modelName: String?, index: Int,
                                                internalTypeName: String,
+                                               modelTargetName: String,
                                                sortedMembers: [(key: String, value: Member)],
                                                includeVariableDocumentation: Bool,
                                                structureElements: inout StructureElements) {
@@ -237,7 +239,7 @@ public extension ServiceModelCodeGenerator {
         let isRequired = modelOverride?.getIsRequiredOverride(attributeName: locationName, inType: modelName ?? name) ?? entry.value.required
         
         updateStructureElementsForMember(member: entry.value, index: index,
-                                         internalTypeName: internalTypeName, isRequired: isRequired,
+                                         internalTypeName: internalTypeName, modelTargetName: modelTargetName, isRequired: isRequired,
                                          variableName: variableName, includeVariableDocumentation: includeVariableDocumentation,
                                          sortedMembersCount: sortedMembers.count,
                                          structureElements: &structureElements)
@@ -245,6 +247,7 @@ public extension ServiceModelCodeGenerator {
     
     func generateStructure(name: String,
                            structureDescription: StructureDescription,
+                           modelTargetName: String,
                            fileBuilder: FileBuilder,
                            includeVariableDocumentation: Bool,
                            generateShapeProtocol: Bool,
@@ -261,8 +264,8 @@ public extension ServiceModelCodeGenerator {
         var structureElements = StructureElements()
         for (index, entry) in sortedMembers.enumerated() {
             addStructureElementsForMember(entry: entry, name: name, modelName: modelName, index: index,
-                                          internalTypeName: internalTypeName, sortedMembers: sortedMembers,
-                                          includeVariableDocumentation: includeVariableDocumentation,
+                                          internalTypeName: internalTypeName, modelTargetName: modelTargetName,
+                                          sortedMembers: sortedMembers, includeVariableDocumentation: includeVariableDocumentation,
                                           structureElements: &structureElements)
         }
         
@@ -273,10 +276,10 @@ public extension ServiceModelCodeGenerator {
                                conformToValidatableProtocol: generateShapeProtocol && validatableProtocolExists == true)
         
         if generateShapeProtocol {
-            addShapeProtocol(name: internalTypeName, fileBuilder: fileBuilder,
+            addShapeProtocol(name: internalTypeName, modelTargetName: modelTargetName, fileBuilder: fileBuilder,
                              structureElements: structureElements)
 
-            addShapeDefaultFunctions(name: internalTypeName, fileBuilder: fileBuilder,
+            addShapeDefaultFunctions(name: internalTypeName, modelTargetName: modelTargetName, fileBuilder: fileBuilder,
                                      structureElements: structureElements)
         }
     }

@@ -36,9 +36,9 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - delegate: The delegate to use when generating this client.
      */
-    func generateClient(delegate: ModelClientDelegate, fileType: ClientFileType) {
+    func generateClient(delegate: ModelClientDelegate, fileType: ClientFileType,
+                        modelTargetName: String, clientTargetName: String) {
         let fileBuilder = FileBuilder()
-        let baseName = applicationDescription.baseName
         
         let fileName: String
         
@@ -59,7 +59,8 @@ public extension ServiceModelCodeGenerator {
             fileName = structTypeName + fileNamePostfix
         }
         
-        addFileHeader(fileBuilder: fileBuilder, fileName: fileName,
+        addFileHeader(modelTargetName: modelTargetName, clientTargetName: clientTargetName,
+                      fileBuilder: fileBuilder, fileName: fileName,
                       delegate: delegate, fileType: fileType)
         
         delegate.addCustomFileHeader(codeGenerator: self, delegate: delegate,
@@ -99,7 +100,7 @@ public extension ServiceModelCodeGenerator {
             }
             
             generateClient(delegate: delegate, entityType: clientEntityType,
-                           genericType: genericType, fileBuilder: fileBuilder)
+                           genericType: genericType, modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         case .clientConfiguration:
             let configurationObjectName = getTypeName(delegate: delegate, entityType: .configurationObject, genericType: true)
             let configurationObjectTypealiasName = getTypeName(delegate: delegate, entityType: .configurationObject, genericType: false)
@@ -110,7 +111,8 @@ public extension ServiceModelCodeGenerator {
                     = \(configurationObjectName)<\(defaultInvocationReportingType)>
                 """)
             
-            generateClient(delegate: delegate, entityType: .configurationObject, genericType: true, fileBuilder: fileBuilder)
+            generateClient(delegate: delegate, entityType: .configurationObject, genericType: true,
+                           modelTargetName: modelTargetName, fileBuilder: fileBuilder)
             fileBuilder.appendEmptyLine()
             
             let operationsClientEntityType: ClientEntityType = .operationsClient(configurationObjectName: configurationObjectName)
@@ -124,16 +126,17 @@ public extension ServiceModelCodeGenerator {
                 """)
             
             generateClient(delegate: delegate, entityType: .operationsClient(configurationObjectName: configurationObjectName),
-                           genericType: true, fileBuilder: fileBuilder)
+                           genericType: true, modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         case .clientGenerator:
-            generateClient(delegate: delegate, entityType: .clientGenerator, genericType: false, fileBuilder: fileBuilder)
+            generateClient(delegate: delegate, entityType: .clientGenerator, genericType: false,
+                           modelTargetName: modelTargetName, fileBuilder: fileBuilder)
         }
         
         let baseFilePath = applicationDescription.baseFilePath
         
         let fileNameWithExtension = "\(fileName).swift"
         fileBuilder.write(toFile: fileNameWithExtension,
-                          atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
+                          atFilePath: "\(baseFilePath)/Sources/\(clientTargetName)")
     }
     
     private func getTypeName(delegate: ModelClientDelegate, entityType: ClientEntityType, genericType: Bool) -> String {
@@ -165,7 +168,7 @@ public extension ServiceModelCodeGenerator {
     }
     
     private func generateClient(delegate: ModelClientDelegate, entityType: ClientEntityType,
-                                genericType: Bool, fileBuilder: FileBuilder) {
+                                genericType: Bool, modelTargetName: String, fileBuilder: FileBuilder) {
         let typeName = getTypeName(delegate: delegate, entityType: entityType, genericType: genericType)
         
         let typeDecaration: String
@@ -233,7 +236,7 @@ public extension ServiceModelCodeGenerator {
             // for each of the operations
             if case .enabled = delegate.eventLoopFutureClientAPIs {
                 for (name, operationDescription) in sortedOperations {
-                    addOperation(fileBuilder: fileBuilder, name: name,
+                    addOperation(modelTargetName: modelTargetName, fileBuilder: fileBuilder, name: name,
                                  operationDescription: operationDescription,
                                  delegate: delegate, operationInvokeType: .eventLoopFutureAsync,
                                  forTypeAlias: false, entityType: entityType)
@@ -245,7 +248,7 @@ public extension ServiceModelCodeGenerator {
                 for (index, operation) in sortedOperations.enumerated() {
                     let (name, operationDescription) = operation
                     
-                    addOperation(fileBuilder: fileBuilder, name: name,
+                    addOperation(modelTargetName: modelTargetName, fileBuilder: fileBuilder, name: name,
                                  operationDescription: operationDescription,
                                  delegate: delegate, operationInvokeType: .asyncFunction,
                                  forTypeAlias: false, entityType: entityType,
@@ -257,17 +260,16 @@ public extension ServiceModelCodeGenerator {
         fileBuilder.appendLine("}", preDec: true)
     }
     
-    private func addOperationInput(fileBuilder: FileBuilder,
+    private func addOperationInput(modelTargetName: String, fileBuilder: FileBuilder,
                                    operationDescription: OperationDescription,
                                    labelPrefix: String, invokeType: InvokeType,
                                    forTypeAlias: Bool) -> (input: String, functionInputType: String?) {
         let input: String
         let functionInputType: String?
-        let baseName = applicationDescription.baseName
         if let inputType = operationDescription.input {
             let type = inputType.getNormalizedTypeName(forModel: model)
             
-            input = "\(labelPrefix)input: \(baseName)Model.\(type)"
+            input = "\(labelPrefix)input: \(modelTargetName).\(type)"
             
             if !forTypeAlias {
                 fileBuilder.appendEmptyLine()
@@ -283,32 +285,31 @@ public extension ServiceModelCodeGenerator {
         return (input: input, functionInputType: functionInputType)
     }
     
-    private func addOperationOutput(fileBuilder: FileBuilder,
+    private func addOperationOutput(modelTargetName: String, fileBuilder: FileBuilder,
                                     operationDescription: OperationDescription,
                                     delegate: ModelClientDelegate,
                                     labelPrefix: String, operationInvokeType: OperationInvokeType,
                                     forTypeAlias: Bool) -> (output: String, functionOutputType: String?) {
         let output: String
         let functionOutputType: String?
-        let baseName = applicationDescription.baseName
         if let outputType = operationDescription.output {
             let type = outputType.getNormalizedTypeName(forModel: model)
             
             switch operationInvokeType {
             case .eventLoopFutureAsync:
-                output = " -> EventLoopFuture<\(baseName)Model.\(type)>"
+                output = " -> EventLoopFuture<\(modelTargetName).\(type)>"
                 if !forTypeAlias {
                     fileBuilder.appendLine(" - Returns: A future to the \(type) object to be passed back from the caller of this operation.")
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
                 }
             case .asyncFunction:
-                output = " async throws -> \(baseName)Model.\(type)"
+                output = " async throws -> \(modelTargetName).\(type)"
                 if !forTypeAlias {
                     fileBuilder.appendLine(" - Returns: The \(type) object to be passed back from the caller of this async operation.")
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
                 }
             case .syncFunctionForNoAsyncAwaitSupport:
-                output = " throws -> \(baseName)Model.\(type)"
+                output = " throws -> \(modelTargetName).\(type)"
                 if !forTypeAlias {
                     fileBuilder.appendLine(" - Returns: The \(type) object to be passed back from the caller of this async operation.")
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
@@ -475,7 +476,7 @@ public extension ServiceModelCodeGenerator {
         - forTypeAlias: true if a typealias for the operation should be generated,
           otherwise the full function
      */
-    internal func addOperation(fileBuilder: FileBuilder, name: String,
+    internal func addOperation(modelTargetName: String, fileBuilder: FileBuilder, name: String,
                                operationDescription: OperationDescription,
                                delegate: ModelClientDelegate,
                                operationInvokeType: OperationInvokeType, forTypeAlias: Bool,
@@ -517,11 +518,11 @@ public extension ServiceModelCodeGenerator {
         let labelPrefix = forTypeAlias ? "_ " : ""
         
         // if there is input
-        let operationInput = addOperationInput(fileBuilder: fileBuilder, operationDescription: operationDescription,
+        let operationInput = addOperationInput(modelTargetName: modelTargetName, fileBuilder: fileBuilder, operationDescription: operationDescription,
                                                labelPrefix: labelPrefix, invokeType: invokeType, forTypeAlias: forTypeAlias)
         
         // if there is output
-        let operationOuput = addOperationOutput(fileBuilder: fileBuilder, operationDescription: operationDescription,
+        let operationOuput = addOperationOutput(modelTargetName: modelTargetName, fileBuilder: fileBuilder, operationDescription: operationDescription,
                                                 delegate: delegate, labelPrefix: labelPrefix,
                                                 operationInvokeType: operationInvokeType, forTypeAlias: forTypeAlias)
         
@@ -554,11 +555,12 @@ public extension ServiceModelCodeGenerator {
             """)
     }
     
-    private func addFileHeader(fileBuilder: FileBuilder,
+    private func addFileHeader(modelTargetName: String,
+                               clientTargetName: String,
+                               fileBuilder: FileBuilder,
                                fileName: String,
                                delegate: ModelClientDelegate,
                                fileType: ClientFileType) {
-        let baseName = applicationDescription.baseName
         if let fileHeader = customizations.fileHeader {
             fileBuilder.appendLine(fileHeader)
         }
@@ -567,11 +569,11 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(fileName).swift
-            // \(baseName)Client
+            // \(clientTargetName)
             //
             
             import Foundation
-            import \(baseName)Model
+            import \(modelTargetName)
             import SmokeAWSCore
             import SmokeHTTPClient
             """)
