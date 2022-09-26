@@ -19,7 +19,7 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-public extension ServiceModelCodeGenerator {
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
     /**
      Generate an operation enumeration for the model.
      */
@@ -27,6 +27,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if let fileHeader = customizations.fileHeader {
             fileBuilder.appendLine(fileHeader)
         }
@@ -35,7 +36,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelOperations.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -89,7 +90,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileName = "\(baseName)ModelOperations.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(modelTargetName)")
     }
     
     private func addOperationCases(sortedOperations: [(key: String, value: OperationDescription)], fileBuilder: FileBuilder) {

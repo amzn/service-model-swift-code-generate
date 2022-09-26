@@ -39,7 +39,7 @@ will attempt to parse that file into the required service model type and will th
 to the provided function which can call any required generation functions.
 
 ```swift
-extension ServiceModelCodeGenerator {
+extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
     
     func generateFromModel<ModelType: ServiceModel>(serviceModel: ModelType,
                                                     ...) throws {
@@ -62,28 +62,124 @@ extension ServiceModelCodeGenerator {
     }
 }
 
-public struct MyCodeGeneration {
-    static let asyncResultType = AsyncResultType(typeName: "HTTPResult",
-                                                 libraryImport: "SmokeHTTPClient")
-    
+public struct MyCodeGeneration {    
     public static func generateFromModel<ModelType: ServiceModel>(
         modelFilePath: String,
         modelType: ModelType.Type,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        ...) throws {
-            func generatorFunction(codeGenerator: ServiceModelCodeGenerator,
-                                   serviceModel: ModelType) throws {
+        ...) throws 
+    -> ModelType {
+        return try ServiceModelGenerate.generateFromModel(
+            modelFilePath: modelFilePath,
+            customizations: customizations,
+            applicationDescription: applicationDescription,
+            modelOverride: modelOverride) { (codeGenerator, serviceModel) in
                 try codeGenerator.generateFromModel(serviceModel: serviceModel, ...)
-            }
-        
-            try ServiceModelGenerate.generateFromModel(
-                    modelFilePath: modelFilePath,
-                    customizations: customizations,
-                    applicationDescription: applicationDescription,
-                    modelOverride: modelOverride,
-                    generatorFunction: generatorFunction)
+        }
+    }
+}
+```
+
+By default, the code generator will use `\(applicationDescription.baseName)Model` for the name of the model target and 
+`\(applicationDescription.baseName)Client` for the name of the client target. You can override these defaults by using
+the `ModelAndClientTargetSupport` type.
+  
+```
+public struct MyCodeGeneration {
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelFilePath: String,
+        modelType: ModelType.Type,
+        modelTargetName: String, clientTargetName: String,
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        ...) throws 
+    -> ModelType {
+        let targetSupport = ModelAndClientTargetSupport(modelTargetName: modelTargetName,
+                                                        clientTargetName: clientTargetName)
+                                                        
+        return try ServiceModelGenerate.generateFromModel(
+            modelFilePath: modelFilePath,
+            customizations: customizations,
+            applicationDescription: applicationDescription,
+            targetSupport: targetSupport,
+            modelOverride: modelOverride) { (codeGenerator, serviceModel) in
+                try codeGenerator.generateFromModel(serviceModel: serviceModel, ...)
+        }
+    }
+}
+```
+
+Further, if you are generating additional targets, you can use a custom type that provides the name of
+additional targets. This type will have to conform to the `ModelTargetSupport` and `ClientTargetSupport` protocols.
+
+```swift
+extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport & MyCustomTargetSupport {
+    
+    func generateFromModel<ModelType: ServiceModel>(serviceModel: ModelType,
+                                                    ...) throws {
+        let myClientDelegate = ...
+        let myModelErrorsDelegate = ...
+
+        generateClient(delegate: myClientDelegate)
+        generateModelOperationsEnum()
+        generateOperationsReporting()
+        generateModelOperationClientInput()
+        generateModelOperationClientOutput()
+        generateModelOperationHTTPInput()
+        generateModelOperationHTTPOutput()
+        generateModelStructures()
+        generateModelTypes()
+        generateModelErrors(delegate: myModelErrorsDelegate)
+        generateDefaultInstances(generationType: .internalTypes)
+
+        // Call any custom generation functions as required
+        // The `targetSupport` attribute will conform to the `MyCustomTargetSupport` protocol.
+    }
+}
+
+public protocol MyCustomTargetSupport {
+    var myCustomTargetName: String { get }
+}
+
+public struct MyTargetSupport: ModelTargetSupport, ClientTargetSupport, MyCustomTargetSupport {
+    public let modelTargetName: String
+    public let clientTargetName: String
+    public let myCustomTargetName: String
+    
+    public init(modelTargetName: String, clientTargetName: String,
+                    myCustomTargetName: String) {
+        self.modelTargetName = modelTargetName
+        self.clientTargetName = clientTargetName
+        self.myCustomTargetName = myCustomTargetName
+    }
+}
+
+public struct MyCodeGeneration {    
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelFilePath: String,
+        modelType: ModelType.Type,
+        modelTargetName: String, clientTargetName: String,
+        myCustomTargetName: String,
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        ...) throws 
+    -> ModelType {
+        let targetSupport = MyTargetSupport(modelTargetName: modelTargetName,
+                                            clientTargetName: clientTargetName,
+                                            myCustomTargetName: myCustomTargetName)
+                                                        
+        return try ServiceModelGenerate.generateFromModel(
+            modelFilePath: modelFilePath,
+            customizations: customizations,
+            applicationDescription: applicationDescription,
+            targetSupport: targetSupport,
+            modelOverride: modelOverride) { (codeGenerator, serviceModel) in
+                try codeGenerator.generateFromModel(serviceModel: serviceModel, ...)
+        }
     }
 }
 ```

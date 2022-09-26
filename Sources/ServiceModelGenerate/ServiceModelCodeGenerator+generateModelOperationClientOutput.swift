@@ -19,7 +19,7 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-public extension ServiceModelCodeGenerator {
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
     private struct HTTPResponseOutputTypes {
         let bodyTypeName: String
         let headersTypeName: String
@@ -32,6 +32,8 @@ public extension ServiceModelCodeGenerator {
      */
     func generateModelOperationClientOutput() {
         let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
+        let clientTargetName = self.targetSupport.clientTargetName
         
         let fileBuilder = FileBuilder()
         
@@ -43,12 +45,12 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)OperationsClientOutput.swift
-            // \(baseName)Client
+            // \(clientTargetName)
             //
             
             import Foundation
             import SmokeHTTPClient
-            import \(baseName)Model
+            import \(modelTargetName)
             """)
         
         if case let .external(libraryImport: libraryImport, _) = customizations.validationErrorDeclaration {
@@ -68,7 +70,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileName = "\(baseName)OperationsClientOutput.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(clientTargetName)")
     }
     
     private func addBodyOperationHTTPResponseOutput(bodyMembers: [String: Member],

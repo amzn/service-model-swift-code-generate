@@ -19,7 +19,7 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-public extension ServiceModelCodeGenerator {
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport {
     /**
      Generate the errors specified in the Model.
      
@@ -30,6 +30,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if let fileHeader = customizations.fileHeader {
             fileBuilder.appendLine(fileHeader)
         }
@@ -38,7 +39,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelErrors.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -89,7 +90,7 @@ public extension ServiceModelCodeGenerator {
         }
         
         let fileName = "\(baseName)ModelErrors.swift"
-        fileBuilder.write(toFile: fileName, atFilePath: "\(applicationDescription.baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(applicationDescription.baseFilePath)/Sources/\(modelTargetName)")
     }
     
     func getSortedErrors(allErrorTypes: Set<String>) -> [ErrorType] {

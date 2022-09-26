@@ -21,7 +21,7 @@ import ServiceModelEntities
 
 internal let asyncAwaitCondition = "#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)"
 
-public extension ServiceModelCodeGenerator {
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
     private struct OperationSignature {
         let input: String
         let functionInputType: String?
@@ -36,9 +36,10 @@ public extension ServiceModelCodeGenerator {
      - Parameters:
         - delegate: The delegate to use when generating this client.
      */
-    func generateClient(delegate: ModelClientDelegate, fileType: ClientFileType) {
+    func generateClient<DelegateType: ModelClientDelegate>(delegate: DelegateType, fileType: ClientFileType)
+    where DelegateType.TargetSupportType == TargetSupportType {
         let fileBuilder = FileBuilder()
-        let baseName = applicationDescription.baseName
+        let clientTargetName = self.targetSupport.clientTargetName
         
         let fileName: String
         
@@ -133,10 +134,12 @@ public extension ServiceModelCodeGenerator {
         
         let fileNameWithExtension = "\(fileName).swift"
         fileBuilder.write(toFile: fileNameWithExtension,
-                          atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
+                          atFilePath: "\(baseFilePath)/Sources/\(clientTargetName)")
     }
     
-    private func getTypeName(delegate: ModelClientDelegate, entityType: ClientEntityType, genericType: Bool) -> String {
+    private func getTypeName<DelegateType: ModelClientDelegate>(delegate: DelegateType,
+                                                                entityType: ClientEntityType, genericType: Bool)
+    -> String where DelegateType.TargetSupportType == TargetSupportType {
         let typePrefix = genericType ? "Generic" : ""
         let typePostfix: String
         switch entityType {
@@ -164,8 +167,10 @@ public extension ServiceModelCodeGenerator {
         }
     }
     
-    private func generateClient(delegate: ModelClientDelegate, entityType: ClientEntityType,
-                                genericType: Bool, fileBuilder: FileBuilder) {
+    private func generateClient<DelegateType: ModelClientDelegate>(
+        delegate: DelegateType, entityType: ClientEntityType,
+        genericType: Bool, fileBuilder: FileBuilder)
+    where DelegateType.TargetSupportType == TargetSupportType {
         let typeName = getTypeName(delegate: delegate, entityType: entityType, genericType: genericType)
         
         let typeDecaration: String
@@ -263,11 +268,11 @@ public extension ServiceModelCodeGenerator {
                                    forTypeAlias: Bool) -> (input: String, functionInputType: String?) {
         let input: String
         let functionInputType: String?
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if let inputType = operationDescription.input {
             let type = inputType.getNormalizedTypeName(forModel: model)
             
-            input = "\(labelPrefix)input: \(baseName)Model.\(type)"
+            input = "\(labelPrefix)input: \(modelTargetName).\(type)"
             
             if !forTypeAlias {
                 fileBuilder.appendEmptyLine()
@@ -283,32 +288,34 @@ public extension ServiceModelCodeGenerator {
         return (input: input, functionInputType: functionInputType)
     }
     
-    private func addOperationOutput(fileBuilder: FileBuilder,
-                                    operationDescription: OperationDescription,
-                                    delegate: ModelClientDelegate,
-                                    labelPrefix: String, operationInvokeType: OperationInvokeType,
-                                    forTypeAlias: Bool) -> (output: String, functionOutputType: String?) {
+    private func addOperationOutput<DelegateType: ModelClientDelegate>(
+        fileBuilder: FileBuilder,
+        operationDescription: OperationDescription,
+        delegate: DelegateType,
+        labelPrefix: String, operationInvokeType: OperationInvokeType,
+        forTypeAlias: Bool)
+    -> (output: String, functionOutputType: String?) where DelegateType.TargetSupportType == TargetSupportType {
         let output: String
         let functionOutputType: String?
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if let outputType = operationDescription.output {
             let type = outputType.getNormalizedTypeName(forModel: model)
             
             switch operationInvokeType {
             case .eventLoopFutureAsync:
-                output = " -> EventLoopFuture<\(baseName)Model.\(type)>"
+                output = " -> EventLoopFuture<\(modelTargetName).\(type)>"
                 if !forTypeAlias {
                     fileBuilder.appendLine(" - Returns: A future to the \(type) object to be passed back from the caller of this operation.")
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
                 }
             case .asyncFunction:
-                output = " async throws -> \(baseName)Model.\(type)"
+                output = " async throws -> \(modelTargetName).\(type)"
                 if !forTypeAlias {
                     fileBuilder.appendLine(" - Returns: The \(type) object to be passed back from the caller of this async operation.")
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
                 }
             case .syncFunctionForNoAsyncAwaitSupport:
-                output = " throws -> \(baseName)Model.\(type)"
+                output = " throws -> \(modelTargetName).\(type)"
                 if !forTypeAlias {
                     fileBuilder.appendLine(" - Returns: The \(type) object to be passed back from the caller of this async operation.")
                     fileBuilder.appendLine("     Will be validated before being returned to caller.")
@@ -409,12 +416,14 @@ public extension ServiceModelCodeGenerator {
         }
     }
     
-    private func addOperationBody(fileBuilder: FileBuilder, name: String,
-                                  operationDescription: OperationDescription,
-                                  delegate: ModelClientDelegate,
-                                  invokeType: InvokeType, forTypeAlias: Bool,
-                                  operationSignature: OperationSignature,
-                                  entityType: ClientEntityType) {
+    private func addOperationBody<DelegateType: ModelClientDelegate>(
+        fileBuilder: FileBuilder, name: String,
+        operationDescription: OperationDescription,
+        delegate: DelegateType,
+        invokeType: InvokeType, forTypeAlias: Bool,
+        operationSignature: OperationSignature,
+        entityType: ClientEntityType)
+    where DelegateType.TargetSupportType == TargetSupportType {
         let functionName: String
         if !forTypeAlias {
             fileBuilder.appendLine(" */")
@@ -475,11 +484,13 @@ public extension ServiceModelCodeGenerator {
         - forTypeAlias: true if a typealias for the operation should be generated,
           otherwise the full function
      */
-    internal func addOperation(fileBuilder: FileBuilder, name: String,
-                               operationDescription: OperationDescription,
-                               delegate: ModelClientDelegate,
-                               operationInvokeType: OperationInvokeType, forTypeAlias: Bool,
-                               entityType: ClientEntityType, prefixLine: String? = nil, postfixLine: String? = nil) {
+    internal func addOperation<DelegateType: ModelClientDelegate>(
+        fileBuilder: FileBuilder, name: String,
+        operationDescription: OperationDescription,
+        delegate: DelegateType,
+        operationInvokeType: OperationInvokeType, forTypeAlias: Bool,
+        entityType: ClientEntityType, prefixLine: String? = nil, postfixLine: String? = nil)
+    where DelegateType.TargetSupportType == TargetSupportType {
         // OperationInvokeType.syncFunctionForNoAsyncAwaitSupport is only an internal invoke state
         // for legacy support so we ignore it other than for where it is necessary
         let invokeType: InvokeType
@@ -544,21 +555,14 @@ public extension ServiceModelCodeGenerator {
         }
     }
     
-    func addGeneratedFileHeader(fileBuilder: FileBuilder) {
-        fileBuilder.appendLine("""
-            // swiftlint:disable superfluous_disable_command
-            // swiftlint:disable file_length line_length identifier_name type_name vertical_parameter_alignment
-            // swiftlint:disable type_body_length function_body_length generic_type_name cyclomatic_complexity
-            // -- Generated Code; do not edit --
-            //
-            """)
-    }
-    
-    private func addFileHeader(fileBuilder: FileBuilder,
-                               fileName: String,
-                               delegate: ModelClientDelegate,
-                               fileType: ClientFileType) {
-        let baseName = applicationDescription.baseName
+    private func addFileHeader<DelegateType: ModelClientDelegate>(
+        fileBuilder: FileBuilder,
+        fileName: String,
+        delegate: DelegateType,
+        fileType: ClientFileType)
+    where DelegateType.TargetSupportType == TargetSupportType {
+        let modelTargetName = self.targetSupport.modelTargetName
+        let clientTargetName = self.targetSupport.clientTargetName
         if let fileHeader = customizations.fileHeader {
             fileBuilder.appendLine(fileHeader)
         }
@@ -567,11 +571,11 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(fileName).swift
-            // \(baseName)Client
+            // \(clientTargetName)
             //
             
             import Foundation
-            import \(baseName)Model
+            import \(modelTargetName)
             import SmokeAWSCore
             import SmokeHTTPClient
             """)

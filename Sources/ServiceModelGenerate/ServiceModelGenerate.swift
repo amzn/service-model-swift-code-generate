@@ -73,12 +73,13 @@ public struct ServiceModelGenerate {
          - generatorFunction: a function that will be provided a code generator and an instantiated ServiceModel
                               which can be used to generate any code that is required.
      */
-    public static func generateFromModel<ModelType: ServiceModel>(
+    public static func generateFromModel<ModelType: ServiceModel, TargetSupportType>(
         modelFilePath: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws
+        targetSupport: TargetSupportType,
+        generatorFunction: (ServiceModelCodeGenerator<TargetSupportType>, ModelType) throws -> ()) throws
     -> ModelType {
         let (data, modelFormat) = getModelDataForFilePath(modelFilePath: modelFilePath)
         
@@ -88,11 +89,27 @@ public struct ServiceModelGenerate {
             model: model,
             applicationDescription: applicationDescription,
             customizations: customizations,
-            modelOverride: modelOverride)
+            modelOverride: modelOverride,
+            targetSupport: targetSupport)
         
         try generatorFunction(codeGenerator, model)
         
         return model
+    }
+    
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelFilePath: String,
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        generatorFunction: (ServiceModelCodeGenerator<ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
+    -> ModelType {
+        return try generateFromModel(modelFilePath: modelFilePath,
+                                     customizations: customizations,
+                                     applicationDescription: applicationDescription,
+                                     modelOverride: modelOverride,
+                                     targetSupport: applicationDescription.defaultTargetSupport,
+                                     generatorFunction: generatorFunction)
     }
     
     /**
@@ -106,12 +123,13 @@ public struct ServiceModelGenerate {
          - generatorFunction: a function that will be provided a code generator and an instantiated ServiceModel
                               which can be used to generate any code that is required.
      */
-    public static func generateFromModel<ModelType: ServiceModel>(
+    public static func generateFromModel<ModelType: ServiceModel, TargetSupportType>(
         modelFilePaths: [String],
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws
+        targetSupport: TargetSupportType,
+        generatorFunction: (ServiceModelCodeGenerator<TargetSupportType>, ModelType) throws -> ()) throws
     -> ModelType {
         var modelFormat: ModelFormat?
         let dataList: [Data] = modelFilePaths.map { modelFilePath in
@@ -135,11 +153,27 @@ public struct ServiceModelGenerate {
             model: model,
             applicationDescription: applicationDescription,
             customizations: customizations,
-            modelOverride: modelOverride)
+            modelOverride: modelOverride,
+            targetSupport: targetSupport)
         
         try generatorFunction(codeGenerator, model)
         
         return model
+    }
+    
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelFilePaths: [String],
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        generatorFunction: (ServiceModelCodeGenerator<ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
+    -> ModelType {
+        return try generateFromModel(modelFilePaths: modelFilePaths,
+                                     customizations: customizations,
+                                     applicationDescription: applicationDescription,
+                                     modelOverride: modelOverride,
+                                     targetSupport: applicationDescription.defaultTargetSupport,
+                                     generatorFunction: generatorFunction)
     }
     
     /**
@@ -154,13 +188,14 @@ public struct ServiceModelGenerate {
          - generatorFunction: a function that will be provided a code generator and an instantiated ServiceModel
                               which can be used to generate any code that is required.
      */
-    public static func generateFromModel<ModelType: ServiceModel>(
+    public static func generateFromModel<ModelType: ServiceModel, TargetSupportType>(
         modelDirectoryPath: String,
         fileExtension: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws
+        targetSupport: TargetSupportType,
+        generatorFunction: (ServiceModelCodeGenerator<TargetSupportType>, ModelType) throws -> ()) throws
     -> ModelType {
         let dataList = try getDataListForModelFiles(atPath: modelDirectoryPath, fileExtension: fileExtension)
         
@@ -172,11 +207,29 @@ public struct ServiceModelGenerate {
             model: model,
             applicationDescription: applicationDescription,
             customizations: customizations,
-            modelOverride: modelOverride)
+            modelOverride: modelOverride,
+            targetSupport: targetSupport)
         
         try generatorFunction(codeGenerator, model)
         
         return model
+    }
+    
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelDirectoryPath: String,
+        fileExtension: String,
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        generatorFunction: (ServiceModelCodeGenerator<ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
+    -> ModelType {
+        return try generateFromModel(modelDirectoryPath: modelDirectoryPath,
+                                     fileExtension: fileExtension,
+                                     customizations: customizations,
+                                     applicationDescription: applicationDescription,
+                                     modelOverride: modelOverride,
+                                     targetSupport: applicationDescription.defaultTargetSupport,
+                                     generatorFunction: generatorFunction)
     }
     
     /**
@@ -191,13 +244,14 @@ public struct ServiceModelGenerate {
          - generatorFunction: a function that will be provided a code generator and an instantiated ServiceModel
                               which can be used to generate any code that is required.
      */
-    public static func generateFromModel<ModelType: ServiceModel>(
+    public static func generateFromModel<ModelType: ServiceModel, TargetSupportType>(
         modelDirectoryPaths: [String],
         fileExtension: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
         modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator, ModelType) throws -> ()) throws
+        targetSupport: TargetSupportType,
+        generatorFunction: (ServiceModelCodeGenerator<TargetSupportType>, ModelType) throws -> ()) throws
     -> ModelType {
         let dataList = try modelDirectoryPaths.map { path in
             try getDataListForModelFiles(atPath: path, fileExtension: fileExtension)
@@ -211,11 +265,29 @@ public struct ServiceModelGenerate {
             model: model,
             applicationDescription: applicationDescription,
             customizations: customizations,
-            modelOverride: modelOverride)
+            modelOverride: modelOverride,
+            targetSupport: targetSupport)
         
         try generatorFunction(codeGenerator, model)
         
         return model
+    }
+    
+    public static func generateFromModel<ModelType: ServiceModel>(
+        modelDirectoryPaths: [String],
+        fileExtension: String,
+        customizations: CodeGenerationCustomizations,
+        applicationDescription: ApplicationDescription,
+        modelOverride: ModelOverride?,
+        generatorFunction: (ServiceModelCodeGenerator<ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
+    -> ModelType {
+        return try generateFromModel(modelDirectoryPaths: modelDirectoryPaths,
+                                     fileExtension: fileExtension,
+                                     customizations: customizations,
+                                     applicationDescription: applicationDescription,
+                                     modelOverride: modelOverride,
+                                     targetSupport: applicationDescription.defaultTargetSupport,
+                                     generatorFunction: generatorFunction)
     }
     
     private static func getDataListForModelFiles(atPath modelDirectoryPath: String, fileExtension: String) throws -> [Data] {
@@ -241,5 +313,12 @@ public struct ServiceModelGenerate {
             
             return [data]
         }
+    }
+}
+
+private extension ApplicationDescription {
+    var defaultTargetSupport: ModelAndClientTargetSupport {
+        return ModelAndClientTargetSupport(modelTargetName: "\(self.baseName)Model",
+                                           clientTargetName: "\(self.baseName)Client")
     }
 }
