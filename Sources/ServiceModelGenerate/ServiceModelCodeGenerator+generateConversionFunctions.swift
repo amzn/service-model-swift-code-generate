@@ -19,12 +19,12 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-extension ServiceModelCodeGenerator {
+extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport {
     func createArrayConversionFunction(fileBuilder: FileBuilder,
                                        name: String, innerType: String) {
         let typeName = name.getNormalizedTypeName(forModel: model)
         let innerTypeName = innerType.getNormalizedTypeName(forModel: model)
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         
         let willConversionFail = willShapeConversionFail(fieldName: innerType, alreadySeenShapes: [])
         
@@ -48,8 +48,8 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Array where Element: \(type) {
-               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
-                   return \(tryPrefix)self.map { \(tryPrefix)$0.as\(baseName)Model\(innerTypeName)() }
+               func as\(modelTargetName)\(typeName)()\(failPostfix) -> \(modelTargetName).\(typeName) {
+                   return \(tryPrefix)self.map { \(tryPrefix)$0.as\(modelTargetName)\(innerTypeName)() }
                }
             }
             """)
@@ -62,8 +62,8 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Array where \(whereClause) {
-               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
-                   return \(tryPrefix)self.map { \(tryPrefix)$0.as\(baseName)Model\(innerTypeName)() }
+               func as\(modelTargetName)\(typeName)()\(failPostfix) -> \(modelTargetName).\(typeName) {
+                   return \(tryPrefix)self.map { \(tryPrefix)$0.as\(modelTargetName)\(innerTypeName)() }
                }
             }
             """)
@@ -71,8 +71,8 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Array where Element: CustomStringConvertible {
-               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
-                   return \(tryPrefix)self.map { \(tryPrefix)$0.as\(baseName)Model\(innerTypeName)() }
+               func as\(modelTargetName)\(typeName)()\(failPostfix) -> \(modelTargetName).\(typeName) {
+                   return \(tryPrefix)self.map { \(tryPrefix)$0.as\(modelTargetName)\(innerTypeName)() }
                }
             }
             """)
@@ -82,7 +82,7 @@ extension ServiceModelCodeGenerator {
     func createMapConversionFunction(fileBuilder: FileBuilder,
                                      name: String, valueType: String) {
         let typeName = name.getNormalizedTypeName(forModel: model)
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         
         let willConversionFail = willShapeConversionFail(fieldName: valueType, alreadySeenShapes: [])
         
@@ -106,8 +106,8 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Dictionary where Key == String, Value: \(type) {
-               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
-                   return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(baseName)Model\(valueType)() }
+               func as\(modelTargetName)\(typeName)()\(failPostfix) -> \(modelTargetName).\(typeName) {
+                   return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(modelTargetName)\(valueType)() }
                }
             }
             """)
@@ -120,8 +120,8 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Dictionary where Key == String, \(whereClause) {
-               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
-                   return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(baseName)Model\(valueType)() }
+               func as\(modelTargetName)\(typeName)()\(failPostfix) -> \(modelTargetName).\(typeName) {
+                   return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(modelTargetName)\(valueType)() }
                }
             }
             """)
@@ -129,8 +129,8 @@ extension ServiceModelCodeGenerator {
             fileBuilder.appendLine("""
             
             public extension Dictionary where Value: CustomStringConvertible {
-               func as\(baseName)Model\(typeName)()\(failPostfix) -> \(baseName)Model.\(typeName) {
-                   return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(baseName)Model\(valueType)() }
+               func as\(modelTargetName)\(typeName)()\(failPostfix) -> \(modelTargetName).\(typeName) {
+                   return \(tryPrefix)self.mapValues { \(tryPrefix)$0.as\(modelTargetName)\(valueType)() }
                }
             }
             """)

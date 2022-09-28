@@ -24,7 +24,7 @@ public enum DefaultInstancesGenerationType {
     case json
 }
 
-public extension ServiceModelCodeGenerator {
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport {
     /**
      Generate default instances for in a Service Model.
      
@@ -35,6 +35,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if let fileHeader = customizations.fileHeader {
             fileBuilder.appendLine(fileHeader)
         }
@@ -43,7 +44,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelDefaultInstances.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -73,7 +74,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileName = "\(baseName)ModelDefaultInstances.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(modelTargetName)")
     }
     
     private func addDefaultValues(_ fileBuilder: FileBuilder) {
@@ -100,6 +101,8 @@ public extension ServiceModelCodeGenerator {
     
     private func addDefaultStructureInstance(generationType: DefaultInstancesGenerationType, fileBuilder: FileBuilder,
                                              name: String, baseName: String, getOverrideFieldName: @escaping (String) -> String?) {
+        let modelTargetName = self.targetSupport.modelTargetName
+        
         switch generationType {
         case .internalTypes:
             // create a function that returns the default instance of this structure
@@ -109,7 +112,7 @@ public extension ServiceModelCodeGenerator {
                     /**
                      Default instance of the \(name) structure.
                      */
-                    static let __default: \(baseName)Model.\(name) = {
+                    static let __default: \(modelTargetName).\(name) = {
                 """)
             fileBuilder.incIndent()
             fileBuilder.incIndent()

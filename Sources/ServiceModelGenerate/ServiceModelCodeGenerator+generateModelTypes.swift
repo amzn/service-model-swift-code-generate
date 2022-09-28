@@ -19,7 +19,7 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-public extension ServiceModelCodeGenerator {
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport {
     /**
      Generate the declarations for structures specified in a Service Model.
      */
@@ -27,6 +27,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if let fileHeader = customizations.fileHeader {
             fileBuilder.appendLine(fileHeader)
         }
@@ -35,7 +36,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelTypes.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -56,7 +57,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileName = "\(baseName)ModelTypes.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(modelTargetName)")
     }
     
     private func addStringFieldValidation(name: String, fieldValueConstraints: [(name: String, value: String)], regexConstraint: String?,

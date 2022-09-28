@@ -21,7 +21,7 @@ import ServiceModelEntities
 
 let exampleDateString: String = "2013-02-18T17:00:00Z"
 
-internal extension ServiceModelCodeGenerator {
+internal extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport {
     /**
      Outputs a declaration of a structure with default values for its fields.
      
@@ -39,7 +39,7 @@ internal extension ServiceModelCodeGenerator {
                                      fatalOnError: Bool,
                                      overrideFieldNameProvider: ((String) -> String?)? = nil) {
         var outputLines: [String] = []
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         
         // if there isn't actually a structure of the type, this is a fatal
         guard let structureDefinition = model.structureDescriptions[type] else {
@@ -70,9 +70,9 @@ internal extension ServiceModelCodeGenerator {
         }
         
         if sortedMembers.isEmpty {
-            outputLines.append("\(declarationPrefix) \(baseName)Model.\(type)()")
+            outputLines.append("\(declarationPrefix) \(modelTargetName).\(type)()")
         } else {
-            outputLines.append("\(declarationPrefix) \(baseName)Model.\(type)(")
+            outputLines.append("\(declarationPrefix) \(modelTargetName).\(type)(")
         }
         
         // iterate through each property
@@ -85,7 +85,7 @@ internal extension ServiceModelCodeGenerator {
         
         // output the declaration
         if outputLines.isEmpty {
-            fileBuilder.appendLine("\(declarationPrefix) \(baseName)Model.\(type)()")
+            fileBuilder.appendLine("\(declarationPrefix) \(modelTargetName).\(type)()")
         } else {
             outputLines.forEach { line in fileBuilder.appendLine(line) }
         }

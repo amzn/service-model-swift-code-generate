@@ -18,12 +18,31 @@
 import Foundation
 import ServiceModelEntities
 
+public protocol ModelTargetSupport {
+    var modelTargetName: String { get }
+}
+
+public protocol ClientTargetSupport {
+    var clientTargetName: String { get }
+}
+
+public struct ModelAndClientTargetSupport: ModelTargetSupport, ClientTargetSupport {
+    public let modelTargetName: String
+    public let clientTargetName: String
+    
+    public init(modelTargetName: String, clientTargetName: String) {
+        self.modelTargetName = modelTargetName
+        self.clientTargetName = clientTargetName
+    }
+}
+
 /// A code generator that uses a Service Model
-public struct ServiceModelCodeGenerator {
+public struct ServiceModelCodeGenerator<TargetSupportType> {
     public let model: ServiceModel
     public let applicationDescription: ApplicationDescription
     public let customizations: CodeGenerationCustomizations
     public let modelOverride: ModelOverride?
+    public let targetSupport: TargetSupportType
     
     /**
      Constructs the description with an application base name and suffix.
@@ -40,11 +59,13 @@ public struct ServiceModelCodeGenerator {
     public init(model: ServiceModel,
                 applicationDescription: ApplicationDescription,
                 customizations: CodeGenerationCustomizations,
-                modelOverride: ModelOverride?) {
+                modelOverride: ModelOverride?,
+                targetSupport: TargetSupportType) {
         self.model = model
         self.applicationDescription = applicationDescription
         self.customizations = customizations
         self.modelOverride = modelOverride
+        self.targetSupport = targetSupport
     }
 }
 

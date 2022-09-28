@@ -19,8 +19,8 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-public extension ServiceModelCodeGenerator {
-    internal func addRequestInputStructure(generationType: ServiceModelCodeGenerator.ClientInputGenerationType,
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
+    internal func addRequestInputStructure(generationType: ClientInputGenerationType,
                                            fileBuilder: FileBuilder, name: String, inputTypeName: String,
                                            httpRequestInputTypes: HTTPRequestInputTypes) {
         if case .requestInput = generationType {

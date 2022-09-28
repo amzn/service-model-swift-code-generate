@@ -19,8 +19,8 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-public extension ServiceModelCodeGenerator {
-    
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport {
+
     struct StructureElements {
         var codingKeyLines: [String] = []
         var constructorSignatureLines: [String] = []
@@ -41,6 +41,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if let fileHeader = customizations.fileHeader {
             fileBuilder.appendLine(fileHeader)
         }
@@ -49,7 +50,7 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)ModelStructures.swift
-            // \(baseName)Model
+            // \(modelTargetName)
             //
             
             import Foundation
@@ -80,7 +81,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileName = "\(baseName)ModelStructures.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Model")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(modelTargetName)")
     }
     
     private func addCodingKeyLines(name: String, modelName: String?,

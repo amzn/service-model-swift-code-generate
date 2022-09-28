@@ -19,7 +19,7 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-extension ServiceModelCodeGenerator {
+extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport {
     /**
      Generates validation for a field with length constraints.
      
@@ -94,19 +94,19 @@ extension ServiceModelCodeGenerator {
         let typeName: String
         let extensionName: String
         let extensionDeclaration: String
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if let isListWithInnerType = isListWithInnerType {
             typeName = isListWithInnerType.getNormalizedTypeName(forModel: model)
             extensionName = name.getNormalizedTypeName(forModel: model)
             if typeName.isBuiltinType {
                 extensionDeclaration = "Array where Element == \(typeName)"
             } else {
-                extensionDeclaration = "Array where Element == \(baseName)Model.\(typeName)"
+                extensionDeclaration = "Array where Element == \(modelTargetName).\(typeName)"
             }
         } else {
             typeName = name.getNormalizedTypeName(forModel: model)
             extensionName = typeName
-            extensionDeclaration = "\(baseName)Model.\(typeName)"
+            extensionDeclaration = "\(modelTargetName).\(typeName)"
         }
         
         // if there are constraints

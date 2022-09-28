@@ -19,7 +19,7 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
-public extension ServiceModelCodeGenerator {
+public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
     internal struct HTTPRequestInputTypes {
         let queryTypeName: String
         let queryTypeConversion: String
@@ -37,6 +37,8 @@ public extension ServiceModelCodeGenerator {
      */
     func generateModelOperationClientInput() {
         let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
+        let clientTargetName = self.targetSupport.clientTargetName
         
         let fileBuilder = FileBuilder()
         
@@ -48,12 +50,12 @@ public extension ServiceModelCodeGenerator {
         
         fileBuilder.appendLine("""
             // \(baseName)OperationsClientInput.swift
-            // \(baseName)Client
+            // \(clientTargetName)
             //
             
             import Foundation
             import SmokeHTTPClient
-            import \(baseName)Model
+            import \(modelTargetName)
             """)
         
         if case let .external(libraryImport: libraryImport, _) = customizations.validationErrorDeclaration {
@@ -71,7 +73,7 @@ public extension ServiceModelCodeGenerator {
         
         let fileName = "\(baseName)OperationsClientInput.swift"
         let baseFilePath = applicationDescription.baseFilePath
-        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(baseName)Client")
+        fileBuilder.write(toFile: fileName, atFilePath: "\(baseFilePath)/Sources/\(clientTargetName)")
     }
     
     private func addPathOperationHTTPRequestInput(pathMembers: [String: Member],
@@ -82,7 +84,7 @@ public extension ServiceModelCodeGenerator {
                                                   fileBuilder: FileBuilder) -> (pathTypeName: String, pathTypeConversion: String) {
         let pathTypeName: String
         let pathTypeConversion: String
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if !pathMembers.isEmpty {
             pathTypeName = "\(operationPrefix)Path"
             let structureDefinition = StructureDescription(
@@ -103,7 +105,7 @@ public extension ServiceModelCodeGenerator {
                                          fileBuilder: fileBuilder)
             }
             
-            pathTypeConversion = "encodable.as\(baseName)Model\(operationPrefix)Path()"
+            pathTypeConversion = "encodable.as\(modelTargetName)\(operationPrefix)Path()"
         } else {
             pathTypeName = "String"
             pathTypeConversion = "nil"
@@ -120,7 +122,7 @@ public extension ServiceModelCodeGenerator {
                                                    fileBuilder: FileBuilder) -> (queryTypeName: String, queryTypeConversion: String) {
         let queryTypeName: String
         let queryTypeConversion: String
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if !queryMembers.isEmpty {
             queryTypeName = "\(operationPrefix)Query"
             let structureDefinition = StructureDescription(
@@ -141,7 +143,7 @@ public extension ServiceModelCodeGenerator {
                                          fileBuilder: fileBuilder)
             }
             
-            queryTypeConversion = "encodable.as\(baseName)Model\(operationPrefix)Query()"
+            queryTypeConversion = "encodable.as\(modelTargetName)\(operationPrefix)Query()"
         } else {
             queryTypeName = "String"
             queryTypeConversion = "nil"
@@ -158,7 +160,7 @@ public extension ServiceModelCodeGenerator {
                                                   fileBuilder: FileBuilder) -> (bodyTypeName: String, bodyTypeConversion: String) {
         let bodyTypeName: String
         let bodyTypeConversion: String
-        let baseName = applicationDescription.baseName
+        let modelTargetName = self.targetSupport.modelTargetName
         if !bodyMembers.isEmpty {
             bodyTypeName = "\(operationPrefix)Body"
             let structureDefinition = StructureDescription(
@@ -179,7 +181,7 @@ public extension ServiceModelCodeGenerator {
                                          fileBuilder: fileBuilder)
             }
             
-            bodyTypeConversion = "encodable.as\(baseName)Model\(operationPrefix)Body()"
+            bodyTypeConversion = "encodable.as\(modelTargetName)\(operationPrefix)Body()"
         } else {
             bodyTypeName = "String"
             bodyTypeConversion = "nil"
@@ -197,7 +199,7 @@ public extension ServiceModelCodeGenerator {
         -> (additionalHeadersTypeName: String, additionalHeadersTypeConversion: String) {
             let additionalHeadersTypeName: String
             let additionalHeadersTypeConversion: String
-            let baseName = applicationDescription.baseName
+            let modelTargetName = self.targetSupport.modelTargetName
             if !additionalHeadersMembers.isEmpty {
                 additionalHeadersTypeName = "\(operationPrefix)AdditionalHeaders"
                 let structureDefinition = StructureDescription(
@@ -218,7 +220,7 @@ public extension ServiceModelCodeGenerator {
                                              fileBuilder: fileBuilder)
                 }
                 
-                additionalHeadersTypeConversion = "encodable.as\(baseName)Model\(operationPrefix)AdditionalHeaders()"
+                additionalHeadersTypeConversion = "encodable.as\(modelTargetName)\(operationPrefix)AdditionalHeaders()"
             } else {
                 additionalHeadersTypeName = "String"
                 additionalHeadersTypeConversion = "nil"

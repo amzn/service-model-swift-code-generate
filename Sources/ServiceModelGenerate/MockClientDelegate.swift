@@ -23,7 +23,7 @@ import ServiceModelEntities
  A ModelClientDelegate that can be used to generate a
  mock or throwing test client from a Service Model.
  */
-public struct MockClientDelegate: ModelClientDelegate {
+public struct MockClientDelegate<TargetSupportType>: ModelClientDelegate {
     public let baseName: String
     public let isThrowingMock: Bool
     public let clientType: ClientType
@@ -66,8 +66,8 @@ public struct MockClientDelegate: ModelClientDelegate {
                                   conformingProtocolNames: ["\(baseName)ClientProtocol", implementationProviderProtocol])
     }
     
-    public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator,
-                                   delegate: ModelClientDelegate,
+    public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+                                   delegate: Self,
                                    fileBuilder: FileBuilder,
                                    entityType: ClientEntityType) {
         let functionDetail: String
@@ -105,8 +105,8 @@ public struct MockClientDelegate: ModelClientDelegate {
             """)
     }
     
-    public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator,
-                                    delegate: ModelClientDelegate,
+    public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+                                    delegate: Self,
                                     fileBuilder: FileBuilder,
                                     fileType: ClientFileType) {
         fileBuilder.appendLine("""
@@ -130,8 +130,8 @@ public struct MockClientDelegate: ModelClientDelegate {
         fileBuilder.appendLine("\(variableName): \(name.startingWithUppercase)FunctionType? = nil\(postfix)")
     }
     
-    public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator,
-                                   delegate: ModelClientDelegate,
+    public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+                                   delegate: Self,
                                    fileBuilder: FileBuilder,
                                    sortedOperations: [(String, OperationDescription)],
                                    entityType: ClientEntityType) {
@@ -252,8 +252,8 @@ public struct MockClientDelegate: ModelClientDelegate {
                 """)
     }
     
-    public func addOperationBody(codeGenerator: ServiceModelCodeGenerator,
-                                 delegate: ModelClientDelegate,
+    public func addOperationBody(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+                                 delegate: Self,
                                  fileBuilder: FileBuilder,
                                  invokeType: InvokeType,
                                  operationName: String,
@@ -278,7 +278,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
     }
     
-    private func delegateMockImplementationCall(codeGenerator: ServiceModelCodeGenerator,
+    private func delegateMockImplementationCall(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
                                                 functionPrefix: String, functionInfix: String,
                                                 fileBuilder: FileBuilder, hasInput: Bool,
                                                 functionOutputType: String?, operationName: String) {
@@ -325,7 +325,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
     }
     
-    private func delegateAsyncOnlyMockImplementationCall(codeGenerator: ServiceModelCodeGenerator,
+    private func delegateAsyncOnlyMockImplementationCall(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
                                                          fileBuilder: FileBuilder, hasInput: Bool,
                                                          functionOutputType: String?, operationName: String) {
         let variableName = operationName.upperToLowerCamelCase
@@ -350,7 +350,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
     }
     
-    private func addMockClientOperationBody(codeGenerator: ServiceModelCodeGenerator,
+    private func addMockClientOperationBody(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
                                             fileBuilder: FileBuilder, hasInput: Bool,
                                             functionOutputType: String?, invokeType: InvokeType,
                                             protocolTypeName: String, operationName: String) {
@@ -412,7 +412,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         fileBuilder.appendLine("}", preDec: true)
     }
     
-    private func delegateMockThrowingImplementationCall(codeGenerator: ServiceModelCodeGenerator,
+    private func delegateMockThrowingImplementationCall(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
                                                         functionPrefix: String, functionInfix: String,
                                                         fileBuilder: FileBuilder, hasInput: Bool,
                                                         functionOutputType: String?, operationName: String) {
@@ -459,7 +459,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
     }
     
-    private func delegateAsyncOnlyMockThrowingImplementationCall(codeGenerator: ServiceModelCodeGenerator,
+    private func delegateAsyncOnlyMockThrowingImplementationCall(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
                                                                  fileBuilder: FileBuilder, hasInput: Bool,
                                                                  functionOutputType: String?, operationName: String) {
         let variableName = operationName.upperToLowerCamelCase
@@ -484,7 +484,7 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
     }
     
-    private func addThrowingClientOperationBody(codeGenerator: ServiceModelCodeGenerator,
+    private func addThrowingClientOperationBody(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
                                                 fileBuilder: FileBuilder, hasInput: Bool, functionOutputType: String?,
                                                 invokeType: InvokeType, operationName: String) {
         let functionPrefix: String
