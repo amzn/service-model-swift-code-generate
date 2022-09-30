@@ -93,8 +93,7 @@ public struct MyCodeGeneration {
 ## The ServiceModel Protocol
 
 The `ServiceModel` protocol represents the parsed service model and provides access to descriptions of
-the operations, fields and errors. This library provides `SwaggerServiceModel` that conforms to this protocol
-and will parse a Swagger 2.0 specification file.
+the operations, fields and errors. 
 
 ## The ModelClientDelegate protocol
 

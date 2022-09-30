@@ -18,8 +18,6 @@
 import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
-import SwaggerParser
-import Yams
 
 public struct ServiceModelGenerate {
     private static func getModelDataForFilePath(modelFilePath: String) -> (data: Data, modelFormat: ModelFormat) {
