@@ -45,7 +45,8 @@ let package = Package(
         .target(
             name: "ServiceModelGenerate", 
             dependencies: [
-                .target(name: "ServiceModelEntities")
+                .target(name: "ServiceModelEntities"),
+                .target(name: "ServiceModelCodeGeneration")
             ]
         ),
         .testTarget(
