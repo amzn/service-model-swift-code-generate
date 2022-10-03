@@ -30,55 +30,29 @@ let package = Package(
         .library(
             name: "ServiceModelGenerate",
             targets: ["ServiceModelGenerate"]),
-        .library(
-            name: "SwaggerServiceModel",
-            targets: ["SwaggerServiceModel"]),
-        .library(
-            name: "OpenAPIServiceModel",
-            targets: ["OpenAPIServiceModel"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/tachyonics/SwaggerParser.git", from: "0.6.4"),
-        .package(url: "https://github.com/jpsim/Yams.git", from: "4.0.0"),
-        .package(url: "https://github.com/mattpolzin/OpenAPIKit.git", from: "3.0.0-alpha.4"),
-    ],
+    dependencies: [],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "ServiceModelCodeGeneration", dependencies: [
-                .target(name: "ServiceModelEntities"),
-            ]
-        ),
-        .target(
-            name: "ServiceModelEntities", dependencies: [
-            ]
-        ),
-        .target(
-            name: "SwaggerServiceModel", dependencies: [
-                .target(name: "ServiceModelCodeGeneration"),
-                .product(name: "Yams", package: "Yams"),
-                .product(name: "SwaggerParser", package: "SwaggerParser"),
-                .product(name: "OpenAPIKit30" , package: "OpenAPIKit"),
-            ]
-        ),
-        .target(
-            name: "OpenAPIServiceModel", dependencies: [
-                .target(name: "ServiceModelCodeGeneration"),
-                .product(name: "Yams", package: "Yams"),
-                .product(name: "SwaggerParser", package: "SwaggerParser"),
-                .product(name: "OpenAPIKit" , package: "OpenAPIKit"),
-            ]
-        ),
-        .target(
-            name: "ServiceModelGenerate", dependencies: [
-                .target(name: "SwaggerServiceModel"),
                 .target(name: "ServiceModelEntities")
             ]
         ),
-        .testTarget(
-            name: "ServiceModelEntitiesTests", dependencies: [
+        .target(
+            name: "ServiceModelEntities",
+             dependencies: []
+        ),
+        .target(
+            name: "ServiceModelGenerate", 
+            dependencies: [
                 .target(name: "ServiceModelEntities"),
+                .target(name: "ServiceModelCodeGeneration")
+            ]
+        ),
+        .testTarget(
+            name: "ServiceModelEntitiesTests",
+            dependencies: [
+                .target(name: "ServiceModelEntities")
             ]
         ),
     ],
