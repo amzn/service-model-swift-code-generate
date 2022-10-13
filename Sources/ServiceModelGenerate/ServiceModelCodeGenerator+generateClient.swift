@@ -21,6 +21,16 @@ import ServiceModelEntities
 
 internal let asyncAwaitCondition = "#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)"
 
+public struct DefaultTraceContextType {
+    public let typeName: String
+    public let importTargetName: String?
+    
+    public init(typeName: String, importTargetName: String?) {
+        self.typeName = typeName
+        self.importTargetName = importTargetName
+    }
+}
+
 public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
     private struct OperationSignature {
         let input: String
@@ -35,8 +45,11 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
      
      - Parameters:
         - delegate: The delegate to use when generating this client.
+        - fileType: the type of client to be generated.
+        - defaultTraceContextType: the trace context type to be used by default by the client.
      */
-    func generateClient<DelegateType: ModelClientDelegate>(delegate: DelegateType, fileType: ClientFileType)
+    func generateClient<DelegateType: ModelClientDelegate>(delegate: DelegateType, fileType: ClientFileType,
+                                                           defaultTraceContextType: DefaultTraceContextType)
     where DelegateType.TargetSupportType == TargetSupportType {
         let fileBuilder = FileBuilder()
         let clientTargetName = self.targetSupport.clientTargetName
@@ -66,7 +79,8 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
         delegate.addCustomFileHeader(codeGenerator: self, delegate: delegate,
                                      fileBuilder: fileBuilder, fileType: fileType)
         
-        let defaultInvocationReportingType = "StandardHTTPClientCoreInvocationReporting<AWSClientInvocationTraceContext>"
+        let defaultTraceContextTypeName = defaultTraceContextType.typeName
+        let defaultInvocationReportingType = "StandardHTTPClientCoreInvocationReporting<\(defaultTraceContextTypeName)>"
         
         switch fileType {
         case .clientImplementation:
@@ -576,7 +590,9 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
             
             import Foundation
             import \(modelTargetName)
-            import SmokeAWSCore
+            """)
+        
+        fileBuilder.appendLine("""
             import SmokeHTTPClient
             """)
         

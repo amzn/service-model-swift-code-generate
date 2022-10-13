@@ -27,7 +27,7 @@ to your Package.swift-
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/amzn/service-model-swift-code-generate.git", .upToNextMajor(from: "0.1.0"))
+    .package(url: "https://github.com/amzn/service-model-swift-code-generate.git", from: "3.0.0")
 ]
 ```
 
@@ -45,10 +45,15 @@ extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport 
                                                     ...) throws {
         let myClientDelegate = ...
         let myModelErrorsDelegate = ...
+        let defaultTraceContextType = DefaultTraceContextType(...)
+        let operationsReportingType = OperationsReportingType(...)
+        let invocationReportingType = InvocationReportingType(...)
 
-        generateClient(delegate: myClientDelegate)
+        generateClient(delegate: myClientDelegate, fileType: .clientImplementation, 
+            defaultTraceContextType: defaultTraceContextType)
         generateModelOperationsEnum()
-        generateOperationsReporting()
+        generateOperationsReporting(operationsReportingType: operationsReportingType)
+        generateInvocationsReporting(invocationReportingType: invocationReportingType)
         generateModelOperationClientInput()
         generateModelOperationClientOutput()
         generateModelOperationHTTPInput()
