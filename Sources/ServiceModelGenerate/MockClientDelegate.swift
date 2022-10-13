@@ -31,6 +31,7 @@ public struct MockClientDelegate<TargetSupportType>: ModelClientDelegate {
     public let asyncAwaitAPIs: CodeGenFeatureStatus
     public let eventLoopFutureClientAPIs: CodeGenFeatureStatus
     public let minimumCompilerSupport: MinimumCompilerSupport
+    public let supportingTargetName: String?
     
     /**
      Initializer.
@@ -38,16 +39,21 @@ public struct MockClientDelegate<TargetSupportType>: ModelClientDelegate {
      - Parameters:
         - baseName: The base name of the Service.
         - isThrowingMock: true to generate a throwing mock; false for a normal mock
-        - asyncResultType: The name of the result type to use for async functions.
+        - asyncAwaitAPIs: If APIs using Swift Concurrency should be generated.
+        - eventLoopFutureClientAPIs: If APIs using EventLoopFutures should be generated.
+        - supportingTargetName: the target name to be imported to provide the implementation for EventLoopFuture-based APIs.
+        - minimumCompilerSupport: the minimum compiler version that needs to be supported by the client.
      */
     public init(baseName: String, isThrowingMock: Bool,
                 asyncAwaitAPIs: CodeGenFeatureStatus,
                 eventLoopFutureClientAPIs: CodeGenFeatureStatus = .enabled,
+                supportingTargetName: String? = nil,
                 minimumCompilerSupport: MinimumCompilerSupport = .unknown) {
         self.baseName = baseName
         self.isThrowingMock = isThrowingMock
         self.asyncAwaitAPIs = asyncAwaitAPIs
         self.eventLoopFutureClientAPIs = eventLoopFutureClientAPIs
+        self.supportingTargetName = supportingTargetName
         self.minimumCompilerSupport = minimumCompilerSupport
         
         let name: String
@@ -62,8 +68,13 @@ public struct MockClientDelegate<TargetSupportType>: ModelClientDelegate {
             self.defaultBehaviourDescription = "return the `__default` property of its return type."
         }
         
+        var conformingProtocolNames = ["\(baseName)ClientProtocol"]
+        if case .enabled = eventLoopFutureClientAPIs {
+            conformingProtocolNames.append(implementationProviderProtocol)
+        }
+        
         self.clientType = .struct(name: name, genericParameters: [],
-                                  conformingProtocolNames: ["\(baseName)ClientProtocol", implementationProviderProtocol])
+                                  conformingProtocolNames: conformingProtocolNames)
     }
     
     public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
@@ -109,9 +120,11 @@ public struct MockClientDelegate<TargetSupportType>: ModelClientDelegate {
                                     delegate: Self,
                                     fileBuilder: FileBuilder,
                                     fileType: ClientFileType) {
-        fileBuilder.appendLine("""
-            import SmokeAWSHttp
-            """)
+        if let supportingTargetName = self.supportingTargetName {
+            fileBuilder.appendLine("""
+                import \(supportingTargetName)
+                """)
+        }
     }
     
     private func addCommonFunctionsForOperation(name: String, index: Int,

@@ -19,11 +19,27 @@ import Foundation
 import ServiceModelCodeGeneration
 import ServiceModelEntities
 
+public struct InvocationReportingType {
+    public let typeName: String
+    public let targetImportName: String?
+    public let initializeFromOperationsReporting: (_ variableName: String, _ prefix: String, _ fileBuilder: FileBuilder) -> ()
+    
+    public init(typeName: String, targetImportName: String?,
+                initializeFromOperationsReporting: @escaping (_ variableName: String, _ prefix: String, _ fileBuilder: FileBuilder) -> Void) {
+        self.typeName = typeName
+        self.targetImportName = targetImportName
+        self.initializeFromOperationsReporting = initializeFromOperationsReporting
+    }
+}
+
 public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
     /**
      Generate an operation enumeration for the model.
+     
+     - Parameters:
+        - invocationReportingType: The type to use for invocation reporting.
      */
-    func generateInvocationsReporting() {
+    func generateInvocationsReporting(invocationReportingType: InvocationReportingType) {
         
         let fileBuilder = FileBuilder()
         let baseName = applicationDescription.baseName
@@ -42,7 +58,13 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
             
             import Foundation
             import SmokeHTTPClient
-            import SmokeAWSHttp
+            """)
+        
+        if let invocationReportingTypeTargetName = invocationReportingType.targetImportName {
+            fileBuilder.appendLine("import \(invocationReportingTypeTargetName)")
+        }
+        
+        fileBuilder.appendLine("""
             import \(modelTargetName)
             """)
         
@@ -67,10 +89,12 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
         let sortedOperations = model.operationDescriptions.sorted { (left, right) in left.key < right.key }
         
         fileBuilder.incIndent()
-        addOperationReportingParameters(fileBuilder: fileBuilder, baseName: baseName, sortedOperations: sortedOperations)
+        addOperationReportingParameters(fileBuilder: fileBuilder, baseName: baseName, sortedOperations: sortedOperations,
+                                        invocationReportingType: invocationReportingType)
         
         fileBuilder.appendEmptyLine()
-        addOperationReportingInitializer(fileBuilder: fileBuilder, baseName: baseName, sortedOperations: sortedOperations)
+        addOperationReportingInitializer(fileBuilder: fileBuilder, baseName: baseName, sortedOperations: sortedOperations,
+                                         invocationReportingType: invocationReportingType)
         
         fileBuilder.decIndent()
         fileBuilder.appendLine("}")
@@ -81,29 +105,28 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
     }
     
     private func addOperationReportingParameters(fileBuilder: FileBuilder, baseName: String,
-                                               sortedOperations: [(String, OperationDescription)]) {
+                                                 sortedOperations: [(String, OperationDescription)],
+                                                 invocationReportingType: InvocationReportingType) {
         sortedOperations.forEach { (name, operation) in
             let variableName = getNormalizedVariableName(modelTypeName: name)
             
             fileBuilder.appendLine("""
-                public let \(variableName): SmokeAWSHTTPClientInvocationReporting<InvocationReportingType>
+                public let \(variableName): \(invocationReportingType.typeName)<InvocationReportingType>
                 """)
         }
     }
     
     private func addOperationReportingInitializer(fileBuilder: FileBuilder, baseName: String,
-                                                  sortedOperations: [(String, OperationDescription)]) {
+                                                  sortedOperations: [(String, OperationDescription)],
+                                                  invocationReportingType: InvocationReportingType) {
         fileBuilder.appendLine("""
             public init(reporting: InvocationReportingType, operationsReporting: \(baseName)OperationsReporting) {
             """)
         fileBuilder.incIndent()
         sortedOperations.forEach { (name, operation) in
             let variableName = getNormalizedVariableName(modelTypeName: name)
-                        
-            fileBuilder.appendLine("""
-                self.\(variableName) = SmokeAWSHTTPClientInvocationReporting(smokeAWSInvocationReporting: reporting,
-                    smokeAWSOperationReporting: operationsReporting.\(variableName))
-                """)
+            
+            invocationReportingType.initializeFromOperationsReporting(variableName, "self.\(variableName) = ", fileBuilder)
         }
         
         fileBuilder.appendLine("}", preDec: true)
