@@ -22,7 +22,7 @@ import ServiceModelEntities
 public typealias SpecificErrorBehaviour = (retriableErrors: [String], unretriableErrors: [String], defaultBehaviorErrorsCount: Int)
 
 public extension ModelClientDelegate where TargetSupportType: ModelTargetSupport {
-    func getSpecificErrors(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>, baseName: String) -> SpecificErrorBehaviour {
+    func getSpecificErrors(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>, baseName: String) -> SpecificErrorBehaviour {
         let sortedErrors = codeGenerator.getSortedErrors(allErrorTypes: codeGenerator.model.errorTypes)
         
         var retriableErrors: [String] = []
@@ -54,7 +54,7 @@ public extension ModelClientDelegate where TargetSupportType: ModelTargetSupport
 }
 
 public extension ModelClientDelegate {
-    func addTypedErrorRetriableExtension(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    func addTypedErrorRetriableExtension(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                                          fileBuilder: FileBuilder, baseName: String,
                                          specificErrorBehaviour: SpecificErrorBehaviour) {
         let errorType = "\(baseName)Error"
@@ -136,7 +136,7 @@ public extension ModelClientDelegate {
         fileBuilder.decIndent()
     }
     
-    func addErrorRetriableExtension(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    func addErrorRetriableExtension(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                                     fileBuilder: FileBuilder, baseName: String) {
         let errorType = "\(baseName)Error"
                 
@@ -155,7 +155,7 @@ public extension ModelClientDelegate {
     }
     
     func addClientOperationMetricsParameters(fileBuilder: FileBuilder, baseName: String,
-                                             codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+                                             codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                                              sortedOperations: [(String, OperationDescription)],
                                              entityType: ClientEntityType) {
         guard entityType.isGenerator || entityType.isClientImplementation else {
@@ -228,7 +228,7 @@ public extension ModelClientDelegate {
     func addClientGeneratorWithTraceContext(
             fileBuilder: FileBuilder,
             baseName: String,
-            codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+            codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
             targetsAPIGateway: Bool,
             contentType: String) {
         guard case .struct(let clientName, _, _) = clientType else {
@@ -256,7 +256,7 @@ public extension ModelClientDelegate {
     func addClientGeneratorWithLogger(
             fileBuilder: FileBuilder,
             baseName: String,
-            codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+            codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
             targetsAPIGateway: Bool,
             invocationTraceContext: InvocationTraceContextDeclaration,
             contentType: String) {
@@ -282,7 +282,7 @@ public extension ModelClientDelegate {
     }
     
     func addClientOperationMetricsInitializerBody(fileBuilder: FileBuilder, baseName: String,
-                                                  codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+                                                  codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                                                   sortedOperations: [(String, OperationDescription)],
                                                   entityType: ClientEntityType, initializerType: InitializerType,
                                                   inputPrefix: String) {

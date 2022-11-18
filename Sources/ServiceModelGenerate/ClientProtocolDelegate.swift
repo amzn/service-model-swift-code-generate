@@ -23,7 +23,7 @@ import ServiceModelEntities
  A ModelClientDelegate that can be used to generate a
  Client protocol from a Service Model.
  */
-public struct ClientProtocolDelegate<TargetSupportType>: ModelClientDelegate
+public struct ClientProtocolDelegate<ModelType: ServiceModel, TargetSupportType>: ModelClientDelegate
 where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
     public let clientType: ClientType
     public let baseName: String
@@ -50,21 +50,21 @@ where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
         self.minimumCompilerSupport = minimumCompilerSupport
     }
     
-    public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    public func addTypeDescription(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                                    delegate: Self,
                                    fileBuilder: FileBuilder,
                                    entityType: ClientEntityType) {
         fileBuilder.appendLine(self.typeDescription)
     }
     
-    public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    public func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                                     delegate: Self,
                                     fileBuilder: FileBuilder,
                                     fileType: ClientFileType) {
         // no custom file header
     }
     
-    public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                                    delegate: Self,
                                    fileBuilder: FileBuilder,
                                    sortedOperations: [(String, OperationDescription)],
@@ -125,7 +125,7 @@ where TargetSupportType: ModelTargetSupport & ClientTargetSupport {
         }
     }
     
-    public func addOperationBody(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    public func addOperationBody(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                                  delegate: Self,
                                  fileBuilder: FileBuilder, invokeType: InvokeType,
                                  operationName: String,

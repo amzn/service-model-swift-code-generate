@@ -17,8 +17,12 @@
 
 import Foundation
 
+public struct NoModelTypeOverrides: Codable {
+    
+}
+
 /// Data model for the ModelOverride input file
-public struct ModelOverride: Codable {
+public struct ModelOverride<ModelTypeOverridesType: Codable>: Codable {
     /// attributes of these types should match the original case.
     public let matchCase: Set<String>?
     /// attributes of these types should match the original case.
@@ -50,6 +54,8 @@ public struct ModelOverride: Codable {
     public let ignoreRequestHeaders: Set<String>?
     /// overrides the default value used for an enumeration
     public let defaultEnumerationValueOverride: [String: String]?
+    /// overrides that are specific to a particular model type
+    public let modelTypeOverrides: ModelTypeOverridesType?
     
     public init(matchCase: Set<String>? = nil,
                 enumerations: EnumerationNaming? = nil,
@@ -64,7 +70,8 @@ public struct ModelOverride: Codable {
                 ignoreOperations: Set<String>? = nil,
                 ignoreResponseHeaders: Set<String>? = nil,
                 ignoreRequestHeaders: Set<String>? = nil,
-                defaultEnumerationValueOverride: [String: String]? = nil) {
+                defaultEnumerationValueOverride: [String: String]? = nil,
+                modelTypeOverrides: ModelTypeOverridesType? = nil) {
         self.matchCase = matchCase
         self.enumerations = enumerations
         self.fieldRawTypeOverride = fieldRawTypeOverride
@@ -79,6 +86,7 @@ public struct ModelOverride: Codable {
         self.ignoreResponseHeaders = ignoreResponseHeaders
         self.ignoreRequestHeaders = ignoreRequestHeaders
         self.defaultEnumerationValueOverride = defaultEnumerationValueOverride
+        self.modelTypeOverrides = modelTypeOverrides
     }
     
     public func getCodingKeyOverride(attributeName: String, inType: String?) -> String? {

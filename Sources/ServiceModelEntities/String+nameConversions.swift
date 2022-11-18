@@ -32,7 +32,7 @@ public extension String {
      The normalized name for a type; either a specified type mapping
      from the provided service model or this string startingWithUppercase.
      */
-    func getNormalizedTypeName(forModel model: ServiceModel) -> String {
+    func getNormalizedTypeName<ModelType: ServiceModel>(forModel model: ModelType) -> String {
         // if there is a mapping for this name
         if let mappedName = model.typeMappings[self] {
             return mappedName

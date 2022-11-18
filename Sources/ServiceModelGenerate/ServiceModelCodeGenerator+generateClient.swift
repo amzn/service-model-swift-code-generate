@@ -50,7 +50,7 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
      */
     func generateClient<DelegateType: ModelClientDelegate>(delegate: DelegateType, fileType: ClientFileType,
                                                            defaultTraceContextType: DefaultTraceContextType)
-    where DelegateType.TargetSupportType == TargetSupportType {
+    where DelegateType.TargetSupportType == TargetSupportType, DelegateType.ModelType == ModelType {
         let fileBuilder = FileBuilder()
         let clientTargetName = self.targetSupport.clientTargetName
         
@@ -184,7 +184,7 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
     private func generateClient<DelegateType: ModelClientDelegate>(
         delegate: DelegateType, entityType: ClientEntityType,
         genericType: Bool, fileBuilder: FileBuilder)
-    where DelegateType.TargetSupportType == TargetSupportType {
+    where DelegateType.TargetSupportType == TargetSupportType, DelegateType.ModelType == ModelType {
         let typeName = getTypeName(delegate: delegate, entityType: entityType, genericType: genericType)
         
         let typeDecaration: String
@@ -437,7 +437,7 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
         invokeType: InvokeType, forTypeAlias: Bool,
         operationSignature: OperationSignature,
         entityType: ClientEntityType)
-    where DelegateType.TargetSupportType == TargetSupportType {
+    where DelegateType.TargetSupportType == TargetSupportType, DelegateType.ModelType == ModelType {
         let functionName: String
         if !forTypeAlias {
             fileBuilder.appendLine(" */")
@@ -504,7 +504,7 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
         delegate: DelegateType,
         operationInvokeType: OperationInvokeType, forTypeAlias: Bool,
         entityType: ClientEntityType, prefixLine: String? = nil, postfixLine: String? = nil)
-    where DelegateType.TargetSupportType == TargetSupportType {
+    where DelegateType.TargetSupportType == TargetSupportType, DelegateType.ModelType == ModelType {
         // OperationInvokeType.syncFunctionForNoAsyncAwaitSupport is only an internal invoke state
         // for legacy support so we ignore it other than for where it is necessary
         let invokeType: InvokeType
