@@ -37,11 +37,11 @@ public struct ModelAndClientTargetSupport: ModelTargetSupport, ClientTargetSuppo
 }
 
 /// A code generator that uses a Service Model
-public struct ServiceModelCodeGenerator<TargetSupportType> {
-    public let model: ServiceModel
+public struct ServiceModelCodeGenerator<ModelType: ServiceModel, TargetSupportType> {
+    public let model: ModelType
     public let applicationDescription: ApplicationDescription
     public let customizations: CodeGenerationCustomizations
-    public let modelOverride: ModelOverride?
+    public let modelOverride: ModelOverride<ModelType.OverridesType>?
     public let targetSupport: TargetSupportType
     
     /**
@@ -56,10 +56,10 @@ public struct ServiceModelCodeGenerator<TargetSupportType> {
         - baseFilePath: The file path of the generated package.
         - applicationDescription: A description of the application being created.
      */
-    public init(model: ServiceModel,
+    public init(model: ModelType,
                 applicationDescription: ApplicationDescription,
                 customizations: CodeGenerationCustomizations,
-                modelOverride: ModelOverride?,
+                modelOverride: ModelOverride<ModelType.OverridesType>?,
                 targetSupport: TargetSupportType) {
         self.model = model
         self.applicationDescription = applicationDescription

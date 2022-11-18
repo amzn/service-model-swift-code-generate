@@ -75,9 +75,9 @@ public struct ServiceModelGenerate {
         modelFilePath: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
-        modelOverride: ModelOverride?,
+        modelOverride: ModelOverride<ModelType.OverridesType>?,
         targetSupport: TargetSupportType,
-        generatorFunction: (ServiceModelCodeGenerator<TargetSupportType>, ModelType) throws -> ()) throws
+        generatorFunction: (ServiceModelCodeGenerator<ModelType, TargetSupportType>, ModelType) throws -> ()) throws
     -> ModelType {
         let (data, modelFormat) = getModelDataForFilePath(modelFilePath: modelFilePath)
         
@@ -99,8 +99,8 @@ public struct ServiceModelGenerate {
         modelFilePath: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
-        modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator<ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
+        modelOverride: ModelOverride<ModelType.OverridesType>?,
+        generatorFunction: (ServiceModelCodeGenerator<ModelType, ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
     -> ModelType {
         return try generateFromModel(modelFilePath: modelFilePath,
                                      customizations: customizations,
@@ -125,9 +125,9 @@ public struct ServiceModelGenerate {
         modelFilePaths: [String],
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
-        modelOverride: ModelOverride?,
+        modelOverride: ModelOverride<ModelType.OverridesType>?,
         targetSupport: TargetSupportType,
-        generatorFunction: (ServiceModelCodeGenerator<TargetSupportType>, ModelType) throws -> ()) throws
+        generatorFunction: (ServiceModelCodeGenerator<ModelType, TargetSupportType>, ModelType) throws -> ()) throws
     -> ModelType {
         var modelFormat: ModelFormat?
         let dataList: [Data] = modelFilePaths.map { modelFilePath in
@@ -163,8 +163,8 @@ public struct ServiceModelGenerate {
         modelFilePaths: [String],
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
-        modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator<ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
+        modelOverride: ModelOverride<ModelType.OverridesType>?,
+        generatorFunction: (ServiceModelCodeGenerator<ModelType, ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
     -> ModelType {
         return try generateFromModel(modelFilePaths: modelFilePaths,
                                      customizations: customizations,
@@ -191,9 +191,9 @@ public struct ServiceModelGenerate {
         fileExtension: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
-        modelOverride: ModelOverride?,
+        modelOverride: ModelOverride<ModelType.OverridesType>?,
         targetSupport: TargetSupportType,
-        generatorFunction: (ServiceModelCodeGenerator<TargetSupportType>, ModelType) throws -> ()) throws
+        generatorFunction: (ServiceModelCodeGenerator<ModelType, TargetSupportType>, ModelType) throws -> ()) throws
     -> ModelType {
         let dataList = try getDataListForModelFiles(atPath: modelDirectoryPath, fileExtension: fileExtension)
         
@@ -218,8 +218,8 @@ public struct ServiceModelGenerate {
         fileExtension: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
-        modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator<ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
+        modelOverride: ModelOverride<ModelType.OverridesType>?,
+        generatorFunction: (ServiceModelCodeGenerator<ModelType, ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
     -> ModelType {
         return try generateFromModel(modelDirectoryPath: modelDirectoryPath,
                                      fileExtension: fileExtension,
@@ -247,9 +247,9 @@ public struct ServiceModelGenerate {
         fileExtension: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
-        modelOverride: ModelOverride?,
+        modelOverride: ModelOverride<ModelType.OverridesType>?,
         targetSupport: TargetSupportType,
-        generatorFunction: (ServiceModelCodeGenerator<TargetSupportType>, ModelType) throws -> ()) throws
+        generatorFunction: (ServiceModelCodeGenerator<ModelType, TargetSupportType>, ModelType) throws -> ()) throws
     -> ModelType {
         let dataList = try modelDirectoryPaths.map { path in
             try getDataListForModelFiles(atPath: path, fileExtension: fileExtension)
@@ -276,8 +276,8 @@ public struct ServiceModelGenerate {
         fileExtension: String,
         customizations: CodeGenerationCustomizations,
         applicationDescription: ApplicationDescription,
-        modelOverride: ModelOverride?,
-        generatorFunction: (ServiceModelCodeGenerator<ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
+        modelOverride: ModelOverride<ModelType.OverridesType>?,
+        generatorFunction: (ServiceModelCodeGenerator<ModelType, ModelAndClientTargetSupport>, ModelType) throws -> ()) throws
     -> ModelType {
         return try generateFromModel(modelDirectoryPaths: modelDirectoryPaths,
                                      fileExtension: fileExtension,

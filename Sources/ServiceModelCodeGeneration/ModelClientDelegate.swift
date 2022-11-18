@@ -76,6 +76,7 @@ public enum ClientEntityType {
  from the Service Model.
  */
 public protocol ModelClientDelegate {
+    associatedtype ModelType: ServiceModel
     associatedtype TargetSupportType
     
     /// The type of client being generated.
@@ -93,7 +94,7 @@ public protocol ModelClientDelegate {
         - delegate: the delegate being used.
         - fileBuilder: The FileBuilder to output to.
      */
-    func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    func addCustomFileHeader(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                              delegate: Self,
                              fileBuilder: FileBuilder,
                              fileType: ClientFileType)
@@ -106,7 +107,7 @@ public protocol ModelClientDelegate {
         - delegate: the delegate being used.
         - fileBuilder: The FileBuilder to output to.
      */
-    func addTypeDescription(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    func addTypeDescription(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                             delegate: Self,
                             fileBuilder: FileBuilder,
                             entityType: ClientEntityType)
@@ -120,7 +121,7 @@ public protocol ModelClientDelegate {
         - fileBuilder: The FileBuilder to output to.
         - sortedOperations: A list of sorted operations from the current model.
      */
-    func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                             delegate: Self,
                             fileBuilder: FileBuilder,
                             sortedOperations: [(String, OperationDescription)],
@@ -139,7 +140,7 @@ public protocol ModelClientDelegate {
         - functionInputType: the input type to the operation.
         - functionOutputType: the output type for the operation.
      */
-    func addOperationBody(codeGenerator: ServiceModelCodeGenerator<TargetSupportType>,
+    func addOperationBody(codeGenerator: ServiceModelCodeGenerator<ModelType, TargetSupportType>,
                           delegate: Self,
                           fileBuilder: FileBuilder,
                           invokeType: InvokeType,

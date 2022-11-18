@@ -31,6 +31,8 @@ public enum ServiceModelError: Error {
  Protocol for a Service Model description.
  */
 public protocol ServiceModel {
+    associatedtype OverridesType: Codable = NoModelTypeOverrides
+    
     var serviceInformation: ServiceInformation? { get }
     var serviceDescriptions: [String: ServiceDescription] { get }
     var structureDescriptions: [String: StructureDescription] { get }
@@ -44,20 +46,20 @@ public protocol ServiceModel {
      Initialize an instance of this ServiceModel type from a data instance
      that represents that type.
      */
-    static func create(data: Data, modelFormat: ModelFormat, modelOverride: ModelOverride?) throws -> Self
+    static func create(data: Data, modelFormat: ModelFormat, modelOverride: ModelOverride<OverridesType>?) throws -> Self
     
     /**
      Initialize an instance of this ServiceModel type from a data instance
      that represents that type.
      */
-    static func create(dataList: [Data], modelFormat: ModelFormat, modelOverride: ModelOverride?) throws -> Self
+    static func create(dataList: [Data], modelFormat: ModelFormat, modelOverride: ModelOverride<OverridesType>?) throws -> Self
 }
 
 public extension ServiceModel {
     // Provide default value for backwards compatibility
     var serviceInformation: ServiceInformation? { nil }
 
-    static func create(dataList: [Data], modelFormat: ModelFormat, modelOverride: ModelOverride?) throws -> Self {
+    static func create(dataList: [Data], modelFormat: ModelFormat, modelOverride: ModelOverride<OverridesType>?) throws -> Self {
         throw ServiceModelError.notImplementedException
     }
 }
