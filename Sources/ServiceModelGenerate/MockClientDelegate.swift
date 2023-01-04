@@ -29,6 +29,7 @@ public struct MockClientDelegate: ModelClientDelegate {
     public let isThrowingMock: Bool
     public let clientType: ClientType
     public let typeDescription: String
+    public let clientAPIShape: APIShape
     
     /**
      Initializer.
@@ -36,9 +37,11 @@ public struct MockClientDelegate: ModelClientDelegate {
      - Parameters:
         - baseName: The base name of the Service.
         - isThrowingMock: true to generate a throwing mock; false for a normal mock
+        - clientAPIShape: The shape of the APIs to create with this mock
         - asyncResultType: The name of the result type to use for async functions.
      */
     public init(baseName: String, isThrowingMock: Bool,
+                clientAPIShape: APIShape = .syncAndCallback,
                 asyncResultType: AsyncResultType? = nil) {
         self.baseName = baseName
         self.isThrowingMock = isThrowingMock
@@ -54,8 +57,16 @@ public struct MockClientDelegate: ModelClientDelegate {
             + "returns the `__default` property of its return type."
         }
         
-        self.clientType = .struct(name: name, genericParameters: [],
-                                  conformingProtocolName: "\(baseName)ClientProtocol")
+        switch clientAPIShape {
+        case .syncAndCallback:
+            self.clientType = .struct(name: name, genericParameters: [],
+                                      conformingProtocolName: "\(baseName)ClientProtocol")
+        case .structuredConcurrency:
+            self.clientType = .struct(name: name + "V2", genericParameters: [],
+                                      conformingProtocolName: "\(baseName)ClientProtocolV2")
+        }
+        
+        self.clientAPIShape = clientAPIShape
     }
     
     public func getFileDescription(isGenerator: Bool) -> String {
@@ -79,8 +90,13 @@ public struct MockClientDelegate: ModelClientDelegate {
         }
         
         let variableName = name.upperToLowerCamelCase
-        fileBuilder.appendLine("\(variableName)Async: \(name.startingWithUppercase)AsyncType? = nil,")
-        fileBuilder.appendLine("\(variableName)Sync: \(name.startingWithUppercase)SyncType? = nil\(postfix)")
+        switch self.clientAPIShape {
+        case .syncAndCallback:
+            fileBuilder.appendLine("\(variableName)Async: \(name.startingWithUppercase)AsyncType? = nil,")
+            fileBuilder.appendLine("\(variableName)Sync: \(name.startingWithUppercase)SyncType? = nil\(postfix)")
+        case .structuredConcurrency:
+            fileBuilder.appendLine("\(variableName): \(name.startingWithUppercase)FunctionType? = nil\(postfix)")
+        }
     }
     
     public func addCommonFunctions(codeGenerator: ServiceModelCodeGenerator,
@@ -95,8 +111,14 @@ public struct MockClientDelegate: ModelClientDelegate {
         // for each of the operations
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
-            fileBuilder.appendLine("let \(variableName)AsyncOverride: \(name.startingWithUppercase)AsyncType?")
-            fileBuilder.appendLine("let \(variableName)SyncOverride: \(name.startingWithUppercase)SyncType?")
+            
+            switch self.clientAPIShape {
+            case .syncAndCallback:
+                fileBuilder.appendLine("let \(variableName)AsyncOverride: \(name.startingWithUppercase)AsyncType?")
+                fileBuilder.appendLine("let \(variableName)SyncOverride: \(name.startingWithUppercase)SyncType?")
+            case .structuredConcurrency:
+                fileBuilder.appendLine("let \(variableName)Override: \(name.startingWithUppercase)FunctionType?")
+            }
         }
         fileBuilder.appendEmptyLine()
         
@@ -144,8 +166,13 @@ public struct MockClientDelegate: ModelClientDelegate {
         // for each of the operations
         for (name, _) in sortedOperations {
             let variableName = name.upperToLowerCamelCase
-            fileBuilder.appendLine("self.\(variableName)AsyncOverride = \(variableName)Async")
-            fileBuilder.appendLine("self.\(variableName)SyncOverride = \(variableName)Sync")
+            switch self.clientAPIShape {
+            case .syncAndCallback:
+                fileBuilder.appendLine("self.\(variableName)AsyncOverride = \(variableName)Async")
+                fileBuilder.appendLine("self.\(variableName)SyncOverride = \(variableName)Sync")
+            case .structuredConcurrency:
+                fileBuilder.appendLine("self.\(variableName)Override = \(variableName)")
+            }
         }
         
         fileBuilder.decIndent()
@@ -194,7 +221,7 @@ public struct MockClientDelegate: ModelClientDelegate {
             
             let declarationPrefix: String
             switch invokeType {
-            case .sync:
+            case .sync, .asyncFunction:
                 declarationPrefix = "return"
             case .async:
                 declarationPrefix = "let result ="
@@ -225,7 +252,7 @@ public struct MockClientDelegate: ModelClientDelegate {
                                  operationName: operationName, hasInput: hasInput)
         
         switch invokeType {
-        case .sync:
+        case .sync, .asyncFunction:
             fileBuilder.appendLine("throw error")
         case .async:
             if hasOutput {
@@ -244,18 +271,25 @@ public struct MockClientDelegate: ModelClientDelegate {
         
         let customFunctionParameters: String
         let customFunctionPostfix: String
+        let asyncPrefix: String
         switch invokeType {
         case .async:
             customFunctionPostfix = "Async"
             customFunctionParameters = hasInput ? "input, completion" : "completion"
+            asyncPrefix = ""
         case .sync:
             customFunctionPostfix = "Sync"
             customFunctionParameters = hasInput ? "input" : ""
+            asyncPrefix = ""
+        case .asyncFunction:
+            customFunctionPostfix = ""
+            customFunctionParameters = hasInput ? "input" : ""
+            asyncPrefix = "await "
         }
     
         fileBuilder.appendLine("""
                 if let \(variableName)\(customFunctionPostfix)Override = \(variableName)\(customFunctionPostfix)Override {
-                    return try \(variableName)\(customFunctionPostfix)Override(\(customFunctionParameters))
+                    return try \(asyncPrefix)\(variableName)\(customFunctionPostfix)Override(\(customFunctionParameters))
                 }
                 """)
         fileBuilder.appendEmptyLine()
@@ -267,6 +301,8 @@ public struct MockClientDelegate: ModelClientDelegate {
             return name
         case .struct(name: _, genericParameters: _, conformingProtocolName: let conformingProtocolName):
             return conformingProtocolName
+        case .protocolWithConformance(name: let name, conformingProtocolName: _):
+            return name
         }
     }
 }
