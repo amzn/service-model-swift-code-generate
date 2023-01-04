@@ -1,0 +1,23 @@
+name: build
+
+on:
+  push:
+    branches: [ main, service-model-swift-code-generate-2.x, service-model-swift-code-generate-1.x ]
+  pull_request:
+    branches: [ main, service-model-swift-code-generate-2.x, service-model-swift-code-generate-1.x ]
+      
+jobs:
+  Build:
+    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        swift: ["5.7.2", "5.6.3", "5.5.3"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: swift-actions/setup-swift@v1.21.0
+        with:
+          swift-version: ${{ matrix.swift }}
+      - uses: actions/checkout@v2
+      - name: Build
+        run: swift build -c release

@@ -1,13 +1,10 @@
 <p align="center">
-<a href="https://travis-ci.com/amzn/service-model-swift-code-generate">
-<img src="https://travis-ci.com/amzn/service-model-swift-code-generate.svg?branch=master" alt="Build - Master Branch">
+<a href="https://github.com/amzn/service-model-swift-code-generate/actions">
+<img src="https://github.com/amzn/service-model-swift-code-generate/actions/workflows/swift.yml/badge.svg?branch=service-model-swift-code-generate-2.x" alt="Build - service-model-swift-code-generate-2.x Branch">
 </a>
 <a href="http://swift.org">
-<img src="https://img.shields.io/badge/swift-5.1|5.2|5.3-orange.svg?style=flat" alt="Swift 5.1, 5.2 and 5.3 Tested">
+<img src="https://img.shields.io/badge/swift-5.5|5.6|5.7-orange.svg?style=flat" alt="Swift 5.5, 5.6 and 5.7 Tested">
 </a>
-<img src="https://img.shields.io/badge/ubuntu-16.04|18.04|20.04-yellow.svg?style=flat" alt="Ubuntu 16.04, 18.04 and 20.04 Tested">
-<img src="https://img.shields.io/badge/CentOS-8-yellow.svg?style=flat" alt="CentOS 8 Tested">
-<img src="https://img.shields.io/badge/AmazonLinux-2-yellow.svg?style=flat" alt="Amazon Linux 2 Tested">
 <a href="https://gitter.im/SmokeServerSide">
 <img src="https://img.shields.io/badge/chat-on%20gitter-ee115e.svg?style=flat" alt="Join the Smoke Server Side community on gitter">
 </a>
