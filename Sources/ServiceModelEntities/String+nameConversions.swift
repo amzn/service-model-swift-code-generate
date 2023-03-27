@@ -18,7 +18,8 @@
 import Foundation
 
 private let reservedWords: Set<String> = ["in", "protocol", "return", "default", "public", "self",
-                                          "static", "private", "internal", "do", "is", "as", "true", "false", "import"]
+                                          "static", "private", "internal", "do", "is", "as", "true", "false", "import",
+                                          "operator"]
 
 public extension String {
     /**
