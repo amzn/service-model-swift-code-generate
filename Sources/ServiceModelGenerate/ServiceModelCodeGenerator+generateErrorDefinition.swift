@@ -37,6 +37,11 @@ public extension ServiceModelCodeGenerator {
                 
         fileBuilder.appendLine("""
             
+            public enum \(baseName)UnmodeledError: Swift.Error {
+                case internalServer
+                case deserializationError(cause: Swift.Error)
+            }
+            
             public \(entityType) \(baseName)Error: Swift.Error, Decodable {
             """)
         fileBuilder.incIndent()
@@ -174,6 +179,11 @@ public extension ServiceModelCodeGenerator {
                 """)
         }
         
+        fileBuilder.appendLine("""
+            case internalServerErrorIdentityBuiltIn:
+                throw \(baseName)UnmodeledError.internalServer
+            """)
+        
         // add any additional error decode statements from the delegate
         delegate.errorTypeAdditionalErrorDecodeStatementsGenerator(
             fileBuilder: fileBuilder,
@@ -189,6 +199,11 @@ public extension ServiceModelCodeGenerator {
                 
                 """)
         }
+        
+        fileBuilder.appendLine("""
+            private let internalServerErrorIdentityBuiltIn = "InternalError"
+            
+            """)
         
         // for each of the errors
         for error in sortedErrors {
