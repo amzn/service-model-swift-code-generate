@@ -168,6 +168,8 @@ public extension ServiceModelCodeGenerator where TargetSupportType: ModelTargetS
                 """)
         }
         
+        delegate.errorTypeAdditionalExtensions(fileBuilder: fileBuilder, errorTypes: sortedErrors, baseName: baseName)
+        
         if delegate.generateCustomStringConvertibleConformance
             && delegate.generateEncodableConformance {
                 fileBuilder.appendEmptyLine()
