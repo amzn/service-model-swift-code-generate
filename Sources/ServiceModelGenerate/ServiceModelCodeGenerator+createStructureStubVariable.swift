@@ -157,7 +157,9 @@ internal extension ServiceModelCodeGenerator {
         return fieldValue
     }
     
-    private func getMapFieldValue(lengthConstraint: LengthRangeConstraint<Int>, valueType: String,
+    private func getMapFieldValue(lengthConstraint: LengthRangeConstraint<Int>,
+                                  keyType: String,
+                                  valueType: String,
                                   fileBuilder: FileBuilder) -> String {
         let fieldValue: String
         
@@ -173,8 +175,14 @@ internal extension ServiceModelCodeGenerator {
             // create a map that satifies at least the minimum constraint
             var mapConstructor: [String] = []
             let defaultValue = getDefaultValue(type: valueType, fileBuilder: fileBuilder)
-            for index in 0..<requiredSize {
-                mapConstructor.append("\"Entry_\(index)\": \(defaultValue)")
+
+            if requiredSize == 1 {
+                let defaultKeyValue = getDefaultValue(type: keyType, fileBuilder: fileBuilder)
+                mapConstructor.append("\(defaultKeyValue): \(defaultValue)")
+            } else {
+                for index in 0..<requiredSize {
+                    mapConstructor.append("\"Entry_\(index)\": \(defaultValue)")
+                }
             }
             
             fieldValue = "[\(mapConstructor.joined(separator: ", "))]"
@@ -211,9 +219,10 @@ internal extension ServiceModelCodeGenerator {
             fieldValue = overrideDefaultValue ?? "\"\(exampleDateString)\""
         case .list(type: let listType, lengthConstraint: let lengthConstraint):
             fieldValue = getListFieldValue(lengthConstraint: lengthConstraint, listType: listType, fileBuilder: fileBuilder)
-        case .map(keyType: _, valueType: let valueType,
+        case .map(keyType: let keyType,
+                  valueType: let valueType,
                   lengthConstraint: let lengthConstraint):
-            fieldValue = getMapFieldValue(lengthConstraint: lengthConstraint, valueType: valueType, fileBuilder: fileBuilder)
+            fieldValue = getMapFieldValue(lengthConstraint: lengthConstraint, keyType: keyType, valueType: valueType, fileBuilder: fileBuilder)
         }
         
         return fieldValue
